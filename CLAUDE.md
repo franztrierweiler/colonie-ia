@@ -50,3 +50,4 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 
 - Toujours lire les fichiers markdown dans `/docs` au démarrage de Claude Code
 - Les spécifications fonctionnelles sont dans FEATURES.md
+- Ne pas ajouter "Co-Authored-By: Claude" dans les messages de commit
