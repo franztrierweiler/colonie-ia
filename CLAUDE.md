@@ -45,3 +45,8 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 - 1-8 joueurs, timer de tour, chat, contrôles admin
 - Solo contre IA avec plusieurs niveaux de difficulté
 - Mode auto-play pour observer les stratégies de l'IA
+
+## Règles
+
+- Toujours lire les fichiers markdown dans `/docs` au démarrage de Claude Code
+- Les spécifications fonctionnelles sont dans FEATURES.md
