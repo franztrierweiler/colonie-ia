@@ -12,6 +12,7 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 - `docs/EPICS_US.md` - EPICs et User Stories (96 US réparties en 13 EPICs)
 - `docs/ARCHITECTURE.md` - Choix d'architecture technique
 - `docs/SECURITY.md` - Spécifications de sécurité
+- `docs/ART_PROMPT.md` - Prompts pour génération d'assets graphiques (logo)
 - `README.md` - Description brève du projet
 - Aucun système de build, tests ou code source n'existe actuellement
 

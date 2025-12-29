@@ -328,7 +328,7 @@ Le joueur peut continuer à jouer après la victoire, mais sans opposition.
 - Horloge de tour pour rythmer la partie
 - Chat et messages texte intégrés
 - Possibilité de rejoindre une partie en cours
-- Joueur "Administrateur" peut forcer le passage au tour suivant
+- Joueur "Administrateur" peut forcer le passage au tour suivant et contrôler les comptes de joueurs)
 
 ### 12.2 Options
 - Chance au combat (optionnel)
