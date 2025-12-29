@@ -6,11 +6,79 @@ Ce document organise les fonctionnalités de FEATURES.md en EPICs et User Storie
 
 ## EPIC 1 : Plateforme Technique
 
-> **À définir** : Cet EPIC sera complété après la rédaction de ARCHITECTURE.md. Il contiendra les User Stories relatives à l'infrastructure technique, au choix des technologies, au système de build, etc.
+### Architecture
 
-### US 1.1 - [À définir]
-### US 1.2 - [À définir]
-### US 1.3 - [À définir]
+### US 1.1 - Application web responsive
+**En tant que** joueur,
+**Je veux** accéder au jeu via un navigateur web moderne (desktop et mobile),
+**Afin de** jouer sans installation.
+
+### US 1.2 - Backend temps réel
+**En tant que** développeur,
+**Je veux** une architecture backend supportant les WebSockets,
+**Afin de** gérer les parties multijoueurs en temps réel.
+
+### US 1.3 - Persistance des données
+**En tant que** joueur,
+**Je veux** que mes parties soient sauvegardées automatiquement,
+**Afin de** reprendre une partie interrompue.
+
+### US 1.4 - Scalabilité horizontale
+**En tant qu'** administrateur,
+**Je veux** que l'application puisse gérer plusieurs parties simultanées,
+**Afin de** supporter une montée en charge.
+
+### US 1.5 - API RESTful
+**En tant que** développeur,
+**Je veux** une API REST documentée pour les opérations CRUD,
+**Afin de** faciliter l'intégration et la maintenance.
+
+### US 1.6 - Environnements séparés
+**En tant que** développeur,
+**Je veux** des environnements dev/staging/production distincts,
+**Afin de** tester sans impacter les joueurs.
+
+### Authentification
+
+### US 1.7 - Création de compte
+**En tant que** visiteur,
+**Je veux** créer un compte avec email et mot de passe,
+**Afin d'** accéder au jeu.
+
+### US 1.8 - Connexion sécurisée
+**En tant que** joueur,
+**Je veux** me connecter avec mes identifiants,
+**Afin d'** accéder à mon profil et mes parties.
+
+### US 1.9 - Authentification OAuth
+**En tant que** joueur,
+**Je veux** me connecter via Google/GitHub/Discord,
+**Afin de** simplifier l'inscription.
+
+### US 1.10 - Mot de passe oublié
+**En tant que** joueur,
+**Je veux** réinitialiser mon mot de passe par email,
+**Afin de** récupérer l'accès à mon compte.
+
+### US 1.11 - Session persistante
+**En tant que** joueur,
+**Je veux** rester connecté entre les sessions (option "Se souvenir de moi"),
+**Afin de** ne pas me reconnecter à chaque visite.
+
+### US 1.12 - Déconnexion
+**En tant que** joueur,
+**Je veux** me déconnecter de mon compte,
+**Afin de** sécuriser mon accès sur un appareil partagé.
+
+### US 1.13 - Profil utilisateur
+**En tant que** joueur,
+**Je veux** modifier mon pseudo et mon avatar,
+**Afin de** personnaliser mon identité en jeu.
+
+### US 1.14 - Suppression de compte
+**En tant que** joueur,
+**Je veux** supprimer définitivement mon compte et mes données,
+**Afin d'** exercer mon droit à l'oubli (RGPD).
 
 ---
 
@@ -476,7 +544,7 @@ Ce document organise les fonctionnalités de FEATURES.md en EPICs et User Storie
 
 | EPIC | Titre | Nb US |
 |------|-------|-------|
-| 1 | Plateforme Technique | À définir |
+| 1 | Plateforme Technique | 14 (6 Architecture + 8 Auth) |
 | 2 | Configuration de Partie | 5 |
 | 3 | Système de Ressources | 5 |
 | 4 | Système Planétaire | 7 |
@@ -489,4 +557,4 @@ Ce document organise les fonctionnalités de FEATURES.md en EPICs et User Storie
 | 11 | Mode Multijoueur | 6 |
 | 12 | Intelligence Artificielle | 6 |
 | 13 | Éléments Cosmétiques | 8 |
-| **Total** | | **82+** |
+| **Total** | | **96** |
