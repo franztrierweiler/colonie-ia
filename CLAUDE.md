@@ -9,6 +9,9 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 ## État Actuel
 
 - `docs/FEATURES.md` - Spécification fonctionnelle complète (440 lignes)
+- `docs/EPICS_US.md` - EPICs et User Stories (96 US réparties en 13 EPICs)
+- `docs/ARCHITECTURE.md` - Choix d'architecture technique
+- `docs/SECURITY.md` - Spécifications de sécurité
 - `README.md` - Description brève du projet
 - Aucun système de build, tests ou code source n'existe actuellement
 
