@@ -548,6 +548,89 @@ def start_game(game_id: int):
         return jsonify({"error": error_msg}), 400
 
 
+@api_bp.route("/games/<int:game_id>/map", methods=["GET"])
+@token_required
+def get_game_map(game_id: int):
+    """
+    Obtenir la carte complète d'une partie
+    ---
+    tags:
+      - Parties
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: game_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Carte avec étoiles, planètes et flottes
+      403:
+        description: Non participant à cette partie
+      404:
+        description: Partie non trouvée
+    """
+    from app.models import GamePlayer, Fleet
+
+    # Vérifier que la partie existe
+    game = Game.query.get(game_id)
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+
+    # Vérifier que l'utilisateur participe à cette partie
+    player = GamePlayer.query.filter_by(
+        game_id=game_id,
+        user_id=g.current_user.id
+    ).first()
+
+    if not player:
+        return jsonify({"error": "You are not a player in this game"}), 403
+
+    # Vérifier que la partie a démarré
+    if game.status != GameStatus.RUNNING.value:
+        return jsonify({"error": "Game has not started yet"}), 400
+
+    # Construire la réponse
+    galaxy = game.galaxy
+    if not galaxy:
+        return jsonify({"error": "Galaxy not generated"}), 500
+
+    # Étoiles avec leurs planètes
+    stars_data = []
+    for star in galaxy.stars:
+        star_dict = star.to_dict()
+        star_dict["planets"] = [planet.to_dict() for planet in star.planets]
+        stars_data.append(star_dict)
+
+    # Flottes visibles (les siennes + celles sur ses planètes)
+    # Pour l'instant, on retourne toutes les flottes du jeu (fog of war à implémenter plus tard)
+    all_fleets = Fleet.query.join(GamePlayer).filter(
+        GamePlayer.game_id == game_id
+    ).all()
+
+    fleets_data = [fleet.to_dict() for fleet in all_fleets]
+
+    # Tous les joueurs (pour les couleurs)
+    players_data = [p.to_dict() for p in game.players]
+
+    return jsonify({
+        "game_id": game_id,
+        "turn": game.current_turn,
+        "my_player_id": player.id,
+        "galaxy": {
+            "id": galaxy.id,
+            "width": galaxy.width,
+            "height": galaxy.height,
+            "shape": galaxy.shape,
+            "star_count": galaxy.star_count,
+        },
+        "stars": stars_data,
+        "fleets": fleets_data,
+        "players": players_data,
+    })
+
+
 @api_bp.route("/games/my", methods=["GET"])
 @token_required
 def my_games():

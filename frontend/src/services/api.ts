@@ -202,6 +202,12 @@ class ApiClient {
     const response = await this.client.get('/games/my');
     return response.data;
   }
+
+  // Game map endpoint
+  async getGameMap(gameId: number) {
+    const response = await this.client.get(`/games/${gameId}/map`);
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

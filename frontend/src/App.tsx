@@ -9,6 +9,7 @@ import ResetPassword from './pages/ResetPassword';
 import GameList from './pages/GameList';
 import CreateGame from './pages/CreateGame';
 import GameLobby from './pages/GameLobby';
+import GameView from './pages/GameView';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -50,12 +51,11 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* TODO: Add game play view route */}
             <Route
               path="games/:gameId/play"
               element={
                 <ProtectedRoute>
-                  <div>Vue de jeu en cours de développement...</div>
+                  <GameView />
                 </ProtectedRoute>
               }
             />
