@@ -4,7 +4,7 @@ Routes d'authentification.
 from flask import jsonify, request
 from pydantic import ValidationError
 
-from app import db
+from app import db, limiter
 from app.routes import api_bp
 from app.models.user import User
 from app.schemas.auth import RegisterSchema, LoginSchema, RefreshSchema
@@ -19,6 +19,7 @@ from app.utils.errors import ValidationError as APIValidationError, Authenticati
 
 
 @api_bp.route("/auth/register", methods=["POST"])
+@limiter.limit("5 per hour")
 def register():
     """Inscription d'un nouvel utilisateur."""
     try:
@@ -56,6 +57,7 @@ def register():
 
 
 @api_bp.route("/auth/login", methods=["POST"])
+@limiter.limit("5 per 5 minutes")
 def login():
     """Connexion d'un utilisateur."""
     try:
@@ -86,6 +88,7 @@ def login():
 
 
 @api_bp.route("/auth/refresh", methods=["POST"])
+@limiter.limit("30 per hour")
 def refresh():
     """Rafraîchir le token d'accès."""
     try:

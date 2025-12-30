@@ -6,7 +6,7 @@
 |-------|-------------|--------|
 | 1 | Infrastructure de base | ✅ Terminé |
 | 2 | API RESTful | ✅ Terminé |
-| 3 | WebSocket temps réel | ⏳ À faire |
+| 3 | WebSocket temps réel | ✅ Terminé |
 | 4 | Authentification | 🔶 Partiel |
 | 5 | Frontend React | ✅ Terminé |
 | 6 | Scalabilité | ⏳ À faire |
@@ -94,14 +94,14 @@ colonie-ia/
 
 ---
 
-## Phase 3 : WebSocket temps réel (US 1.2) ⏳
+## Phase 3 : WebSocket temps réel (US 1.2) ✅
 
 ### 3.1 Configuration WebSocket
 
-- [ ] T3.1.1 - Intégrer Flask-SocketIO
-- [ ] T3.1.2 - Namespace pour les parties
-- [ ] T3.1.3 - Gestion des rooms (une par partie)
-- [ ] T3.1.4 - Authentification WebSocket
+- [x] T3.1.1 - Intégrer Flask-SocketIO
+- [x] T3.1.2 - Namespace pour les parties
+- [x] T3.1.3 - Gestion des rooms (une par partie)
+- [x] T3.1.4 - Authentification WebSocket
 
 ### 3.2 Événements WebSocket
 
@@ -134,7 +134,7 @@ colonie-ia/
 
 - [x] T4.3.1 - Endpoint POST `/api/auth/login`
 - [x] T4.3.2 - Génération JWT (access + refresh tokens)
-- [ ] T4.3.3 - Rate limiting (5 tentatives / 5 min)
+- [x] T4.3.3 - Rate limiting (5 tentatives / 5 min)
 - [ ] T4.3.4 - Logging des tentatives (audit)
 
 ### 4.4 US 1.9 - OAuth Google ⏳
@@ -170,10 +170,10 @@ colonie-ia/
 - [ ] T4.8.3 - Upload avatar (Azure Blob ou local)
 - [x] T4.8.4 - Validation et sanitization pseudo
 
-### 4.9 US 1.14 - Suppression de compte (RGPD) ⏳
+### 4.9 US 1.14 - Suppression de compte (RGPD) ✅
 
-- [ ] T4.9.1 - Endpoint DELETE `/api/users/me`
-- [ ] T4.9.2 - Soft delete avec anonymisation
+- [x] T4.9.1 - Endpoint DELETE `/api/users/me`
+- [x] T4.9.2 - Soft delete avec anonymisation
 - [ ] T4.9.3 - Suppression définitive après 30 jours
 - [ ] T4.9.4 - Export des données utilisateur
 
@@ -186,7 +186,7 @@ colonie-ia/
 - [x] T5.1.1 - Configuration Vite + TypeScript
 - [x] T5.1.2 - CSS custom (style noir minimaliste)
 - [x] T5.1.3 - Client API (axios)
-- [ ] T5.1.4 - Client WebSocket
+- [x] T5.1.4 - Client WebSocket
 - [x] T5.1.5 - Routing (React Router)
 
 ### 5.2 Pages authentification
@@ -222,9 +222,9 @@ colonie-ia/
 
 - [x] Hashage Argon2 pour mots de passe
 - [x] JWT avec expiration courte (15 min access, 7j refresh)
-- [ ] Headers de sécurité (HSTS, CSP, X-Frame-Options)
+- [x] Headers de sécurité (HSTS, CSP, X-Frame-Options)
 - [x] CORS restrictif (domaines autorisés uniquement)
-- [ ] Rate limiting sur endpoints sensibles
+- [x] Rate limiting sur endpoints sensibles
 - [x] Validation et sanitization de toutes les entrées
 - [ ] Audit logging des actions d'authentification
 - [x] Pas de secrets dans le code (variables d'environnement)
@@ -238,9 +238,9 @@ colonie-ia/
 - [ ] Un utilisateur peut se connecter via Google OAuth
 - [x] Les sessions persistent entre les visites (refresh token)
 - [x] Un utilisateur peut modifier son pseudo et avatar
-- [ ] Un utilisateur peut supprimer son compte (RGPD)
+- [x] Un utilisateur peut supprimer son compte (RGPD)
 - [ ] L'API est documentée via Swagger/OpenAPI
-- [ ] WebSocket fonctionne pour les événements temps réel
+- [x] WebSocket fonctionne pour les événements temps réel
 - [x] L'application est responsive (desktop + mobile)
 - [ ] Les tests couvrent >80% du code critique
 - [ ] Aucune vulnérabilité OWASP Top 10 détectée

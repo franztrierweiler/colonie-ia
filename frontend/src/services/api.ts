@@ -110,6 +110,13 @@ class ApiClient {
     const response = await this.client.patch('/users/me', data);
     return response.data;
   }
+
+  async deleteAccount() {
+    const response = await this.client.delete('/users/me');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

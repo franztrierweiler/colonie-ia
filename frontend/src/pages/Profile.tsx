@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Profile.css';
 
-type Section = 'profile' | 'games' | 'messages';
+type Section = 'profile' | 'games' | 'messages' | 'account';
 
 export default function Profile() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<Section>('profile');
   const [pseudo, setPseudo] = useState(user?.pseudo || '');
@@ -14,6 +14,8 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,10 +37,27 @@ export default function Profile() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'SUPPRIMER') return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await deleteAccount();
+      navigate('/');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      setError(error.response?.data?.error || 'Erreur lors de la suppression');
+      setIsLoading(false);
+    }
+  };
+
   const menuItems: { key: Section; label: string; icon: string }[] = [
     { key: 'profile', label: 'Profil', icon: '👤' },
     { key: 'games', label: 'Mes parties', icon: '🎮' },
     { key: 'messages', label: 'Messages', icon: '💬' },
+    { key: 'account', label: 'Compte', icon: '⚙️' },
   ];
 
   return (
@@ -143,6 +162,66 @@ export default function Profile() {
               <p>Aucun message</p>
               <span className="empty-hint">Les messages des autres joueurs apparaîtront ici</span>
             </div>
+          </div>
+        )}
+
+        {activeSection === 'account' && (
+          <div className="settings-section">
+            <h2>Gestion du compte</h2>
+            <p className="section-description">Paramètres et suppression de votre compte.</p>
+
+            {error && <div className="settings-error">{error}</div>}
+
+            <div className="danger-zone">
+              <h3>Zone de danger</h3>
+              <div className="danger-item">
+                <div className="danger-info">
+                  <strong>Supprimer le compte</strong>
+                  <p>Cette action est irréversible. Toutes vos données seront anonymisées conformément au RGPD.</p>
+                </div>
+                <button
+                  className="btn-danger"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Supprimer mon compte
+                </button>
+              </div>
+            </div>
+
+            {showDeleteConfirm && (
+              <div className="delete-confirm-overlay">
+                <div className="delete-confirm-modal">
+                  <h3>Confirmer la suppression</h3>
+                  <p>Cette action est <strong>définitive</strong>. Votre compte et toutes vos données seront supprimés.</p>
+                  <p>Pour confirmer, tapez <strong>SUPPRIMER</strong> ci-dessous :</p>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="SUPPRIMER"
+                    autoFocus
+                  />
+                  <div className="delete-confirm-actions">
+                    <button
+                      className="btn-danger"
+                      onClick={handleDeleteAccount}
+                      disabled={deleteConfirmText !== 'SUPPRIMER' || isLoading}
+                    >
+                      {isLoading ? 'Suppression...' : 'Confirmer la suppression'}
+                    </button>
+                    <button
+                      className="btn-back"
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setDeleteConfirmText('');
+                      }}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -6,11 +6,16 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_socketio import SocketIO
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from app.config import config
 
 db = SQLAlchemy()
 migrate = Migrate()
+socketio = SocketIO()
+limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
 
 
 def create_app(config_name: str = "development") -> Flask:
@@ -21,12 +26,21 @@ def create_app(config_name: str = "development") -> Flask:
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    limiter.init_app(app)
 
     # CORS configuration
+    cors_origins = app.config.get("CORS_ORIGINS", ["http://localhost:5173"])
     CORS(
         app,
-        origins=app.config.get("CORS_ORIGINS", ["http://localhost:5173"]),
+        origins=cors_origins,
         supports_credentials=True,
+    )
+
+    # SocketIO configuration
+    socketio.init_app(
+        app,
+        cors_allowed_origins=cors_origins,
+        async_mode="threading",
     )
 
     # Register blueprints
@@ -36,6 +50,20 @@ def create_app(config_name: str = "development") -> Flask:
     # Register error handlers
     from app.utils.errors import register_error_handlers
     register_error_handlers(app)
+
+    # Security headers
+    @app.after_request
+    def add_security_headers(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        if not app.debug:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
+
+    # Register WebSocket events
+    from app import websocket  # noqa: F401
 
     # Import models for migrations
     from app import models  # noqa: F401

@@ -88,3 +88,32 @@ def update_current_user():
         "is_verified": user.is_verified,
         "created_at": user.created_at.isoformat() if user.created_at else None,
     })
+
+
+@api_bp.route("/users/me", methods=["DELETE"])
+@auth_required
+def delete_current_user():
+    """Supprime le compte de l'utilisateur (soft delete RGPD)."""
+    from datetime import datetime
+    import uuid
+    from app import db
+
+    user = request.current_user
+
+    # Soft delete: anonymize data and mark as deleted
+    user.email = f"deleted_{uuid.uuid4().hex[:8]}@deleted.local"
+    user.pseudo = f"Utilisateur supprimé"
+    user.password_hash = None
+    user.avatar_url = None
+    user.oauth_provider = None
+    user.oauth_id = None
+    user.is_active = False
+    user.deleted_at = datetime.utcnow()
+    user.reset_token = None
+    user.reset_token_expires = None
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Compte supprimé avec succès. Vos données ont été anonymisées."
+    })

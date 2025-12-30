@@ -11,6 +11,7 @@ function Home() {
         <div className="hero-section">
           <img src="/game-logo.jpg" alt="Colonie-IA" className="game-logo" />
           <h1 className="game-title">Colonie-IA</h1>
+          <p className="game-tagline">Un jeu déconnant à la sauce Hebdogiciel</p>
           <p className="game-subtitle">Conquête Galactique à l'ère Napoléonienne</p>
           <div className="authenticated-section">
             <p className="welcome-message">Bienvenue, Général {user?.pseudo} !</p>

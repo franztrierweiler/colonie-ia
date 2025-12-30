@@ -63,6 +63,7 @@ function AuthModal() {
         <div className="auth-header">
           <img src="/game-logo.jpg" alt="Colonie-IA" className="auth-logo" />
           <h1 className="auth-title">Colonie-IA</h1>
+          <p className="auth-tagline">Un jeu déconnant à la sauce Hebdogiciel</p>
         </div>
 
         <div className="modal-tabs">

@@ -71,3 +71,10 @@ def register_error_handlers(app):
     @app.errorhandler(500)
     def handle_500(error):
         return jsonify({"error": "Internal server error", "status_code": 500}), 500
+
+    @app.errorhandler(429)
+    def handle_429(error):
+        return jsonify({
+            "error": "Trop de requêtes. Veuillez réessayer plus tard.",
+            "status_code": 429
+        }), 429

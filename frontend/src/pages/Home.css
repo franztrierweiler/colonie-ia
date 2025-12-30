@@ -25,6 +25,13 @@
   margin: 0 0 0.5rem 0;
 }
 
+.game-tagline {
+  font-size: 1rem;
+  color: #666;
+  font-style: italic;
+  margin: 0 0 0.3rem 0;
+}
+
 .game-subtitle {
   font-size: 1.1rem;
   color: #888;
