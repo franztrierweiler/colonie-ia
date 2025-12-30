@@ -39,20 +39,20 @@ frontend:
 	@echo "Starting React frontend..."
 	cd frontend && npm run dev
 
-# Docker commands
+# Docker commands (V2 syntax: "docker compose" sans tiret)
 docker-up:
 	@echo "Starting Docker services..."
-	docker-compose up -d
+	docker compose up -d
 
 docker-down:
 	@echo "Stopping Docker services..."
-	docker-compose down
+	docker compose down
 
 docker-logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 docker-build:
-	docker-compose build
+	docker compose build
 
 # Testing
 test:

@@ -48,6 +48,24 @@ Ce fichier consigne les discussions et décisions techniques prises au cours du 
 
 ---
 
+## 2025-12-30 : Accès Docker pour Claude Code
+
+**Contexte** : Lors du debug de l'authentification JWT, Claude Code n'a pas pu accéder aux logs Docker (`docker logs`) car les commandes nécessitent `sudo`.
+
+**Problème** : Claude Code ne peut pas exécuter de commandes avec `sudo`, ce qui limite sa capacité à :
+- Voir les logs des containers (`docker logs`)
+- Exécuter des commandes dans les containers (`docker compose exec`)
+- Diagnostiquer les erreurs backend en temps réel
+
+**TODO** : Trouver une solution pour donner accès à Docker sans sudo :
+- Option 1 : Ajouter l'utilisateur au groupe `docker` (`sudo usermod -aG docker $USER`)
+- Option 2 : Configurer un alias ou script wrapper
+- Option 3 : Utiliser les logs exposés via un volume
+
+**Impact** : Sans cet accès, le debug nécessite une collaboration manuelle (l'utilisateur copie les logs).
+
+---
+
 ## Template pour nouvelles discussions
 
 ```markdown

@@ -23,3 +23,4 @@ def version():
 
 # Import and register route modules
 from app.routes import auth  # noqa: F401, E402
+from app.routes import users  # noqa: F401, E402
