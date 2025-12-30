@@ -4,13 +4,15 @@
 
 | Phase | Description | Statut |
 |-------|-------------|--------|
-| 1 | Modèles de données | En cours |
-| 2 | Service FleetService | En attente |
-| 3 | Déplacement et trajectoires | En attente |
-| 4 | Ravitaillement | En attente |
-| 5 | Démantèlement | En attente |
-| 6 | API Endpoints | En attente |
-| 7 | Tests | En attente |
+| 1 | Modèles de données | ✅ Terminé |
+| 2 | Service FleetService | ✅ Terminé |
+| 3 | Déplacement et trajectoires | ✅ Terminé |
+| 4 | Ravitaillement | ✅ Terminé |
+| 5 | Démantèlement | ✅ Terminé |
+| 6 | API Endpoints | ✅ Terminé |
+| 7 | Tests | ✅ Terminé (17 tests) |
+
+**Commit** : `b9dd4bb` - EPIC 6 : Système de Vaisseaux - Modèles, Service et API
 
 ---
 
@@ -318,13 +320,15 @@ class FleetService:
 
 ## Phase 7 : Tests
 
-- [ ] Tests calcul des coûts
-- [ ] Tests construction prototype vs production
-- [ ] Tests création/gestion flottes
-- [ ] Tests déplacement et trajectoires
-- [ ] Tests ravitaillement
-- [ ] Tests démantèlement (75% métal)
-- [ ] Tests API endpoints
+- [x] Tests calcul des coûts
+- [x] Tests construction prototype vs production
+- [x] Tests création/gestion flottes
+- [x] Tests déplacement et trajectoires
+- [x] Tests ravitaillement
+- [x] Tests démantèlement (75% métal)
+- [x] Tests API endpoints
+
+**Fichier** : `backend/tests/test_fleet.py` (17 tests)
 
 ---
 
@@ -356,14 +360,14 @@ effective_range = base_range + tanker_bonus (si ravitailleur présent)
 
 ## Critères d'acceptation
 
-- [ ] 8 types de vaisseaux disponibles
-- [ ] Les designs sont personnalisables (5 valeurs tech)
-- [ ] Prototype coûte 2x, production normale ensuite
-- [ ] Les flottes se déplacent avec trajectoire fixe
-- [ ] Ravitaillement automatique sur planètes alliées
-- [ ] Démantèlement récupère 75% du métal
-- [ ] La vitesse de flotte = min des vaisseaux
-- [ ] La portée de flotte = min des vaisseaux
+- [x] 8 types de vaisseaux disponibles
+- [x] Les designs sont personnalisables (5 valeurs tech)
+- [x] Prototype coûte 2x, production normale ensuite
+- [x] Les flottes se déplacent avec trajectoire fixe
+- [x] Ravitaillement automatique sur planètes alliées
+- [x] Démantèlement récupère 75% du métal
+- [x] La vitesse de flotte = min des vaisseaux
+- [x] La portée de flotte = min des vaisseaux
 
 ---
 
