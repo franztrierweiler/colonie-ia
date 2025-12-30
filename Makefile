@@ -93,6 +93,15 @@ test-backend:
 test-frontend:
 	cd frontend && npm test
 
+# Testing (Docker)
+docker-test:
+	@echo "Running backend tests in Docker..."
+	docker compose exec backend python -m pytest -v
+
+docker-test-cov:
+	@echo "Running backend tests with coverage..."
+	docker compose exec backend python -m pytest -v --cov=app
+
 # Database migrations (local)
 db-init:
 	cd backend && flask db init

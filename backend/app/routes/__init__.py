@@ -60,3 +60,4 @@ from app.routes import auth  # noqa: F401, E402
 from app.routes import users  # noqa: F401, E402
 from app.routes import oauth  # noqa: F401, E402
 from app.routes import games  # noqa: F401, E402
+from app.routes import economy  # noqa: F401, E402

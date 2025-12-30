@@ -9,6 +9,15 @@ from app.services.galaxy_generator import (
     GALAXY_PRESETS,
 )
 from app.services.game_service import GameService
+from app.services.economy import (
+    EconomyService,
+    diminishing_returns,
+    INITIAL_MONEY,
+    INITIAL_METAL,
+    DEBT_MAX_MULTIPLIER,
+    DEBT_INTEREST_RATE,
+)
+from app.services.turn import TurnService
 
 __all__ = [
     "GalaxyGenerator",
@@ -17,4 +26,11 @@ __all__ = [
     "prepare_home_planet",
     "GALAXY_PRESETS",
     "GameService",
+    "EconomyService",
+    "diminishing_returns",
+    "INITIAL_MONEY",
+    "INITIAL_METAL",
+    "DEBT_MAX_MULTIPLIER",
+    "DEBT_INTEREST_RATE",
+    "TurnService",
 ]
