@@ -39,6 +39,9 @@ def create_app(config_name: str = "development") -> Flask:
         app,
         origins=cors_origins,
         supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     )
 
     # SocketIO configuration
