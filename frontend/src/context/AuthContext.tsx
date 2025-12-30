@@ -17,6 +17,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (data: { pseudo?: string; avatar_url?: string }) => Promise<void>;
   deleteAccount: () => Promise<void>;
+  setTokens: (accessToken: string, refreshToken: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,6 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const setTokens = async (accessToken: string, refreshToken: string) => {
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+    await loadUser();
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -82,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         updateProfile,
         deleteAccount,
+        setTokens,
       }}
     >
       {children}

@@ -7,7 +7,7 @@
 | 1 | Infrastructure de base | ✅ Terminé |
 | 2 | API RESTful | ✅ Terminé |
 | 3 | WebSocket temps réel | ✅ Terminé |
-| 4 | Authentification | 🔶 Partiel |
+| 4 | Authentification | ✅ Terminé |
 | 5 | Frontend React | ✅ Terminé |
 | 6 | Scalabilité | ⏳ À faire |
 
@@ -85,7 +85,7 @@ colonie-ia/
 - [x] T2.1.2 - Middleware CORS sécurisé
 - [x] T2.1.3 - Validation des entrées (Pydantic)
 - [x] T2.1.4 - Gestion globale des erreurs
-- [ ] T2.1.5 - Documentation OpenAPI/Swagger
+- [x] T2.1.5 - Documentation OpenAPI/Swagger (Flasgger)
 
 ### 2.2 Endpoints de base
 
@@ -137,19 +137,21 @@ colonie-ia/
 - [x] T4.3.3 - Rate limiting (5 tentatives / 5 min)
 - [ ] T4.3.4 - Logging des tentatives (audit)
 
-### 4.4 US 1.9 - OAuth Google ⏳
+### 4.4 US 1.9 - OAuth Google ✅
 
-- [ ] T4.4.1 - Configuration OAuth2 Google
-- [ ] T4.4.2 - Endpoint GET `/api/auth/google`
-- [ ] T4.4.3 - Callback `/api/auth/google/callback`
-- [ ] T4.4.4 - Création/liaison compte OAuth
+- [x] T4.4.1 - Configuration OAuth2 Google (Authlib)
+- [x] T4.4.2 - Endpoint GET `/api/auth/google`
+- [x] T4.4.3 - Callback `/api/auth/google/callback`
+- [x] T4.4.4 - Création/liaison compte OAuth
+- [x] T4.4.5 - Frontend: bouton Google + callback page
 
-### 4.5 US 1.10 - Mot de passe oublié ⏳
+### 4.5 US 1.10 - Mot de passe oublié ✅
 
-- [ ] T4.5.1 - Endpoint POST `/api/auth/forgot-password`
-- [ ] T4.5.2 - Génération token réinitialisation (expiration 1h)
-- [ ] T4.5.3 - Envoi email (SendGrid/SMTP)
-- [ ] T4.5.4 - Endpoint POST `/api/auth/reset-password`
+- [x] T4.5.1 - Endpoint POST `/api/auth/forgot-password`
+- [x] T4.5.2 - Génération token réinitialisation (expiration 1h)
+- [ ] T4.5.3 - Envoi email (SendGrid/SMTP) - log en dev
+- [x] T4.5.4 - Endpoint POST `/api/auth/reset-password`
+- [x] T4.5.5 - Frontend: pages ForgotPassword et ResetPassword
 
 ### 4.6 US 1.11 - Session persistante ✅
 
@@ -191,9 +193,10 @@ colonie-ia/
 
 ### 5.2 Pages authentification
 
-- [x] AuthModal - Modale connexion/inscription
-- [ ] ForgotPassword - Demande réinitialisation
-- [ ] ResetPassword - Nouveau mot de passe
+- [x] AuthModal - Modale connexion/inscription (+ bouton Google OAuth)
+- [x] ForgotPassword - Demande réinitialisation
+- [x] ResetPassword - Nouveau mot de passe
+- [x] OAuthCallback - Callback OAuth
 - [x] Profile - Édition profil
 
 ### 5.3 Composants communs
@@ -235,11 +238,12 @@ colonie-ia/
 ## Critères d'acceptation EPIC 1
 
 - [x] Un utilisateur peut créer un compte avec email/mot de passe
-- [ ] Un utilisateur peut se connecter via Google OAuth
+- [x] Un utilisateur peut se connecter via Google OAuth
+- [x] Un utilisateur peut réinitialiser son mot de passe
 - [x] Les sessions persistent entre les visites (refresh token)
 - [x] Un utilisateur peut modifier son pseudo et avatar
 - [x] Un utilisateur peut supprimer son compte (RGPD)
-- [ ] L'API est documentée via Swagger/OpenAPI
+- [x] L'API est documentée via Swagger/OpenAPI
 - [x] WebSocket fonctionne pour les événements temps réel
 - [x] L'application est responsive (desktop + mobile)
 - [ ] Les tests couvrent >80% du code critique

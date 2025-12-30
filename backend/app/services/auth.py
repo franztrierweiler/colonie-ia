@@ -120,3 +120,34 @@ def authenticate_user(email: str, password: str) -> User:
         raise AuthenticationError("Compte supprimé")
 
     return user
+
+
+def generate_reset_token() -> str:
+    """Génère un token de réinitialisation de mot de passe."""
+    import secrets
+    return secrets.token_urlsafe(32)
+
+
+def verify_reset_token(token: str) -> User | None:
+    """Vérifie un token de réinitialisation et retourne l'utilisateur."""
+    from app import db
+
+    user = db.session.query(User).filter_by(reset_token=token).first()
+
+    if not user:
+        return None
+
+    if not user.reset_token_expires:
+        return None
+
+    if datetime.utcnow() > user.reset_token_expires:
+        # Token expiré, le supprimer
+        user.reset_token = None
+        user.reset_token_expires = None
+        db.session.commit()
+        return None
+
+    if not user.is_active:
+        return None
+
+    return user

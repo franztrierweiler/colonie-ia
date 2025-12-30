@@ -9,6 +9,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flasgger import Swagger
 
 from app.config import config
 
@@ -16,6 +17,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 socketio = SocketIO()
 limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
+swagger = Swagger()
 
 
 def create_app(config_name: str = "development") -> Flask:
@@ -42,6 +44,24 @@ def create_app(config_name: str = "development") -> Flask:
         cors_allowed_origins=cors_origins,
         async_mode="threading",
     )
+
+    # Swagger/OpenAPI configuration
+    app.config["SWAGGER"] = {
+        "title": "Colonie-IA API",
+        "description": "API pour le jeu de stratégie galactique Colonie-IA",
+        "version": "1.0.0",
+        "termsOfService": "",
+        "uiversion": 3,
+        "specs_route": "/api/docs/",
+        "headers": [],
+        "specs": [
+            {
+                "endpoint": "apispec",
+                "route": "/api/docs/apispec.json",
+            }
+        ],
+    }
+    swagger.init_app(app)
 
     # Register blueprints
     from app.routes import api_bp

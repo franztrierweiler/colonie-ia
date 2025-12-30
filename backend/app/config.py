@@ -32,6 +32,11 @@ class Config:
     PASSWORD_REQUIRE_DIGIT = True
     PASSWORD_REQUIRE_SPECIAL = True
 
+    # OAuth Google
+    GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:5000/api/auth/google/callback")
+
 
 class DevelopmentConfig(Config):
     """Configuration de développement."""

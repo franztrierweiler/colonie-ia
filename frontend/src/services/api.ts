@@ -117,6 +117,25 @@ class ApiClient {
     localStorage.removeItem('refresh_token');
     return response.data;
   }
+
+  async checkGoogleOAuth(): Promise<boolean> {
+    try {
+      const response = await this.client.get('/auth/google/status');
+      return response.data.enabled;
+    } catch {
+      return false;
+    }
+  }
+
+  async forgotPassword(email: string) {
+    const response = await this.client.post('/auth/forgot-password', { email });
+    return response.data;
+  }
+
+  async resetPassword(token: string, password: string) {
+    const response = await this.client.post('/auth/reset-password', { token, password });
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

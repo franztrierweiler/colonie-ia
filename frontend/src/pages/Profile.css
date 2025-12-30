@@ -1,34 +1,36 @@
 .settings-container {
   display: flex;
   min-height: calc(100vh - 60px);
-  margin-top: 50px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  gap: 2rem;
 }
 
 /* Sidebar */
 .settings-sidebar {
-  width: 240px;
-  background: #0d0d0d;
-  border-right: 1px solid #222;
-  padding: 20px 0;
+  width: 220px;
   flex-shrink: 0;
 }
 
 .settings-nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 0 12px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 8px;
 }
 
 .settings-nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  color: #888;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.15s;
@@ -37,15 +39,13 @@
 }
 
 .settings-nav-item:hover {
-  background: #1a1a1a;
-  color: #ccc;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .settings-nav-item.active {
-  background: #1a1a1a;
+  background: var(--orange-dark);
   color: #fff;
-  border-left: 2px solid #fff;
-  margin-left: -2px;
 }
 
 .nav-icon {
@@ -61,23 +61,25 @@
 /* Content */
 .settings-content {
   flex: 1;
-  padding: 30px 40px;
-  max-width: 800px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .settings-section h2 {
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 1.5rem;
+  font-weight: 600;
   margin: 0 0 8px 0;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .section-description {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0 0 24px 0;
   padding-bottom: 16px;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--card-border);
 }
 
 /* Form */
@@ -94,7 +96,7 @@
 }
 
 .form-group label {
-  color: #ccc;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
 }
@@ -109,7 +111,7 @@
 }
 
 .form-hint {
-  color: #555;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -124,7 +126,7 @@
   height: 60px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #333;
+  border: 3px solid var(--orange-light);
   flex-shrink: 0;
 }
 
@@ -140,9 +142,9 @@
 
 .btn-save {
   padding: 10px 24px;
-  background: #238636;
-  border: 1px solid #238636;
-  border-radius: 6px;
+  background: var(--orange-dark);
+  border: 1px solid var(--orange-dark);
+  border-radius: 8px;
   color: #fff;
   font-size: 14px;
   font-weight: 500;
@@ -151,7 +153,7 @@
 }
 
 .btn-save:hover:not(:disabled) {
-  background: #2ea043;
+  background: #d14f18;
 }
 
 .btn-save:disabled {
@@ -162,37 +164,36 @@
 .btn-back {
   padding: 10px 24px;
   background: transparent;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #888;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .btn-back:hover {
-  background: #1a1a1a;
-  color: #ccc;
-  border-color: #444;
+  background: #f5f5f5;
+  color: var(--text-primary);
 }
 
 /* Messages */
 .settings-error {
-  background: #3d1a1a;
-  border: 1px solid #6b2a2a;
-  color: #f88;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
   padding: 12px 16px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   margin-bottom: 16px;
 }
 
 .settings-success {
-  background: #1a3d1a;
-  border: 1px solid #2a6b2a;
-  color: #8f8;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
   padding: 12px 16px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   margin-bottom: 16px;
 }
@@ -210,31 +211,31 @@
 .empty-icon {
   font-size: 48px;
   margin-bottom: 16px;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .empty-state p {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 16px;
   margin: 0 0 8px 0;
 }
 
 .empty-hint {
-  color: #555;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
 /* Danger zone */
 .danger-zone {
   margin-top: 24px;
-  border: 1px solid #6b2a2a;
-  border-radius: 6px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
   padding: 16px;
-  background: #1a0a0a;
+  background: #fef2f2;
 }
 
 .danger-zone h3 {
-  color: #f88;
+  color: #dc2626;
   font-size: 14px;
   font-weight: 600;
   margin: 0 0 16px 0;
@@ -250,23 +251,23 @@
 }
 
 .danger-info strong {
-  color: #ccc;
+  color: var(--text-primary);
   display: block;
   margin-bottom: 4px;
 }
 
 .danger-info p {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 13px;
   margin: 0;
 }
 
 .btn-danger {
   padding: 8px 16px;
-  background: #6b2a2a;
-  border: 1px solid #8b3a3a;
-  border-radius: 6px;
-  color: #faa;
+  background: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  color: #fff;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.15s;
@@ -274,8 +275,7 @@
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #8b3a3a;
-  color: #fff;
+  background: #b91c1c;
 }
 
 .btn-danger:disabled {
@@ -290,7 +290,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -298,21 +298,21 @@
 }
 
 .delete-confirm-modal {
-  background: #1a1a1a;
-  border: 1px solid #6b2a2a;
-  border-radius: 8px;
+  background: var(--card-bg);
+  border-radius: 16px;
   padding: 24px;
   max-width: 400px;
   width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .delete-confirm-modal h3 {
-  color: #f88;
+  color: #dc2626;
   margin: 0 0 16px 0;
 }
 
 .delete-confirm-modal p {
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 14px;
   margin: 0 0 12px 0;
 }
@@ -332,20 +332,19 @@
 @media (max-width: 768px) {
   .settings-container {
     flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
   }
 
   .settings-sidebar {
     width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #222;
-    padding: 12px 0;
   }
 
   .settings-nav {
     flex-direction: row;
     overflow-x: auto;
     gap: 4px;
-    padding: 0 12px;
+    padding: 8px;
   }
 
   .settings-nav-item {
@@ -353,15 +352,8 @@
     padding: 8px 16px;
   }
 
-  .settings-nav-item.active {
-    border-left: none;
-    border-bottom: 2px solid #fff;
-    margin-left: 0;
-    margin-bottom: -2px;
-  }
-
   .settings-content {
-    padding: 20px;
+    padding: 1.5rem;
   }
 
   .form-group input {

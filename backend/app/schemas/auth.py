@@ -105,3 +105,29 @@ class UpdateProfileSchema(BaseModel):
         if not v.startswith(("http://", "https://", "/")):
             raise ValueError("L'URL de l'avatar doit être une URL valide")
         return v
+
+
+class ForgotPasswordSchema(BaseModel):
+    """Schéma pour la demande de réinitialisation."""
+
+    email: EmailStr
+
+
+class ResetPasswordSchema(BaseModel):
+    """Schéma pour la réinitialisation du mot de passe."""
+
+    token: str
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Le mot de passe doit contenir au moins 8 caractères")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Le mot de passe doit contenir au moins une majuscule")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Le mot de passe doit contenir au moins une minuscule")
+        if not re.search(r"\d", v):
+            raise ValueError("Le mot de passe doit contenir au moins un chiffre")
+        return v

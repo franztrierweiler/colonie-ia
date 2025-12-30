@@ -40,7 +40,35 @@ def auth_required(f):
 @api_bp.route("/users/me", methods=["GET"])
 @auth_required
 def get_current_user():
-    """Récupère le profil de l'utilisateur connecté."""
+    """
+    Récupère le profil de l'utilisateur connecté
+    ---
+    tags:
+      - Utilisateur
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Profil utilisateur
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+            pseudo:
+              type: string
+            avatar_url:
+              type: string
+            is_verified:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+      401:
+        description: Non authentifié
+    """
     user = request.current_user
     return jsonify({
         "id": user.id,
@@ -55,7 +83,53 @@ def get_current_user():
 @api_bp.route("/users/me", methods=["PATCH"])
 @auth_required
 def update_current_user():
-    """Met à jour le profil de l'utilisateur connecté."""
+    """
+    Met à jour le profil de l'utilisateur connecté
+    ---
+    tags:
+      - Utilisateur
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            pseudo:
+              type: string
+              minLength: 3
+              maxLength: 30
+              example: NouveauPseudo
+            avatar_url:
+              type: string
+              format: uri
+              example: https://example.com/avatar.jpg
+    responses:
+      200:
+        description: Profil mis à jour
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+            pseudo:
+              type: string
+            avatar_url:
+              type: string
+            is_verified:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+      400:
+        description: Données invalides
+      401:
+        description: Non authentifié
+    """
     from app import db
 
     try:
@@ -93,7 +167,31 @@ def update_current_user():
 @api_bp.route("/users/me", methods=["DELETE"])
 @auth_required
 def delete_current_user():
-    """Supprime le compte de l'utilisateur (soft delete RGPD)."""
+    """
+    Supprime le compte de l'utilisateur (RGPD)
+    ---
+    tags:
+      - Utilisateur
+    security:
+      - Bearer: []
+    description: |
+      Effectue un soft delete du compte :
+      - Anonymise les données personnelles (email, pseudo)
+      - Supprime le mot de passe et l'avatar
+      - Marque le compte comme inactif
+      - Les données seront définitivement supprimées après 30 jours
+    responses:
+      200:
+        description: Compte supprimé et anonymisé
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Compte supprimé avec succès. Vos données ont été anonymisées.
+      401:
+        description: Non authentifié
+    """
     from datetime import datetime
     import uuid
     from app import db

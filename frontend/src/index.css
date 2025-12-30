@@ -1,13 +1,25 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.9);
-  background-color: #000;
+  color: #1a1a1a;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Orange theme colors */
+  --orange-dark: #e85a1e;
+  --orange-light: #f5a623;
+  --bg-gradient: linear-gradient(135deg, var(--orange-dark) 0%, var(--orange-light) 100%);
+  --text-primary: #1a1a1a;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --card-bg: #ebe8e1;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --sidebar-bg: #1a1a1a;
+  --sidebar-text: #999;
+  --sidebar-text-active: #fff;
 }
 
 * {
@@ -16,86 +28,110 @@
 
 a {
   font-weight: 500;
-  color: #fff;
-  text-decoration: inherit;
+  color: var(--orange-dark);
+  text-decoration: none;
 }
 a:hover {
-  color: #ccc;
+  text-decoration: underline;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #000;
+  background: #0a0a0a;
 }
 
-h1, h2 {
-  color: #fff;
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+h1, h2, h3 {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 h1 {
-  font-size: 2.5em;
-  line-height: 1.1;
+  font-size: 2.2em;
+  line-height: 1.2;
 }
 
+h2 {
+  font-size: 1.5em;
+}
+
+/* Buttons */
 button {
   border-radius: 8px;
-  border: 1px solid #444;
+  border: 1px solid var(--card-border);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: transparent;
-  color: #bbb;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 button:hover {
-  background-color: #333;
-  color: #fff;
-  border-color: #555;
+  background-color: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.15);
 }
 button:focus,
 button:focus-visible {
-  outline: 2px solid #666;
+  outline: 2px solid var(--orange-dark);
   outline-offset: 2px;
 }
 
 button.btn-primary {
-  background-color: #333;
-  color: #eee;
-  border-color: #444;
+  background-color: var(--orange-dark);
+  color: #fff;
+  border-color: var(--orange-dark);
 }
 button.btn-primary:hover {
-  background-color: #444;
-  color: #fff;
+  background-color: #d14f18;
+  border-color: #d14f18;
 }
 
 button.btn-secondary {
   background-color: transparent;
-  color: #888;
-  border-color: #333;
-  margin-top: 1rem;
+  color: var(--text-secondary);
+  border-color: rgba(0, 0, 0, 0.2);
 }
 button.btn-secondary:hover {
-  background-color: #222;
-  color: #ccc;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
 }
 
+/* Inputs */
 input {
-  background-color: #111;
-  border: 1px solid #333;
+  background-color: var(--card-bg);
+  border: 1px solid #ddd;
   border-radius: 8px;
   padding: 0.8em 1em;
   font-size: 1em;
-  color: #fff;
+  font-family: inherit;
+  color: var(--text-primary);
   width: 100%;
+  transition: border-color 0.2s;
 }
 input:focus {
   outline: none;
-  border-color: #888;
+  border-color: var(--orange-dark);
 }
 input::placeholder {
-  color: #666;
+  color: var(--text-muted);
+}
+input:disabled {
+  background-color: #f5f5f5;
+  color: var(--text-secondary);
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
 }
