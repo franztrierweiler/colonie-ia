@@ -1,0 +1,81 @@
+.home-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+}
+
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.game-logo {
+  width: 280px;
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
+.game-title {
+  font-size: 3rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.game-subtitle {
+  font-size: 1.1rem;
+  color: #888;
+  margin: 0 0 2.5rem 0;
+}
+
+.authenticated-section,
+.unauthenticated-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.welcome-message {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin: 0;
+}
+
+.game-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .game-logo {
+    width: 200px;
+  }
+
+  .game-title {
+    font-size: 2rem;
+  }
+
+  .game-subtitle {
+    font-size: 1rem;
+  }
+
+  .game-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-large {
+    width: 100%;
+  }
+}

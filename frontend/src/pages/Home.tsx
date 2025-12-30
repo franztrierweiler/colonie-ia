@@ -1,67 +1,28 @@
-import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
-
-interface ApiStatus {
-  status: string;
-  service: string;
-}
+import AuthModal from '../components/AuthModal';
+import './Home.css';
 
 function Home() {
   const { isAuthenticated, user } = useAuth();
-  const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    checkApiStatus();
-  }, []);
-
-  const checkApiStatus = async () => {
-    try {
-      const status = await api.health();
-      setApiStatus(status);
-      setError(null);
-    } catch {
-      setError('API non disponible');
-      setApiStatus(null);
-    }
-  };
 
   return (
     <div className="home-page">
-      <section className="hero">
-        <h2>Conquete Galactique</h2>
-        <p className="subtitle">
-          Un jeu de strategie 4X au tour par tour, theme Empire Napoleonien
-        </p>
-      </section>
-
       {isAuthenticated ? (
-        <section className="dashboard">
-          <h3>Bienvenue, {user?.pseudo} !</h3>
-          <div className="actions">
-            <button className="btn-primary">Nouvelle Partie</button>
-            <button className="btn-secondary">Rejoindre une Partie</button>
+        <div className="hero-section">
+          <img src="/game-logo.jpg" alt="Colonie-IA" className="game-logo" />
+          <h1 className="game-title">Colonie-IA</h1>
+          <p className="game-subtitle">Conquête Galactique à l'ère Napoléonienne</p>
+          <div className="authenticated-section">
+            <p className="welcome-message">Bienvenue, Général {user?.pseudo} !</p>
+            <div className="game-actions">
+              <button className="btn-primary btn-large">Nouvelle Partie</button>
+              <button className="btn-large">Rejoindre une Partie</button>
+            </div>
           </div>
-        </section>
+        </div>
       ) : (
-        <section className="cta">
-          <p>Connectez-vous pour commencer a jouer</p>
-        </section>
+        <AuthModal />
       )}
-
-      <section className="api-status">
-        <h4>Statut API</h4>
-        {error ? (
-          <p className="status-error">{error}</p>
-        ) : apiStatus ? (
-          <p className="status-ok">
-            {apiStatus.service}: {apiStatus.status}
-          </p>
-        ) : (
-          <p>Verification...</p>
-        )}
-      </section>
     </div>
   );
 }
