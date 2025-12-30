@@ -8,13 +8,19 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 
 ## État Actuel
 
+### Documentation
 - `docs/FEATURES.md` - Spécification fonctionnelle complète (440 lignes)
 - `docs/EPICS_US.md` - EPICs et User Stories (96 US réparties en 13 EPICs)
 - `docs/ARCHITECTURE.md` - Choix d'architecture technique
 - `docs/SECURITY.md` - Spécifications de sécurité
 - `docs/ART_PROMPT.md` - Prompts pour génération d'assets graphiques (logo)
+- `docs/TECH_DISCUSSIONS.md` - Historique des discussions et décisions techniques
 - `README.md` - Description brève du projet
-- Aucun système de build, tests ou code source n'existe actuellement
+
+### Code
+- `backend/` - API Flask (Python)
+- `frontend/` - Application React (TypeScript)
+- `plan/` - Plans de développement par EPIC
 
 ## Résumé de la Spécification (depuis FEATURES.md)
 
@@ -55,4 +61,5 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 - Toujours lire les fichiers markdown dans `/docs` au démarrage de Claude Code
 - Les spécifications fonctionnelles sont dans FEATURES.md
 - Ne pas ajouter "Co-Authored-By: Claude" dans les messages de commit
-- Lors d'une demande de planification, documenter chaque planification d'EPIC dans un fichier spécifique stocké dans plan/xx avec xx = nom de l'EPIC qui comprend son numéro.
+- Lors d'une demande de planification, documenter chaque planification d'EPIC dans un fichier spécifique stocké dans plan/xx avec xx = nom de l'EPIC qui comprend son numéro
+- Consigner les discussions techniques importantes dans `docs/TECH_DISCUSSIONS.md` (choix d'architecture, décisions techniques, alternatives considérées)

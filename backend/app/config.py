@@ -1,0 +1,91 @@
+"""
+Configuration par environnement (dev/staging/prod)
+"""
+import os
+from datetime import timedelta
+
+
+class Config:
+    """Configuration de base."""
+
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+
+    # SQLAlchemy
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # JWT
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
+
+    # CORS
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
+
+    # Rate limiting
+    RATELIMIT_ENABLED = True
+    RATELIMIT_DEFAULT = "100/minute"
+
+    # Password policy
+    PASSWORD_MIN_LENGTH = 12
+    PASSWORD_REQUIRE_UPPERCASE = True
+    PASSWORD_REQUIRE_LOWERCASE = True
+    PASSWORD_REQUIRE_DIGIT = True
+    PASSWORD_REQUIRE_SPECIAL = True
+
+
+class DevelopmentConfig(Config):
+    """Configuration de développement."""
+
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL",
+        "sqlite:///colonie_dev.db"
+    )
+
+
+class StagingConfig(Config):
+    """Configuration de staging."""
+
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+    # CORS plus restrictif
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "").split(",")
+
+
+class ProductionConfig(Config):
+    """Configuration de production."""
+
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+    # Sécurité renforcée
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+
+    # CORS restrictif
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "").split(",")
+
+    @classmethod
+    def init_app(cls, app):
+        """Validation configuration production."""
+        assert os.environ.get("SECRET_KEY"), "SECRET_KEY must be set in production"
+        assert os.environ.get("DATABASE_URL"), "DATABASE_URL must be set in production"
+
+
+class TestingConfig(Config):
+    """Configuration pour les tests."""
+
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    RATELIMIT_ENABLED = False
+
+
+config = {
+    "development": DevelopmentConfig,
+    "staging": StagingConfig,
+    "production": ProductionConfig,
+    "testing": TestingConfig,
+    "default": DevelopmentConfig,
+}
