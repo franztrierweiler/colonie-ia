@@ -18,6 +18,7 @@ from app.services.economy import (
     DEBT_INTEREST_RATE,
 )
 from app.services.turn import TurnService
+from app.services.fleet import FleetService
 
 __all__ = [
     "GalaxyGenerator",
@@ -33,4 +34,5 @@ __all__ = [
     "DEBT_MAX_MULTIPLIER",
     "DEBT_INTEREST_RATE",
     "TurnService",
+    "FleetService",
 ]
