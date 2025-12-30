@@ -1,5 +1,18 @@
 # Plan EPIC 10 : Interface Utilisateur
 
+## Statut Global
+
+| Phase | Description | Statut |
+|-------|-------------|--------|
+| 1 | Infrastructure (Backend + Base Frontend) | ✅ Terminé |
+| 2 | Carte stellaire (US 10.1, 10.2, 10.3) | En attente |
+| 3 | Panneau planète (US 10.5, 10.6) | En attente |
+| 4 | Gestion flottes (US 10.4, 10.9) | En attente |
+| 5 | Rapports et historique (US 10.7, 10.8) | En attente |
+| 6 | Finitions (US 10.10) | En attente |
+
+**Commit Phase 1** : `8b1122f` - EPIC 10 Phase 1 : Infrastructure carte de jeu
+
 ## Vue d'ensemble
 
 L'EPIC 10 couvre l'interface de jeu principale permettant aux joueurs de visualiser et interagir avec la galaxie, leurs planètes et flottes.
