@@ -2,8 +2,8 @@
 Database models
 """
 from app.models.user import User
-from app.models.game import Game, GamePlayer, GameStatus, AIDifficulty
 from app.models.galaxy import Galaxy, Star, Planet, GalaxyShape, GalaxyDensity, PlanetState
+from app.models.game import Game, GamePlayer, GameStatus, AIDifficulty
 
 __all__ = [
     "User",

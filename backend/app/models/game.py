@@ -4,6 +4,7 @@ Game and GamePlayer models
 from datetime import datetime
 from enum import Enum
 from app import db
+from app.models.galaxy import GalaxyShape
 
 
 class GameStatus(str, Enum):

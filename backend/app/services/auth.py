@@ -2,10 +2,11 @@
 Service d'authentification : hashage de mot de passe et gestion JWT.
 """
 import jwt
+from functools import wraps
 from datetime import datetime, timedelta, timezone
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from flask import current_app
+from flask import current_app, request, g, jsonify
 
 from app.models.user import User
 from app.utils.errors import AuthenticationError
@@ -151,3 +152,30 @@ def verify_reset_token(token: str) -> User | None:
         return None
 
     return user
+
+
+def token_required(f):
+    """Décorateur qui vérifie la présence et validité d'un token JWT."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get("Authorization")
+
+        if not auth_header:
+            return jsonify({"error": "Token manquant"}), 401
+
+        parts = auth_header.split()
+
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            return jsonify({"error": "Format de token invalide"}), 401
+
+        token = parts[1]
+
+        try:
+            user = get_user_from_token(token, token_type="access")
+            g.current_user = user
+        except AuthenticationError as e:
+            return jsonify({"error": str(e)}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from typing import Literal, Optional
 
 from app.routes import api_bp
-from app.routes.auth import token_required
+from app.services.auth import token_required
 from app.services import GameService
 from app.models import Game, GameStatus
 
