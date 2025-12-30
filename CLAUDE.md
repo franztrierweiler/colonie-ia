@@ -60,6 +60,6 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 
 - Toujours lire les fichiers markdown dans `/docs` au démarrage de Claude Code
 - Les spécifications fonctionnelles sont dans FEATURES.md
-- Ne pas ajouter "Co-Authored-By: Claude" dans les messages de commit
+- Ne pas ajouter "Co-Authored-By: Claude" ni "Generated with Claude Code" dans les messages de commit
 - Lors d'une demande de planification, documenter chaque planification d'EPIC dans un fichier spécifique stocké dans plan/xx avec xx = nom de l'EPIC qui comprend son numéro
 - Consigner les discussions techniques importantes dans `docs/TECH_DISCUSSIONS.md` (choix d'architecture, décisions techniques, alternatives considérées)
