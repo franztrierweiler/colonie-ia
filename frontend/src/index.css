@@ -72,6 +72,17 @@ button.btn-primary:hover {
   color: #fff;
 }
 
+button.btn-secondary {
+  background-color: transparent;
+  color: #888;
+  border-color: #333;
+  margin-top: 1rem;
+}
+button.btn-secondary:hover {
+  background-color: #222;
+  color: #ccc;
+}
+
 input {
   background-color: #111;
   border: 1px solid #333;

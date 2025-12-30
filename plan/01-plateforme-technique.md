@@ -166,9 +166,9 @@ colonie-ia/
 ### 4.8 US 1.13 - Profil utilisateur 🔶
 
 - [x] T4.8.1 - Endpoint GET `/api/users/me`
-- [ ] T4.8.2 - Endpoint PATCH `/api/users/me`
+- [x] T4.8.2 - Endpoint PATCH `/api/users/me`
 - [ ] T4.8.3 - Upload avatar (Azure Blob ou local)
-- [ ] T4.8.4 - Validation et sanitization pseudo
+- [x] T4.8.4 - Validation et sanitization pseudo
 
 ### 4.9 US 1.14 - Suppression de compte (RGPD) ⏳
 
@@ -194,12 +194,12 @@ colonie-ia/
 - [x] AuthModal - Modale connexion/inscription
 - [ ] ForgotPassword - Demande réinitialisation
 - [ ] ResetPassword - Nouveau mot de passe
-- [ ] Profile - Édition profil
+- [x] Profile - Édition profil
 
 ### 5.3 Composants communs
 
 - [x] `AuthProvider` - Context authentification
-- [ ] `ProtectedRoute` - Route nécessitant connexion
+- [x] `ProtectedRoute` - Route nécessitant connexion
 - [x] `Layout` - Layout principal responsive
 - [x] `AuthModal` - Modale d'authentification
 
@@ -237,7 +237,7 @@ colonie-ia/
 - [x] Un utilisateur peut créer un compte avec email/mot de passe
 - [ ] Un utilisateur peut se connecter via Google OAuth
 - [x] Les sessions persistent entre les visites (refresh token)
-- [ ] Un utilisateur peut modifier son pseudo et avatar
+- [x] Un utilisateur peut modifier son pseudo et avatar
 - [ ] Un utilisateur peut supprimer son compte (RGPD)
 - [ ] L'API est documentée via Swagger/OpenAPI
 - [ ] WebSocket fonctionne pour les événements temps réel

@@ -105,6 +105,11 @@ class ApiClient {
     const response = await this.client.get('/users/me');
     return response.data;
   }
+
+  async updateProfile(data: { pseudo?: string; avatar_url?: string }) {
+    const response = await this.client.patch('/users/me', data);
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

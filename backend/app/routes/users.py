@@ -3,10 +3,12 @@ Routes utilisateur.
 """
 from functools import wraps
 from flask import jsonify, request
+from pydantic import ValidationError
 
 from app.routes import api_bp
 from app.services.auth import get_user_from_token
-from app.utils.errors import AuthenticationError
+from app.schemas.auth import UpdateProfileSchema
+from app.utils.errors import AuthenticationError, ValidationError as APIValidationError
 
 
 def auth_required(f):
@@ -40,6 +42,44 @@ def auth_required(f):
 def get_current_user():
     """Récupère le profil de l'utilisateur connecté."""
     user = request.current_user
+    return jsonify({
+        "id": user.id,
+        "email": user.email,
+        "pseudo": user.pseudo,
+        "avatar_url": user.avatar_url,
+        "is_verified": user.is_verified,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    })
+
+
+@api_bp.route("/users/me", methods=["PATCH"])
+@auth_required
+def update_current_user():
+    """Met à jour le profil de l'utilisateur connecté."""
+    from app import db
+
+    try:
+        data = UpdateProfileSchema(**request.get_json())
+    except ValidationError as e:
+        errors = e.errors()
+        if errors:
+            return jsonify({"error": errors[0]["msg"]}), 400
+        return jsonify({"error": "Données invalides"}), 400
+
+    user = request.current_user
+    updated = False
+
+    if data.pseudo is not None:
+        user.pseudo = data.pseudo
+        updated = True
+
+    if data.avatar_url is not None:
+        user.avatar_url = data.avatar_url
+        updated = True
+
+    if updated:
+        db.session.commit()
+
     return jsonify({
         "id": user.id,
         "email": user.email,

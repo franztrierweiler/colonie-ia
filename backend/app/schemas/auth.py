@@ -70,3 +70,38 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UpdateProfileSchema(BaseModel):
+    """Schéma pour la mise à jour du profil."""
+
+    pseudo: str | None = None
+    avatar_url: str | None = None
+
+    @field_validator("pseudo")
+    @classmethod
+    def validate_pseudo(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if len(v) < 3:
+            raise ValueError("Le pseudo doit contenir au moins 3 caractères")
+        if len(v) > 30:
+            raise ValueError("Le pseudo ne doit pas dépasser 30 caractères")
+        if not re.match(r"^[a-zA-Z0-9_\- ]+$", v):
+            raise ValueError("Le pseudo ne peut contenir que des lettres, chiffres, espaces, tirets et underscores")
+        return v
+
+    @field_validator("avatar_url")
+    @classmethod
+    def validate_avatar_url(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        v = v.strip()
+        if not v:  # Empty string becomes None
+            return None
+        if len(v) > 500:
+            raise ValueError("L'URL de l'avatar ne doit pas dépasser 500 caractères")
+        if not v.startswith(("http://", "https://", "/")):
+            raise ValueError("L'URL de l'avatar doit être une URL valide")
+        return v

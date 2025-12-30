@@ -63,3 +63,4 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 - Ne pas ajouter "Co-Authored-By: Claude" ni "Generated with Claude Code" dans les messages de commit
 - Lors d'une demande de planification, documenter chaque planification d'EPIC dans un fichier spécifique stocké dans plan/xx avec xx = nom de l'EPIC qui comprend son numéro
 - Consigner les discussions techniques importantes dans `docs/TECH_DISCUSSIONS.md` (choix d'architecture, décisions techniques, alternatives considérées)
+- Mettre à jour la progression des tâches dans les fichiers plan/xx correspondants après chaque implémentation
