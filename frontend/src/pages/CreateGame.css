@@ -1,20 +1,19 @@
 .create-game-page {
   display: flex;
   justify-content: center;
-  padding: 2rem;
-  min-height: calc(100vh - 60px);
+  padding: 1.5rem;
 }
 
 .create-game-card {
   background: var(--card-bg);
   border-radius: 16px;
-  padding: 2rem;
+  padding: 1.5rem;
   width: 100%;
   max-width: 600px;
 }
 
 .create-game-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .back-btn {
@@ -53,12 +52,12 @@
 .create-game-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .form-section {
   border-top: 1px solid var(--card-border);
-  padding-top: 1.5rem;
+  padding-top: 1rem;
 }
 
 .form-section h3 {
@@ -132,7 +131,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
+  padding: 0.6rem;
   background: #fff;
   border: 2px solid var(--card-border);
   border-radius: 8px;
@@ -290,4 +289,15 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Field validation errors */
+.input-error {
+  border-color: #dc2626 !important;
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
 }

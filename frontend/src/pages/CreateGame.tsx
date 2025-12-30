@@ -55,17 +55,32 @@ function CreateGame() {
     alliances_enabled: true,
     combat_luck_enabled: true,
   });
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNameError(null);
+
+    // Validation
+    if (!config.name.trim()) {
+      setNameError('Le nom de la partie est requis');
+      return;
+    }
+    if (config.name.trim().length < 3) {
+      setNameError('Le nom doit contenir au moins 3 caractères');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const game = await api.createGame(config);
       navigate(`/games/${game.id}/lobby`);
-    } catch {
-      setError('Erreur lors de la création de la partie');
+    } catch (err) {
+      console.error('Erreur création partie:', err);
+      const message = err instanceof Error ? err.message : 'Erreur lors de la création de la partie';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -95,12 +110,15 @@ function CreateGame() {
               id="game-name"
               type="text"
               value={config.name}
-              onChange={(e) => updateConfig('name', e.target.value)}
+              onChange={(e) => {
+                updateConfig('name', e.target.value);
+                if (nameError) setNameError(null);
+              }}
               placeholder="Campagne d'Austerlitz"
-              required
-              minLength={3}
               maxLength={100}
+              className={nameError ? 'input-error' : ''}
             />
+            {nameError && <span className="field-error">{nameError}</span>}
           </div>
 
           <div className="form-section">
@@ -238,7 +256,7 @@ function CreateGame() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={isLoading || !config.name.trim()}
+              disabled={isLoading}
             >
               {isLoading ? (
                 'Création...'

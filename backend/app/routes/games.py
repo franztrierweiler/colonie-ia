@@ -162,19 +162,24 @@ def get_game(game_id: int):
       404:
         description: Partie non trouvée
     """
-    game = GameService.get_game_details(game_id)
-    if not game:
-        return jsonify({"error": "Game not found"}), 404
+    try:
+        game = GameService.get_game_details(game_id)
+        if not game:
+            return jsonify({"error": "Game not found"}), 404
 
-    # Include players in response
-    response = game.to_dict()
-    response["players"] = [player.to_dict() for player in game.players]
+        # Include players in response
+        response = game.to_dict()
+        response["players"] = [player.to_dict() for player in game.players]
 
-    # Include galaxy info if game has started
-    if game.galaxy:
-        response["galaxy"] = game.galaxy.to_dict()
+        # Include galaxy info if game has started
+        if game.galaxy:
+            response["galaxy"] = game.galaxy.to_dict()
 
-    return jsonify(response)
+        return jsonify(response)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 @api_bp.route("/games/<int:game_id>", methods=["DELETE"])

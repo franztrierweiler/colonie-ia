@@ -1,23 +1,32 @@
 # Colonie-IA Development Makefile
 
-.PHONY: help install dev backend frontend docker-up docker-down test lint clean db-init db-migrate db-upgrade
+.PHONY: help install dev backend frontend docker-up docker-down docker-build docker-logs rebuild rebuild-all test lint clean db-init db-migrate db-upgrade
 
 # Default target
 help:
 	@echo "Colonie-IA Development Commands"
 	@echo ""
-	@echo "  make install      - Install all dependencies"
-	@echo "  make dev          - Start development servers (backend + frontend)"
-	@echo "  make backend      - Start backend only"
-	@echo "  make frontend     - Start frontend only"
-	@echo "  make docker-up    - Start all services with Docker"
-	@echo "  make docker-down  - Stop Docker services"
-	@echo "  make test         - Run all tests"
-	@echo "  make lint         - Run linters"
-	@echo "  make clean        - Clean generated files"
-	@echo "  make db-init      - Initialize database migrations"
-	@echo "  make db-migrate   - Create new migration"
-	@echo "  make db-upgrade   - Apply migrations"
+	@echo "  make install        - Install all dependencies"
+	@echo "  make dev            - Start development servers (backend + frontend)"
+	@echo "  make backend        - Start backend only (local)"
+	@echo "  make frontend       - Start frontend only (local)"
+	@echo ""
+	@echo "Docker:"
+	@echo "  make docker-up      - Start all services with Docker"
+	@echo "  make docker-down    - Stop Docker services"
+	@echo "  make docker-logs    - Follow Docker logs"
+	@echo "  make rebuild        - Rebuild and restart backend"
+	@echo "  make rebuild-all    - Rebuild and restart all services"
+	@echo ""
+	@echo "Database:"
+	@echo "  make db-migrate msg='description'      - Create new migration (local)"
+	@echo "  make db-upgrade                        - Apply migrations (local)"
+	@echo "  make docker-db-migrate msg='desc'      - Create migration (Docker)"
+	@echo "  make docker-db-upgrade                 - Apply migrations (Docker)"
+	@echo ""
+	@echo "  make test           - Run all tests"
+	@echo "  make lint           - Run linters"
+	@echo "  make clean          - Clean generated files"
 
 # Install dependencies
 install:
@@ -53,6 +62,23 @@ docker-logs:
 
 docker-build:
 	docker compose build
+
+# Rebuild and restart backend
+rebuild:
+	@echo "Rebuilding and restarting backend..."
+	docker compose build backend
+	docker compose up -d backend
+	@echo "Waiting for backend to start..."
+	@sleep 3
+	docker compose logs backend --tail 20
+
+rebuild-all:
+	@echo "Rebuilding all services..."
+	docker compose build
+	docker compose up -d
+	@echo "Waiting for services to start..."
+	@sleep 3
+	docker compose logs --tail 20
 
 # Testing
 test:

@@ -162,7 +162,7 @@ class Planet(db.Model):
 
     # Relationships
     star = db.relationship("Star", back_populates="planets")
-    owner = db.relationship("GamePlayer", back_populates="planets")
+    owner = db.relationship("GamePlayer", back_populates="planets", foreign_keys=[owner_id])
 
     def __repr__(self):
         return f"<Planet {self.name} ({self.state})>"

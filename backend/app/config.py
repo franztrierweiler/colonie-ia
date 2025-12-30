@@ -46,6 +46,8 @@ class DevelopmentConfig(Config):
         "DATABASE_URL",
         "sqlite:///colonie_dev.db"
     )
+    # Disable rate limiting in development
+    RATELIMIT_ENABLED = False
 
 
 class StagingConfig(Config):

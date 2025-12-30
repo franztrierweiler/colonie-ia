@@ -188,7 +188,7 @@ function GameList() {
                       navigate(
                         game.status === 'lobby'
                           ? `/games/${game.id}/lobby`
-                          : `/games/${game.id}`
+                          : `/games/${game.id}/play`
                       )
                     }
                   >

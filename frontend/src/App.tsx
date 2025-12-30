@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -47,6 +47,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <GameLobby />
+                </ProtectedRoute>
+              }
+            />
+            {/* TODO: Add game play view route */}
+            <Route
+              path="games/:gameId/play"
+              element={
+                <ProtectedRoute>
+                  <div>Vue de jeu en cours de développement...</div>
                 </ProtectedRoute>
               }
             />

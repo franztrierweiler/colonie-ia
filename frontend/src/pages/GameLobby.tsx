@@ -63,9 +63,9 @@ function GameLobby() {
       const data = await api.getGame(parseInt(gameId));
       setGame(data);
 
-      // Redirect if game has started
+      // Redirect if game has started (to game view - TODO: create game view page)
       if (data.status === 'running') {
-        navigate(`/games/${gameId}`);
+        navigate(`/games/${gameId}/play`);
       }
     } catch {
       setError('Partie non trouvée');
@@ -151,7 +151,7 @@ function GameLobby() {
     setActionLoading('start');
     try {
       await api.startGame(parseInt(gameId));
-      navigate(`/games/${gameId}`);
+      navigate(`/games/${gameId}/play`);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Impossible de démarrer la partie';
       setError(errorMessage);

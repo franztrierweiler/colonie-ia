@@ -16,7 +16,7 @@ from app.config import config
 db = SQLAlchemy()
 migrate = Migrate()
 socketio = SocketIO()
-limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
+limiter = Limiter(key_func=get_remote_address)
 swagger = Swagger()
 
 
@@ -28,7 +28,10 @@ def create_app(config_name: str = "development") -> Flask:
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    limiter.init_app(app)
+
+    # Only enable rate limiter if configured
+    if app.config.get("RATELIMIT_ENABLED", True):
+        limiter.init_app(app)
 
     # CORS configuration
     cors_origins = app.config.get("CORS_ORIGINS", ["http://localhost:5173"])
