@@ -1,6 +1,6 @@
 # Colonie-IA Development Makefile
 
-.PHONY: help install dev backend frontend docker-up docker-down docker-build docker-logs rebuild rebuild-all test lint clean db-init db-migrate db-upgrade
+.PHONY: help install dev backend frontend docker-up docker-down docker-build docker-logs rebuild rebuild-all rebuild-and-test test lint clean db-init db-migrate db-upgrade
 
 # Default target
 help:
@@ -17,6 +17,7 @@ help:
 	@echo "  make docker-logs    - Follow Docker logs"
 	@echo "  make rebuild        - Rebuild and restart backend"
 	@echo "  make rebuild-all    - Rebuild and restart all services"
+	@echo "  make rebuild-and-test - Rebuild backend and run tests"
 	@echo ""
 	@echo "Database:"
 	@echo "  make db-migrate msg='description'      - Create new migration (local)"
@@ -101,6 +102,15 @@ docker-test:
 docker-test-cov:
 	@echo "Running backend tests with coverage..."
 	docker compose exec backend python -m pytest -v --cov=app
+
+# Rebuild and test (Docker)
+rebuild-and-test:
+	@echo "Rebuilding backend and running tests..."
+	docker compose build backend
+	docker compose up -d backend
+	@echo "Waiting for backend to start..."
+	@sleep 3
+	docker compose exec backend python -m pytest -v
 
 # Database migrations (local)
 db-init:
