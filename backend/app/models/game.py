@@ -16,13 +16,12 @@ class GameStatus(str, Enum):
     ABANDONED = "abandoned"  # Game abandoned
 
 
-class GalaxyShape(str, Enum):
-    """Galaxy shape options."""
-
-    CIRCLE = "circle"
-    SPIRAL = "spiral"
-    CLUSTER = "cluster"
-    RANDOM = "random"
+class AIDifficulty(str, Enum):
+    """AI difficulty levels."""
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+    EXPERT = "expert"
 
 
 class Game(db.Model):
@@ -62,6 +61,7 @@ class Game(db.Model):
     # Relationships
     admin = db.relationship("User", foreign_keys=[admin_user_id])
     players = db.relationship("GamePlayer", back_populates="game", lazy="dynamic")
+    galaxy = db.relationship("Galaxy", back_populates="game", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Game {self.name} ({self.status})>"
@@ -98,8 +98,10 @@ class GamePlayer(db.Model):
     player_name = db.Column(db.String(50), nullable=False)  # In-game name
     color = db.Column(db.String(7), nullable=False)  # Hex color #RRGGBB
     is_ai = db.Column(db.Boolean, default=False)
+    ai_difficulty = db.Column(db.String(20), nullable=True)  # Only for AI players
     is_active = db.Column(db.Boolean, default=True)  # Still in game
     is_eliminated = db.Column(db.Boolean, default=False)
+    is_ready = db.Column(db.Boolean, default=False)  # Ready in lobby
 
     # Player state (denormalized for quick access)
     money = db.Column(db.Integer, default=1000)
@@ -114,9 +116,14 @@ class GamePlayer(db.Model):
     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
     eliminated_at = db.Column(db.DateTime, nullable=True)
 
+    # Home planet reference
+    home_planet_id = db.Column(db.Integer, db.ForeignKey("planets.id"), nullable=True)
+
     # Relationships
     game = db.relationship("Game", back_populates="players")
     user = db.relationship("User", back_populates="games")
+    planets = db.relationship("Planet", back_populates="owner", foreign_keys="Planet.owner_id")
+    home_planet = db.relationship("Planet", foreign_keys=[home_planet_id], post_update=True)
 
     # Unique constraint: one user per game
     __table_args__ = (
@@ -133,8 +140,12 @@ class GamePlayer(db.Model):
             "player_name": self.player_name,
             "color": self.color,
             "is_ai": self.is_ai,
+            "ai_difficulty": self.ai_difficulty,
             "is_active": self.is_active,
+            "is_ready": self.is_ready,
             "is_eliminated": self.is_eliminated,
             "planet_count": self.planet_count,
+            "money": self.money,
+            "metal": self.metal,
             "user_id": self.user_id,
         }

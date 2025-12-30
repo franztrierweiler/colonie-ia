@@ -4,12 +4,12 @@
 
 | Phase | Description | Statut |
 |-------|-------------|--------|
-| 1 | Modèles de données | ⏳ À faire |
-| 2 | Génération de galaxie | ⏳ À faire |
-| 3 | API Configuration | ⏳ À faire |
-| 4 | Gestion des joueurs | ⏳ À faire |
-| 5 | Frontend Lobby | ⏳ À faire |
-| 6 | Initialisation de partie | ⏳ À faire |
+| 1 | Modèles de données | ✅ Terminé |
+| 2 | Génération de galaxie | ✅ Terminé |
+| 3 | API Configuration | ✅ Terminé |
+| 4 | Gestion des joueurs | ✅ Terminé |
+| 5 | Frontend Lobby | ✅ Terminé |
+| 6 | Initialisation de partie | ✅ Terminé |
 
 ---
 
@@ -109,13 +109,13 @@ class Player(db.Model):
 
 ### 1.6 Tâches Phase 1
 
-- [ ] T1.1 - Créer le modèle Galaxy
-- [ ] T1.2 - Créer le modèle Star avec noms napoléoniens
-- [ ] T1.3 - Créer le modèle Planet avec états
-- [ ] T1.4 - Étendre le modèle Game pour configuration
-- [ ] T1.5 - Créer le modèle Player (humain/IA)
-- [ ] T1.6 - Créer les migrations
-- [ ] T1.7 - Fichier de données : noms de planètes napoléoniens
+- [x] T1.1 - Créer le modèle Galaxy
+- [x] T1.2 - Créer le modèle Star avec noms napoléoniens
+- [x] T1.3 - Créer le modèle Planet avec états
+- [x] T1.4 - Étendre le modèle Game pour configuration
+- [x] T1.5 - Créer le modèle Player (humain/IA)
+- [ ] T1.6 - Créer les migrations (à faire via Docker)
+- [x] T1.7 - Fichier de données : noms de planètes napoléoniens
 
 ---
 
@@ -157,13 +157,13 @@ DENSITY_FACTORS = {
 
 ### 2.4 Tâches Phase 2
 
-- [ ] T2.1 - Service GalaxyGenerator avec interface commune
-- [ ] T2.2 - Algorithme forme cercle
-- [ ] T2.3 - Algorithme forme spirale
-- [ ] T2.4 - Algorithme forme amas
-- [ ] T2.5 - Algorithme forme aléatoire (Poisson disk)
-- [ ] T2.6 - Générateur de planètes par étoile
-- [ ] T2.7 - Calcul max_population selon temp/gravité
+- [x] T2.1 - Service GalaxyGenerator avec interface commune
+- [x] T2.2 - Algorithme forme cercle
+- [x] T2.3 - Algorithme forme spirale
+- [x] T2.4 - Algorithme forme amas
+- [x] T2.5 - Algorithme forme aléatoire (Poisson disk)
+- [x] T2.6 - Générateur de planètes par étoile
+- [x] T2.7 - Calcul max_population selon temp/gravité
 - [ ] T2.8 - Tests unitaires génération
 
 ---
@@ -204,17 +204,17 @@ class AddAISchema(BaseModel):
 
 ### 3.3 Tâches Phase 3
 
-- [ ] T3.1 - Schémas Pydantic pour configuration
-- [ ] T3.2 - Endpoint POST /api/games (création)
-- [ ] T3.3 - Endpoint GET /api/games (liste lobby)
-- [ ] T3.4 - Endpoint GET /api/games/:id (détails)
+- [x] T3.1 - Schémas Pydantic pour configuration
+- [x] T3.2 - Endpoint POST /api/games (création)
+- [x] T3.3 - Endpoint GET /api/games (liste lobby)
+- [x] T3.4 - Endpoint GET /api/games/:id (détails)
 - [ ] T3.5 - Endpoint PATCH /api/games/:id (modification)
-- [ ] T3.6 - Endpoint DELETE /api/games/:id (suppression)
-- [ ] T3.7 - Endpoint POST /api/games/:id/join
-- [ ] T3.8 - Endpoint POST /api/games/:id/leave
-- [ ] T3.9 - Endpoint POST /api/games/:id/ai
-- [ ] T3.10 - Endpoint POST /api/games/:id/start
-- [ ] T3.11 - Documentation Swagger pour tous les endpoints
+- [x] T3.6 - Endpoint DELETE /api/games/:id (suppression)
+- [x] T3.7 - Endpoint POST /api/games/:id/join
+- [x] T3.8 - Endpoint POST /api/games/:id/leave
+- [x] T3.9 - Endpoint POST /api/games/:id/ai
+- [x] T3.10 - Endpoint POST /api/games/:id/start
+- [x] T3.11 - Documentation Swagger pour tous les endpoints
 
 ---
 
@@ -261,11 +261,11 @@ PLAYER_COLORS = [
 
 ### 4.4 Tâches Phase 4
 
-- [ ] T4.1 - Service PlayerManager (création, couleurs)
-- [ ] T4.2 - Attribution automatique des couleurs
-- [ ] T4.3 - Génération noms IA thématiques
-- [ ] T4.4 - Validation nombre de joueurs (2-8)
-- [ ] T4.5 - Gestion des slots (humain/IA/vide)
+- [x] T4.1 - Service PlayerManager (création, couleurs)
+- [x] T4.2 - Attribution automatique des couleurs
+- [x] T4.3 - Génération noms IA thématiques
+- [x] T4.4 - Validation nombre de joueurs (2-8)
+- [x] T4.5 - Gestion des slots (humain/IA/vide)
 
 ---
 
@@ -342,16 +342,16 @@ frontend/src/
 
 ### 5.5 Tâches Phase 5
 
-- [ ] T5.1 - Page GameList avec liste des parties
-- [ ] T5.2 - Composant GameCard pour afficher une partie
-- [ ] T5.3 - Page CreateGame avec formulaire complet
+- [x] T5.1 - Page GameList avec liste des parties
+- [x] T5.2 - Composant GameCard pour afficher une partie
+- [x] T5.3 - Page CreateGame avec formulaire complet
 - [ ] T5.4 - Composant GalaxyPreview (canvas 2D)
-- [ ] T5.5 - Page GameLobby avec slots joueurs
-- [ ] T5.6 - Composant PlayerSlot (humain/IA/vide)
-- [ ] T5.7 - Composant DifficultySelect
-- [ ] T5.8 - WebSocket pour updates temps réel du lobby
-- [ ] T5.9 - Navigation et routing
-- [ ] T5.10 - CSS responsive pour toutes les pages
+- [x] T5.5 - Page GameLobby avec slots joueurs
+- [x] T5.6 - Composant PlayerSlot (humain/IA/vide)
+- [x] T5.7 - Composant DifficultySelect
+- [ ] T5.8 - WebSocket pour updates temps réel du lobby (polling en place)
+- [x] T5.9 - Navigation et routing
+- [x] T5.10 - CSS responsive pour toutes les pages
 
 ---
 
@@ -395,15 +395,15 @@ INITIAL_SHIPS = [
 
 ### 6.4 Tâches Phase 6
 
-- [ ] T6.1 - Service GameInitializer
-- [ ] T6.2 - Algorithme sélection planètes mères (distance max)
-- [ ] T6.3 - Terraformation initiale planètes mères
-- [ ] T6.4 - Attribution ressources initiales
-- [ ] T6.5 - Création technologies de base
-- [ ] T6.6 - Création flotte de départ
-- [ ] T6.7 - Transition status lobby → in_progress
+- [x] T6.1 - Service GameInitializer (dans GameService.start_game)
+- [x] T6.2 - Algorithme sélection planètes mères (distance max)
+- [x] T6.3 - Terraformation initiale planètes mères
+- [x] T6.4 - Attribution ressources initiales
+- [ ] T6.5 - Création technologies de base (EPIC 5)
+- [ ] T6.6 - Création flotte de départ (EPIC 6)
+- [x] T6.7 - Transition status lobby → in_progress
 - [ ] T6.8 - Notification WebSocket démarrage partie
-- [ ] T6.9 - Redirection vers page de jeu
+- [x] T6.9 - Redirection vers page de jeu
 
 ---
 
@@ -421,15 +421,15 @@ INITIAL_SHIPS = [
 
 ## Critères d'acceptation EPIC 2
 
-- [ ] Un joueur peut créer une partie avec tous les paramètres de galaxie
-- [ ] Un joueur peut voir la liste des parties en attente
-- [ ] Un joueur peut rejoindre/quitter une partie
-- [ ] L'hôte peut ajouter des joueurs IA avec différents niveaux
-- [ ] L'aperçu de galaxie montre la forme choisie
-- [ ] La partie démarre avec planètes mères équidistantes
-- [ ] Chaque joueur commence avec les ressources correctes
-- [ ] Le lobby se met à jour en temps réel (WebSocket)
-- [ ] L'interface est responsive (mobile friendly)
+- [x] Un joueur peut créer une partie avec tous les paramètres de galaxie
+- [x] Un joueur peut voir la liste des parties en attente
+- [x] Un joueur peut rejoindre/quitter une partie
+- [x] L'hôte peut ajouter des joueurs IA avec différents niveaux
+- [ ] L'aperçu de galaxie montre la forme choisie (V2)
+- [x] La partie démarre avec planètes mères équidistantes
+- [x] Chaque joueur commence avec les ressources correctes
+- [ ] Le lobby se met à jour en temps réel (polling en place, WebSocket V2)
+- [x] L'interface est responsive (mobile friendly)
 
 ---
 

@@ -136,6 +136,72 @@ class ApiClient {
     const response = await this.client.post('/auth/reset-password', { token, password });
     return response.data;
   }
+
+  // Game endpoints
+
+  async createGame(data: {
+    name: string;
+    galaxy_shape?: string;
+    galaxy_size?: string;
+    galaxy_density?: string;
+    max_players?: number;
+    turn_duration_years?: number;
+    alliances_enabled?: boolean;
+    combat_luck_enabled?: boolean;
+  }) {
+    const response = await this.client.post('/games', data);
+    return response.data;
+  }
+
+  async listGames() {
+    const response = await this.client.get('/games');
+    return response.data;
+  }
+
+  async getGame(gameId: number) {
+    const response = await this.client.get(`/games/${gameId}`);
+    return response.data;
+  }
+
+  async deleteGame(gameId: number) {
+    const response = await this.client.delete(`/games/${gameId}`);
+    return response.data;
+  }
+
+  async joinGame(gameId: number) {
+    const response = await this.client.post(`/games/${gameId}/join`);
+    return response.data;
+  }
+
+  async leaveGame(gameId: number) {
+    const response = await this.client.post(`/games/${gameId}/leave`);
+    return response.data;
+  }
+
+  async addAIPlayer(gameId: number, difficulty: string = 'medium', name?: string) {
+    const response = await this.client.post(`/games/${gameId}/ai`, { difficulty, name });
+    return response.data;
+  }
+
+  async removeAIPlayer(gameId: number, playerId: number) {
+    const response = await this.client.delete(`/games/${gameId}/ai/${playerId}`);
+    return response.data;
+  }
+
+  async setPlayerReady(gameId: number, ready: boolean = true) {
+    const response = await this.client.post(`/games/${gameId}/ready`, { ready });
+    return response.data;
+  }
+
+  async startGame(gameId: number) {
+    const response = await this.client.post(`/games/${gameId}/start`);
+    return response.data;
+  }
+
+  async getMyGames() {
+    const response = await this.client.get('/games/my');
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

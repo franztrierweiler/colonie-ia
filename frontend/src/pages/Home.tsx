@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../components/AuthModal';
 import { PixelRocket, PixelUsers, PixelChart, PixelBook } from '../components/PixelIcons';
@@ -5,6 +6,7 @@ import './Home.css';
 
 function Home() {
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="home-page">
@@ -24,7 +26,9 @@ function Home() {
               <p className="card-description">
                 Lancez une nouvelle conquête galactique et affrontez jusqu'à 7 adversaires.
               </p>
-              <button className="btn-primary card-button">Commencer</button>
+              <button className="btn-primary card-button" onClick={() => navigate('/games/new')}>
+                Commencer
+              </button>
             </div>
 
             <div className="dashboard-card">
@@ -35,7 +39,9 @@ function Home() {
               <p className="card-description">
                 Rejoignez une partie en cours et combattez aux côtés d'autres généraux.
               </p>
-              <button className="card-button">Parcourir</button>
+              <button className="card-button" onClick={() => navigate('/games')}>
+                Parcourir
+              </button>
             </div>
 
             <div className="dashboard-card">
@@ -46,7 +52,9 @@ function Home() {
               <p className="card-description">
                 Consultez vos victoires, défaites et performances au fil des parties.
               </p>
-              <button className="card-button">Voir</button>
+              <button className="card-button" disabled>
+                Bientôt
+              </button>
             </div>
 
             <div className="dashboard-card">
@@ -57,7 +65,9 @@ function Home() {
               <p className="card-description">
                 Apprenez les bases de la conquête spatiale napoléonienne.
               </p>
-              <button className="card-button">Apprendre</button>
+              <button className="card-button" disabled>
+                Bientôt
+              </button>
             </div>
           </div>
         </div>

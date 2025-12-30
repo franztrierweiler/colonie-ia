@@ -6,6 +6,9 @@ import Profile from './pages/Profile';
 import OAuthCallback from './pages/OAuthCallback';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import GameList from './pages/GameList';
+import CreateGame from './pages/CreateGame';
+import GameLobby from './pages/GameLobby';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -20,6 +23,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="games"
+              element={
+                <ProtectedRoute>
+                  <GameList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="games/new"
+              element={
+                <ProtectedRoute>
+                  <CreateGame />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="games/:gameId/lobby"
+              element={
+                <ProtectedRoute>
+                  <GameLobby />
                 </ProtectedRoute>
               }
             />

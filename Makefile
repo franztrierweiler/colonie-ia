@@ -67,7 +67,7 @@ test-backend:
 test-frontend:
 	cd frontend && npm test
 
-# Database migrations
+# Database migrations (local)
 db-init:
 	cd backend && flask db init
 
@@ -79,6 +79,19 @@ db-upgrade:
 
 db-downgrade:
 	cd backend && flask db downgrade
+
+# Database migrations (Docker)
+docker-db-migrate:
+	docker compose exec backend flask db migrate -m "$(msg)"
+
+docker-db-upgrade:
+	docker compose exec backend flask db upgrade
+
+docker-db-downgrade:
+	docker compose exec backend flask db downgrade
+
+docker-shell:
+	docker compose exec backend bash
 
 # Linting
 lint:
