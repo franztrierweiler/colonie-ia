@@ -114,7 +114,7 @@ class Player(db.Model):
 - [x] T1.3 - Créer le modèle Planet avec états
 - [x] T1.4 - Étendre le modèle Game pour configuration
 - [x] T1.5 - Créer le modèle Player (humain/IA)
-- [ ] T1.6 - Créer les migrations (à faire via Docker)
+- [x] T1.6 - Créer les migrations
 - [x] T1.7 - Fichier de données : noms de planètes napoléoniens
 
 ---
@@ -164,7 +164,7 @@ DENSITY_FACTORS = {
 - [x] T2.5 - Algorithme forme aléatoire (Poisson disk)
 - [x] T2.6 - Générateur de planètes par étoile
 - [x] T2.7 - Calcul max_population selon temp/gravité
-- [ ] T2.8 - Tests unitaires génération
+- [x] T2.8 - Tests unitaires génération
 
 ---
 
@@ -208,7 +208,7 @@ class AddAISchema(BaseModel):
 - [x] T3.2 - Endpoint POST /api/games (création)
 - [x] T3.3 - Endpoint GET /api/games (liste lobby)
 - [x] T3.4 - Endpoint GET /api/games/:id (détails)
-- [ ] T3.5 - Endpoint PATCH /api/games/:id (modification)
+- [x] T3.5 - Endpoint PATCH /api/games/:id (modification)
 - [x] T3.6 - Endpoint DELETE /api/games/:id (suppression)
 - [x] T3.7 - Endpoint POST /api/games/:id/join
 - [x] T3.8 - Endpoint POST /api/games/:id/leave
@@ -349,7 +349,7 @@ frontend/src/
 - [x] T5.5 - Page GameLobby avec slots joueurs
 - [x] T5.6 - Composant PlayerSlot (humain/IA/vide)
 - [x] T5.7 - Composant DifficultySelect
-- [ ] T5.8 - WebSocket pour updates temps réel du lobby (polling en place)
+- [x] T5.8 - WebSocket pour updates temps réel du lobby
 - [x] T5.9 - Navigation et routing
 - [x] T5.10 - CSS responsive pour toutes les pages
 
@@ -402,7 +402,7 @@ INITIAL_SHIPS = [
 - [ ] T6.5 - Création technologies de base (EPIC 5)
 - [ ] T6.6 - Création flotte de départ (EPIC 6)
 - [x] T6.7 - Transition status lobby → in_progress
-- [ ] T6.8 - Notification WebSocket démarrage partie
+- [x] T6.8 - Notification WebSocket démarrage partie
 - [x] T6.9 - Redirection vers page de jeu
 
 ---
@@ -428,7 +428,7 @@ INITIAL_SHIPS = [
 - [ ] L'aperçu de galaxie montre la forme choisie (V2)
 - [x] La partie démarre avec planètes mères équidistantes
 - [x] Chaque joueur commence avec les ressources correctes
-- [ ] Le lobby se met à jour en temps réel (polling en place, WebSocket V2)
+- [x] Le lobby se met à jour en temps réel via WebSocket
 - [x] L'interface est responsive (mobile friendly)
 
 ---

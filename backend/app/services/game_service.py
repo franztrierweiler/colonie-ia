@@ -11,6 +11,16 @@ from app.data import get_random_ai_name, get_player_color, AI_NAMES
 from app.services.galaxy_generator import generate_galaxy, find_home_planets, prepare_home_planet
 
 
+def _notify_lobby_update(game: Game):
+    """Helper to emit lobby update via WebSocket."""
+    try:
+        from app.websocket import emit_lobby_update
+        players = [player.to_dict() for player in game.players]
+        emit_lobby_update(game.id, players)
+    except Exception as e:
+        print(f"[WS] Failed to emit lobby_update: {e}")
+
+
 class GameService:
     """Service for managing games."""
 
@@ -140,6 +150,9 @@ class GameService:
         db.session.add(player)
         db.session.commit()
 
+        # Notify lobby via WebSocket
+        _notify_lobby_update(game)
+
         return player
 
     @staticmethod
@@ -174,6 +187,9 @@ class GameService:
 
         db.session.delete(player)
         db.session.commit()
+
+        # Notify lobby via WebSocket
+        _notify_lobby_update(game)
 
         return True
 
@@ -227,6 +243,9 @@ class GameService:
         db.session.add(player)
         db.session.commit()
 
+        # Notify lobby via WebSocket
+        _notify_lobby_update(game)
+
         return player
 
     @staticmethod
@@ -252,6 +271,9 @@ class GameService:
         db.session.delete(player)
         db.session.commit()
 
+        # Notify lobby via WebSocket
+        _notify_lobby_update(game)
+
         return True
 
     @staticmethod
@@ -273,6 +295,11 @@ class GameService:
 
         player.is_ready = ready
         db.session.commit()
+
+        # Notify lobby via WebSocket
+        game = Game.query.get(game_id)
+        if game:
+            _notify_lobby_update(game)
 
         return player
 
@@ -346,6 +373,15 @@ class GameService:
 
         db.session.commit()
 
+        # Notify all players via WebSocket that game has started
+        try:
+            from app.websocket import emit_game_started
+            game_data = game.to_dict()
+            game_data["players"] = [p.to_dict() for p in game.players]
+            emit_game_started(game.id, game_data)
+        except Exception as e:
+            print(f"[WS] Failed to emit game_started: {e}")
+
         return game
 
     @staticmethod
@@ -382,6 +418,87 @@ class GameService:
         db.session.commit()
 
         return True
+
+    @staticmethod
+    def update_game(
+        game_id: int,
+        admin_user_id: int,
+        name: Optional[str] = None,
+        galaxy_shape: Optional[str] = None,
+        galaxy_size: Optional[str] = None,
+        galaxy_density: Optional[str] = None,
+        max_players: Optional[int] = None,
+        turn_duration_years: Optional[int] = None,
+        alliances_enabled: Optional[bool] = None,
+        combat_luck_enabled: Optional[bool] = None,
+    ) -> Game:
+        """
+        Update game configuration (only in lobby).
+
+        Args:
+            game_id: ID of the game to update
+            admin_user_id: ID of the user (must be admin)
+            name: New game name (optional)
+            galaxy_shape: New galaxy shape (optional)
+            galaxy_size: New galaxy size preset (optional)
+            galaxy_density: New density preset (optional)
+            max_players: New max players (optional)
+            turn_duration_years: New turn duration (optional)
+            alliances_enabled: New alliance setting (optional)
+            combat_luck_enabled: New combat luck setting (optional)
+
+        Returns:
+            Updated Game instance
+
+        Raises:
+            ValueError: If game not found, user not admin, or game started
+        """
+        game = Game.query.get(game_id)
+        if not game:
+            raise ValueError("Game not found")
+
+        if game.admin_user_id != admin_user_id:
+            raise ValueError("Only the game admin can modify the game")
+
+        if game.status != GameStatus.LOBBY.value:
+            raise ValueError("Cannot modify a game that has started")
+
+        # Update fields if provided
+        if name is not None:
+            game.name = name
+
+        if galaxy_shape is not None:
+            game.galaxy_shape = galaxy_shape
+
+        if galaxy_size is not None:
+            game.star_count = {"small": 20, "medium": 50, "large": 100, "huge": 200}.get(galaxy_size, 50)
+
+        if galaxy_density is not None:
+            game.density = {"low": 0.7, "medium": 1.0, "high": 1.3}.get(galaxy_density, 1.0)
+
+        if max_players is not None:
+            # Ensure max_players is valid and >= current player count
+            current_players = game.players.count()
+            new_max = max(2, min(8, max_players))
+            if new_max < current_players:
+                raise ValueError(f"Cannot reduce max_players below current player count ({current_players})")
+            game.max_players = new_max
+
+        if turn_duration_years is not None:
+            game.turn_duration_years = max(10, min(100, turn_duration_years))
+
+        if alliances_enabled is not None:
+            game.alliances_enabled = alliances_enabled
+
+        if combat_luck_enabled is not None:
+            game.combat_luck_enabled = combat_luck_enabled
+
+        db.session.commit()
+
+        # Notify lobby via WebSocket
+        _notify_lobby_update(game)
+
+        return game
 
     @staticmethod
     def get_lobby_games() -> List[Game]:

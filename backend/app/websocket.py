@@ -168,3 +168,48 @@ def emit_to_user(user_id: int, event: str, data: dict):
         if info["user_id"] == user_id:
             socketio.emit(event, data, room=sid)
             break
+
+
+def emit_lobby_update(game_id: int, players: list):
+    """
+    Emit lobby update to all players in a game lobby.
+
+    Args:
+        game_id: ID of the game
+        players: List of player dictionaries
+    """
+    room = f"game_{game_id}"
+    socketio.emit("lobby_update", {
+        "game_id": game_id,
+        "players": players,
+    }, room=room)
+
+
+def emit_game_starting(game_id: int, countdown: int = 3):
+    """
+    Emit game starting notification with countdown.
+
+    Args:
+        game_id: ID of the game
+        countdown: Seconds until game starts
+    """
+    room = f"game_{game_id}"
+    socketio.emit("game_starting", {
+        "game_id": game_id,
+        "countdown": countdown,
+    }, room=room)
+
+
+def emit_game_started(game_id: int, game_data: dict):
+    """
+    Emit game started notification.
+
+    Args:
+        game_id: ID of the game
+        game_data: Game state dictionary
+    """
+    room = f"game_{game_id}"
+    socketio.emit("game_started", {
+        "game_id": game_id,
+        "game": game_data,
+    }, room=room)

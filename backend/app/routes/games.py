@@ -35,6 +35,18 @@ class SetReadySchema(BaseModel):
     ready: bool = True
 
 
+class UpdateGameSchema(BaseModel):
+    """Schema for updating game configuration."""
+    name: Optional[str] = Field(default=None, min_length=3, max_length=100)
+    galaxy_shape: Optional[Literal["circle", "spiral", "cluster", "random"]] = None
+    galaxy_size: Optional[Literal["small", "medium", "large", "huge"]] = None
+    galaxy_density: Optional[Literal["low", "medium", "high"]] = None
+    max_players: Optional[int] = Field(default=None, ge=2, le=8)
+    turn_duration_years: Optional[int] = Field(default=None, ge=10, le=100)
+    alliances_enabled: Optional[bool] = None
+    combat_luck_enabled: Optional[bool] = None
+
+
 @api_bp.route("/games", methods=["POST"])
 @token_required
 def create_game():
@@ -180,6 +192,90 @@ def get_game(game_id: int):
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route("/games/<int:game_id>", methods=["PATCH"])
+@token_required
+def update_game(game_id: int):
+    """
+    Modifier la configuration d'une partie (admin seulement, lobby uniquement)
+    ---
+    tags:
+      - Parties
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: game_id
+        type: integer
+        required: true
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Nouveau nom de la partie
+            galaxy_shape:
+              type: string
+              enum: [circle, spiral, cluster, random]
+            galaxy_size:
+              type: string
+              enum: [small, medium, large, huge]
+            galaxy_density:
+              type: string
+              enum: [low, medium, high]
+            max_players:
+              type: integer
+              minimum: 2
+              maximum: 8
+            turn_duration_years:
+              type: integer
+              minimum: 10
+              maximum: 100
+            alliances_enabled:
+              type: boolean
+            combat_luck_enabled:
+              type: boolean
+    responses:
+      200:
+        description: Partie modifiée
+      400:
+        description: Données invalides
+      403:
+        description: Non autorisé
+      404:
+        description: Partie non trouvée
+    """
+    try:
+        data = UpdateGameSchema(**(request.json or {}))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    try:
+        game = GameService.update_game(
+            game_id=game_id,
+            admin_user_id=g.current_user.id,
+            name=data.name,
+            galaxy_shape=data.galaxy_shape,
+            galaxy_size=data.galaxy_size,
+            galaxy_density=data.galaxy_density,
+            max_players=data.max_players,
+            turn_duration_years=data.turn_duration_years,
+            alliances_enabled=data.alliances_enabled,
+            combat_luck_enabled=data.combat_luck_enabled,
+        )
+        response = game.to_dict()
+        response["players"] = [player.to_dict() for player in game.players]
+        return jsonify(response)
+    except ValueError as e:
+        error_msg = str(e)
+        if "not found" in error_msg.lower():
+            return jsonify({"error": error_msg}), 404
+        if "admin" in error_msg.lower():
+            return jsonify({"error": error_msg}), 403
+        return jsonify({"error": error_msg}), 400
 
 
 @api_bp.route("/games/<int:game_id>", methods=["DELETE"])
