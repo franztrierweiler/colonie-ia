@@ -1,65 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { GalaxyMap } from '../components/game';
+import type { Star, Fleet, Player, Galaxy } from '../hooks/useGameState';
 import './GameView.css';
-
-// Types
-interface Planet {
-  id: number;
-  name: string;
-  star_id: number;
-  orbit_index: number;
-  temperature: number;
-  current_temperature: number;
-  gravity: number;
-  metal_reserves: number;
-  metal_remaining: number;
-  state: string;
-  owner_id: number | null;
-  population: number;
-  max_population: number;
-  habitability: number;
-  terraform_budget: number;
-  mining_budget: number;
-  is_home_planet: boolean;
-}
-
-interface Star {
-  id: number;
-  name: string;
-  x: number;
-  y: number;
-  is_nova: boolean;
-  planet_count: number;
-  planets: Planet[];
-}
-
-interface Fleet {
-  id: number;
-  name: string;
-  player_id: number;
-  status: string;
-  current_star_id: number | null;
-  destination_star_id: number | null;
-  ship_count: number;
-  fleet_speed: number;
-  fleet_range: number;
-}
-
-interface Player {
-  id: number;
-  player_name: string;
-  color: string;
-  is_ai: boolean;
-}
-
-interface Galaxy {
-  id: number;
-  width: number;
-  height: number;
-  shape: string;
-  star_count: number;
-}
 
 interface GameMapData {
   game_id: number;
@@ -79,10 +23,7 @@ function GameView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStarId, setSelectedStarId] = useState<number | null>(null);
-
-  // Zoom et pan
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [selectedFleetId, setSelectedFleetId] = useState<number | null>(null);
 
   const loadMap = useCallback(async () => {
     if (!gameId) return;
@@ -104,13 +45,11 @@ function GameView() {
 
   const handleStarClick = (starId: number) => {
     setSelectedStarId(starId === selectedStarId ? null : starId);
+    setSelectedFleetId(null);
   };
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z * 1.5, 4));
-  const handleZoomOut = () => setZoom((z) => Math.max(z / 1.5, 0.25));
-  const handleZoomReset = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
+  const handleFleetClick = (fleetId: number) => {
+    setSelectedFleetId(fleetId === selectedFleetId ? null : fleetId);
   };
 
   const getPlayerColor = (playerId: number | null): string => {
@@ -120,6 +59,7 @@ function GameView() {
   };
 
   const selectedStar = mapData?.stars.find((s) => s.id === selectedStarId);
+  const selectedFleet = mapData?.fleets.find((f) => f.id === selectedFleetId);
 
   if (isLoading) {
     return (
@@ -156,6 +96,9 @@ function GameView() {
         </button>
         <h1>Tour {mapData.turn}</h1>
         <div className="turn-actions">
+          <button className="btn-primary" onClick={loadMap}>
+            Rafraîchir
+          </button>
           <button className="btn-primary">Fin de tour</button>
         </div>
       </header>
@@ -163,157 +106,60 @@ function GameView() {
       {/* Main content */}
       <div className="game-content">
         {/* Galaxy Map */}
-        <div className="galaxy-map-container">
-          <div className="zoom-controls">
-            <button onClick={handleZoomIn}>+</button>
-            <button onClick={handleZoomReset}>1:1</button>
-            <button onClick={handleZoomOut}>-</button>
-          </div>
-
-          <svg
-            className="galaxy-map"
-            viewBox={`0 0 ${mapData.galaxy.width} ${mapData.galaxy.height}`}
-            style={{
-              transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
-            }}
-          >
-            {/* Background */}
-            <rect
-              x="0"
-              y="0"
-              width={mapData.galaxy.width}
-              height={mapData.galaxy.height}
-              fill="#0a0a1a"
-            />
-
-            {/* Fleet trajectories */}
-            {mapData.fleets
-              .filter((f) => f.status === 'in_transit' && f.current_star_id && f.destination_star_id)
-              .map((fleet) => {
-                const fromStar = mapData.stars.find((s) => s.id === fleet.current_star_id);
-                const toStar = mapData.stars.find((s) => s.id === fleet.destination_star_id);
-                if (!fromStar || !toStar) return null;
-                return (
-                  <line
-                    key={`trajectory-${fleet.id}`}
-                    x1={fromStar.x}
-                    y1={fromStar.y}
-                    x2={toStar.x}
-                    y2={toStar.y}
-                    stroke={getPlayerColor(fleet.player_id)}
-                    strokeWidth="0.5"
-                    strokeDasharray="2,2"
-                    opacity="0.6"
-                  />
-                );
-              })}
-
-            {/* Stars */}
-            {mapData.stars.map((star) => {
-              const hasOwnedPlanet = star.planets.some(
-                (p) => p.owner_id === mapData.my_player_id
-              );
-              const hasEnemyPlanet = star.planets.some(
-                (p) => p.owner_id && p.owner_id !== mapData.my_player_id
-              );
-              const isSelected = star.id === selectedStarId;
-
-              return (
-                <g
-                  key={star.id}
-                  className={`star-group ${isSelected ? 'selected' : ''}`}
-                  onClick={() => handleStarClick(star.id)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {/* Star glow */}
-                  <circle
-                    cx={star.x}
-                    cy={star.y}
-                    r={isSelected ? 4 : 3}
-                    fill={star.is_nova ? '#ff4444' : '#ffdd44'}
-                    opacity="0.3"
-                  />
-                  {/* Star core */}
-                  <circle
-                    cx={star.x}
-                    cy={star.y}
-                    r={isSelected ? 2.5 : 2}
-                    fill={star.is_nova ? '#ff0000' : '#ffffff'}
-                  />
-                  {/* Ownership indicator */}
-                  {hasOwnedPlanet && (
-                    <circle
-                      cx={star.x}
-                      cy={star.y}
-                      r={5}
-                      fill="none"
-                      stroke={getPlayerColor(mapData.my_player_id)}
-                      strokeWidth="1"
-                    />
-                  )}
-                  {hasEnemyPlanet && !hasOwnedPlanet && (
-                    <circle
-                      cx={star.x}
-                      cy={star.y}
-                      r={5}
-                      fill="none"
-                      stroke="#ff4444"
-                      strokeWidth="0.5"
-                      strokeDasharray="1,1"
-                    />
-                  )}
-                  {/* Star name (only at higher zoom) */}
-                  {zoom >= 1.5 && (
-                    <text
-                      x={star.x}
-                      y={star.y + 8}
-                      textAnchor="middle"
-                      fill="#aaa"
-                      fontSize="3"
-                    >
-                      {star.name}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-
-            {/* Fleet markers */}
-            {mapData.fleets
-              .filter((f) => f.status === 'stationed' && f.current_star_id)
-              .map((fleet) => {
-                const star = mapData.stars.find((s) => s.id === fleet.current_star_id);
-                if (!star) return null;
-                const isMine = fleet.player_id === mapData.my_player_id;
-                return (
-                  <g key={`fleet-${fleet.id}`}>
-                    <polygon
-                      points={`${star.x + 4},${star.y - 2} ${star.x + 7},${star.y} ${star.x + 4},${star.y + 2}`}
-                      fill={getPlayerColor(fleet.player_id)}
-                      stroke={isMine ? '#fff' : 'none'}
-                      strokeWidth="0.3"
-                    />
-                    {zoom >= 1 && (
-                      <text
-                        x={star.x + 8}
-                        y={star.y + 1}
-                        fill={getPlayerColor(fleet.player_id)}
-                        fontSize="3"
-                      >
-                        {fleet.ship_count}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-          </svg>
-        </div>
+        <GalaxyMap
+          width={mapData.galaxy.width}
+          height={mapData.galaxy.height}
+          stars={mapData.stars}
+          fleets={mapData.fleets}
+          players={mapData.players}
+          myPlayerId={mapData.my_player_id}
+          selectedStarId={selectedStarId}
+          onStarClick={handleStarClick}
+          onFleetClick={handleFleetClick}
+        />
 
         {/* Side Panel */}
         <aside className="side-panel">
-          {selectedStar ? (
+          {selectedFleet ? (
+            // Fleet details
+            <div className="fleet-info">
+              <div className="panel-header">
+                <h2>{selectedFleet.name}</h2>
+                <button
+                  className="close-btn"
+                  onClick={() => setSelectedFleetId(null)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="fleet-details">
+                <p>
+                  <strong>Vaisseaux:</strong> {selectedFleet.ship_count}
+                </p>
+                <p>
+                  <strong>Vitesse:</strong> {selectedFleet.fleet_speed.toFixed(1)}
+                </p>
+                <p>
+                  <strong>Portée:</strong> {selectedFleet.fleet_range.toFixed(1)}
+                </p>
+                <p>
+                  <strong>Statut:</strong>{' '}
+                  {selectedFleet.status === 'stationed' ? 'En orbite' : 'En transit'}
+                </p>
+              </div>
+            </div>
+          ) : selectedStar ? (
+            // Star details
             <div className="star-info">
-              <h2>{selectedStar.name}</h2>
+              <div className="panel-header">
+                <h2>{selectedStar.name}</h2>
+                <button
+                  className="close-btn"
+                  onClick={() => setSelectedStarId(null)}
+                >
+                  ×
+                </button>
+              </div>
               <p className="star-coords">
                 Position: ({selectedStar.x.toFixed(1)}, {selectedStar.y.toFixed(1)})
               </p>
@@ -323,41 +169,52 @@ function GameView() {
                 {selectedStar.planets.map((planet) => (
                   <div
                     key={planet.id}
-                    className={`planet-card ${planet.owner_id === mapData.my_player_id ? 'owned' : ''}`}
+                    className={`planet-card ${planet.owner_id === mapData.my_player_id ? 'owned' : ''} ${planet.state === 'unexplored' ? 'unexplored' : ''}`}
                   >
                     <div className="planet-header">
-                      <span className="planet-name">{planet.name}</span>
+                      <span className="planet-name">
+                        {planet.state === 'unexplored' ? '???' : planet.name}
+                      </span>
                       {planet.owner_id && (
                         <span
                           className="owner-dot"
                           style={{ backgroundColor: getPlayerColor(planet.owner_id) }}
                         />
                       )}
+                      {planet.is_home_planet && (
+                        <span className="home-badge" title="Planète mère">H</span>
+                      )}
                     </div>
-                    <div className="planet-stats">
-                      <span title="Température">
-                        {planet.current_temperature.toFixed(0)}°C
-                      </span>
-                      <span title="Gravité">{planet.gravity.toFixed(1)}g</span>
-                      <span title="Métal restant">{planet.metal_remaining} Fe</span>
-                    </div>
-                    {planet.owner_id === mapData.my_player_id && (
-                      <div className="planet-details">
-                        <div className="population">
-                          Pop: {(planet.population / 1000).toFixed(0)}k / {(planet.max_population / 1000).toFixed(0)}k
+                    {planet.state !== 'unexplored' && (
+                      <>
+                        <div className="planet-stats">
+                          <span title="Température">
+                            {planet.current_temperature.toFixed(0)}°C
+                          </span>
+                          <span title="Gravité">{planet.gravity.toFixed(1)}g</span>
+                          <span title="Métal restant">{planet.metal_remaining} Fe</span>
                         </div>
-                        <div className="budgets">
-                          <span>Terra: {planet.terraform_budget}%</span>
-                          <span>Mine: {planet.mining_budget}%</span>
-                        </div>
-                      </div>
+                        {planet.owner_id === mapData.my_player_id && (
+                          <div className="planet-details">
+                            <div className="population">
+                              Pop: {(planet.population / 1000).toFixed(0)}k /{' '}
+                              {(planet.max_population / 1000).toFixed(0)}k
+                            </div>
+                            <div className="budgets">
+                              <span>Terra: {planet.terraform_budget}%</span>
+                              <span>Mine: {planet.mining_budget}%</span>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}
               </div>
 
               {/* Fleets at this star */}
-              {mapData.fleets.filter((f) => f.current_star_id === selectedStar.id).length > 0 && (
+              {mapData.fleets.filter((f) => f.current_star_id === selectedStar.id)
+                .length > 0 && (
                 <>
                   <h3>Flottes</h3>
                   <div className="fleets-list">
@@ -366,7 +223,8 @@ function GameView() {
                       .map((fleet) => (
                         <div
                           key={fleet.id}
-                          className={`fleet-card ${fleet.player_id === mapData.my_player_id ? 'owned' : ''}`}
+                          className={`fleet-card ${fleet.player_id === mapData.my_player_id ? 'owned' : ''} ${fleet.id === selectedFleetId ? 'selected' : ''}`}
+                          onClick={() => handleFleetClick(fleet.id)}
                         >
                           <span
                             className="fleet-color"
@@ -383,6 +241,14 @@ function GameView() {
           ) : (
             <div className="no-selection">
               <p>Cliquez sur une étoile pour voir ses détails</p>
+              <div className="help-tips">
+                <p><strong>Contrôles:</strong></p>
+                <ul>
+                  <li>Molette: Zoom</li>
+                  <li>Clic + Glisser: Déplacer</li>
+                  <li>G/R/S: Niveaux de zoom</li>
+                </ul>
+              </div>
             </div>
           )}
         </aside>

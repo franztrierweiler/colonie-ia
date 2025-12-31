@@ -1,0 +1,142 @@
+.galaxy-map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a1a;
+  user-select: none;
+}
+
+.galaxy-map {
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  transition: transform 0.05s ease-out;
+}
+
+.galaxy-map.dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.zoom-controls button {
+  width: 2rem;
+  height: 2rem;
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.zoom-controls button:hover {
+  background: var(--bg-dark);
+  border-color: var(--orange-primary);
+  color: var(--orange-primary);
+}
+
+.zoom-controls button.active {
+  background: var(--orange-primary);
+  border-color: var(--orange-primary);
+  color: var(--bg-darker);
+}
+
+.zoom-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0.25rem 0;
+}
+
+/* Zoom indicator */
+.zoom-indicator {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Star system */
+.star-system {
+  cursor: pointer;
+}
+
+.star-system:hover .star-core {
+  filter: brightness(1.3);
+}
+
+.star-system.selected .star-core {
+  filter: brightness(1.5);
+}
+
+.star-name {
+  pointer-events: none;
+  user-select: none;
+  font-family: var(--font-pixel);
+}
+
+/* Planet marker */
+.planet-marker {
+  pointer-events: none;
+}
+
+.planet-details text {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Fleet marker */
+.fleet-marker {
+  cursor: pointer;
+}
+
+.fleet-marker:hover .fleet-highlight {
+  opacity: 0.5 !important;
+}
+
+.fleet-marker:hover .fleet-icon {
+  filter: brightness(1.2);
+}
+
+.fleet-marker.mine .fleet-icon {
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+}
+
+/* Fleet trajectory */
+.fleet-trajectory {
+  pointer-events: none;
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.star-system.selected .star-core {
+  animation: pulse 1.5s infinite;
+}
