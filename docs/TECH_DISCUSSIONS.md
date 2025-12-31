@@ -66,6 +66,34 @@ Ce fichier consigne les discussions et décisions techniques prises au cours du 
 
 ---
 
+## 2025-12-31 : Refactorisation modèle Star/Planet (À FAIRE)
+
+**Contexte** : Le modèle actuel implémente une hiérarchie `Galaxie → Étoiles → Planètes` (1-4 planètes par étoile), alors que dans le jeu original Spaceward Ho!, chaque point sur la carte est directement une planète colonisable.
+
+**Problème** :
+- Le modèle actuel est trop complexe pour le gameplay voulu
+- Dans Spaceward Ho!, on ne voit que des planètes sur la carte, pas des systèmes stellaires
+- L'interface actuelle montre une liste de planètes par étoile, ce qui alourdit l'UX
+
+**Refactorisation proposée** :
+1. Fusionner `Star` et `Planet` en un seul modèle `Planet`
+2. Chaque planète a : position (x, y), nom, température, gravité, métal, population, etc.
+3. Supprimer la relation parent/enfant Star→Planet
+4. Simplifier le frontend (plus de liste imbriquée)
+
+**Impact** :
+- Migration de base de données (drop + recreate)
+- Modification du générateur de galaxie
+- Simplification des routes API
+- Mise à jour du frontend (GalaxyMap, GameView)
+- Perte des parties de développement existantes (acceptable)
+
+**Risque** : Faible (projet en développement, pas de données de production)
+
+**Statut** : En attente - À planifier pour une prochaine session
+
+---
+
 ## Template pour nouvelles discussions
 
 ```markdown
