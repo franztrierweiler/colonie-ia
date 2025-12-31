@@ -6,13 +6,14 @@
 |-------|-------------|--------|
 | 1 | Infrastructure (Backend + Base Frontend) | ✅ Terminé |
 | 2 | Carte stellaire (US 10.1, 10.2, 10.3) | ✅ Terminé |
-| 3 | Panneau planète (US 10.5, 10.6) | En attente |
+| 3 | Panneau planète (US 10.5, 10.6) | ✅ Terminé |
 | 4 | Gestion flottes (US 10.4, 10.9) | En attente |
 | 5 | Rapports et historique (US 10.7, 10.8) | En attente |
 | 6 | Finitions (US 10.10) | En attente |
 
 **Commit Phase 1** : `8b1122f` - EPIC 10 Phase 1 : Infrastructure carte de jeu
 **Commit Phase 2** : `37e7f67` - EPIC 10 Phase 2 : Carte stellaire interactive
+**Commit Phase 3** : `82cf33c` - EPIC 10 Phase 3 : Panneau planète avec sliders budget
 
 ## Vue d'ensemble
 
@@ -257,14 +258,14 @@ interface FleetSidebarProps {
 - [ ] Destination claire
 
 ### US 10.5 - Panneau info planète
-- [ ] Affiche temp, gravité, métal, population
-- [ ] Sliders budget fonctionnels
-- [ ] Mise à jour en temps réel
+- [x] Affiche temp, gravité, métal, population
+- [x] Sliders budget fonctionnels
+- [x] Mise à jour en temps réel
 
 ### US 10.6 - Graphique budget
-- [ ] Visualisation courbe logarithmique
-- [ ] Montre rendement attendu
-- [ ] Interactif avec slider
+- [x] Visualisation courbe logarithmique
+- [x] Montre rendement attendu
+- [x] Interactif avec slider
 
 ### US 10.7 - Graphique historique
 - [ ] Évolution dans le temps
