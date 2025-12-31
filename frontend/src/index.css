@@ -10,6 +10,7 @@
 
   /* Orange theme colors */
   --orange-dark: #e85a1e;
+  --orange-primary: #ff6600;
   --orange-light: #f5a623;
   --bg-gradient: linear-gradient(135deg, var(--orange-dark) 0%, var(--orange-light) 100%);
   --text-primary: #1a1a1a;
@@ -20,6 +21,15 @@
   --sidebar-bg: #1a1a1a;
   --sidebar-text: #999;
   --sidebar-text-active: #fff;
+
+  /* Dark theme colors (for game view) */
+  --bg-dark: #12121a;
+  --bg-darker: #0a0a12;
+  --bg-panel: #1a1a24;
+  --text-light: #e8e8f0;
+  --border-color: #2a2a3a;
+  --font-pixel: 'Press Start 2P', 'Courier New', monospace;
+  --font-mono: 'Fira Code', 'Monaco', monospace;
 }
 
 * {
