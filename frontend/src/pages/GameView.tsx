@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { GalaxyMap } from '../components/game';
-import type { Star, Fleet, Player, Galaxy } from '../hooks/useGameState';
+import { GalaxyMap, PlanetPanel } from '../components/game';
+import type { Star, Fleet, Player, Galaxy, Planet } from '../hooks/useGameState';
 import './GameView.css';
 
 interface GameMapData {
@@ -24,6 +24,7 @@ function GameView() {
   const [error, setError] = useState<string | null>(null);
   const [selectedStarId, setSelectedStarId] = useState<number | null>(null);
   const [selectedFleetId, setSelectedFleetId] = useState<number | null>(null);
+  const [selectedPlanetId, setSelectedPlanetId] = useState<number | null>(null);
 
   const loadMap = useCallback(async () => {
     if (!gameId) return;
@@ -46,10 +47,17 @@ function GameView() {
   const handleStarClick = (starId: number) => {
     setSelectedStarId(starId === selectedStarId ? null : starId);
     setSelectedFleetId(null);
+    setSelectedPlanetId(null);
   };
 
   const handleFleetClick = (fleetId: number) => {
     setSelectedFleetId(fleetId === selectedFleetId ? null : fleetId);
+    setSelectedPlanetId(null);
+  };
+
+  const handlePlanetClick = (planet: Planet) => {
+    setSelectedPlanetId(planet.id === selectedPlanetId ? null : planet.id);
+    setSelectedFleetId(null);
   };
 
   const getPlayerColor = (playerId: number | null): string => {
@@ -58,8 +66,15 @@ function GameView() {
     return player?.color || '#666';
   };
 
+  const getPlayerName = (playerId: number | null): string | undefined => {
+    if (!playerId || !mapData) return undefined;
+    const player = mapData.players.find((p) => p.id === playerId);
+    return player?.player_name;
+  };
+
   const selectedStar = mapData?.stars.find((s) => s.id === selectedStarId);
   const selectedFleet = mapData?.fleets.find((f) => f.id === selectedFleetId);
+  const selectedPlanet = selectedStar?.planets.find((p) => p.id === selectedPlanetId);
 
   if (isLoading) {
     return (
@@ -120,7 +135,22 @@ function GameView() {
 
         {/* Side Panel */}
         <aside className="side-panel">
-          {selectedFleet ? (
+          {selectedPlanet && selectedStar ? (
+            // Planet details panel
+            <PlanetPanel
+              planet={selectedPlanet}
+              starName={selectedStar.name}
+              isOwned={selectedPlanet.owner_id === mapData.my_player_id}
+              ownerColor={getPlayerColor(selectedPlanet.owner_id)}
+              ownerName={getPlayerName(selectedPlanet.owner_id)}
+              onClose={() => setSelectedPlanetId(null)}
+              onBudgetChange={loadMap}
+              onAbandon={() => {
+                setSelectedPlanetId(null);
+                loadMap();
+              }}
+            />
+          ) : selectedFleet ? (
             // Fleet details
             <div className="fleet-info">
               <div className="panel-header">
@@ -169,7 +199,8 @@ function GameView() {
                 {selectedStar.planets.map((planet) => (
                   <div
                     key={planet.id}
-                    className={`planet-card ${planet.owner_id === mapData.my_player_id ? 'owned' : ''} ${planet.state === 'unexplored' ? 'unexplored' : ''}`}
+                    className={`planet-card ${planet.owner_id === mapData.my_player_id ? 'owned' : ''} ${planet.state === 'unexplored' ? 'unexplored' : ''} ${planet.id === selectedPlanetId ? 'selected' : ''}`}
+                    onClick={() => handlePlanetClick(planet)}
                   >
                     <div className="planet-header">
                       <span className="planet-name">

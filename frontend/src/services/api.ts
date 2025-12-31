@@ -208,6 +208,22 @@ class ApiClient {
     const response = await this.client.get(`/games/${gameId}/map`);
     return response.data;
   }
+
+  // Planet endpoints
+  async updatePlanetBudget(planetId: number, terraformBudget: number, miningBudget: number) {
+    const response = await this.client.patch(`/planets/${planetId}/budget`, {
+      terraform_budget: terraformBudget,
+      mining_budget: miningBudget,
+    });
+    return response.data;
+  }
+
+  async abandonPlanet(planetId: number, stripMine: boolean = true) {
+    const response = await this.client.post(`/planets/${planetId}/abandon`, {
+      strip_mine: stripMine,
+    });
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

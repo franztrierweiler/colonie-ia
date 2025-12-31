@@ -91,10 +91,22 @@
   border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.planet-card:hover {
+  background: var(--bg-darker);
 }
 
 .planet-card.owned {
   border-color: var(--orange-primary);
+}
+
+.planet-card.selected {
+  background: var(--bg-darker);
+  border-color: var(--orange-light);
+  box-shadow: 0 0 0 1px var(--orange-light);
 }
 
 .planet-header {
