@@ -5,13 +5,14 @@
 | Phase | Description | Statut |
 |-------|-------------|--------|
 | 1 | Infrastructure (Backend + Base Frontend) | ✅ Terminé |
-| 2 | Carte stellaire (US 10.1, 10.2, 10.3) | En attente |
+| 2 | Carte stellaire (US 10.1, 10.2, 10.3) | ✅ Terminé |
 | 3 | Panneau planète (US 10.5, 10.6) | En attente |
 | 4 | Gestion flottes (US 10.4, 10.9) | En attente |
 | 5 | Rapports et historique (US 10.7, 10.8) | En attente |
 | 6 | Finitions (US 10.10) | En attente |
 
 **Commit Phase 1** : `8b1122f` - EPIC 10 Phase 1 : Infrastructure carte de jeu
+**Commit Phase 2** : `37e7f67` - EPIC 10 Phase 2 : Carte stellaire interactive
 
 ## Vue d'ensemble
 
@@ -236,19 +237,19 @@ interface FleetSidebarProps {
 ## Critères d'Acceptation
 
 ### US 10.1 - Carte stellaire 2D
-- [ ] Affiche toutes les étoiles de la galaxie
-- [ ] Positions correctes selon coordonnées x, y
-- [ ] Cliquable pour sélectionner
+- [x] Affiche toutes les étoiles de la galaxie
+- [x] Positions correctes selon coordonnées x, y
+- [x] Cliquable pour sélectionner
 
 ### US 10.2 - Niveaux de zoom
-- [ ] 3 niveaux accessibles (boutons ou molette)
-- [ ] Transition fluide entre niveaux
-- [ ] Pan possible à tous les niveaux
+- [x] 3 niveaux accessibles (boutons ou molette)
+- [x] Transition fluide entre niveaux
+- [x] Pan possible à tous les niveaux
 
 ### US 10.3 - Représentation planètes
-- [ ] Bicorne sur planètes possédées
-- [ ] "?" sur planètes inexplorées
-- [ ] Couleur du propriétaire visible
+- [x] Bicorne sur planètes possédées
+- [x] "?" sur planètes inexplorées
+- [x] Couleur du propriétaire visible
 
 ### US 10.4 - Trajectoires flottes
 - [ ] Lignes visibles pour flottes en transit
