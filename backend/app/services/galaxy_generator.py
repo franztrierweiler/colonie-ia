@@ -11,19 +11,19 @@ from app.models import Galaxy, Star, Planet, GalaxyShape, GalaxyDensity, PlanetS
 from app.data import STAR_NAMES, PLANET_SUFFIXES, get_random_star_name
 
 
-# Galaxy size presets
+# Galaxy size presets (larger dimensions for better star spacing)
 GALAXY_PRESETS = {
-    "small": {"stars": 20, "width": 100, "height": 100},
-    "medium": {"stars": 50, "width": 200, "height": 200},
-    "large": {"stars": 100, "width": 300, "height": 300},
-    "huge": {"stars": 200, "width": 500, "height": 500},
+    "small": {"stars": 20, "width": 150, "height": 150},
+    "medium": {"stars": 50, "width": 300, "height": 300},
+    "large": {"stars": 100, "width": 450, "height": 450},
+    "huge": {"stars": 200, "width": 700, "height": 700},
 }
 
 # Density factors (affects minimum distance between stars)
 DENSITY_FACTORS = {
-    GalaxyDensity.LOW.value: 1.5,
-    GalaxyDensity.MEDIUM.value: 1.0,
-    GalaxyDensity.HIGH.value: 0.7,
+    GalaxyDensity.LOW.value: 1.8,
+    GalaxyDensity.MEDIUM.value: 1.3,
+    GalaxyDensity.HIGH.value: 1.0,
 }
 
 
@@ -191,7 +191,8 @@ class GalaxyGenerator:
     def _generate_random(self) -> List[Tuple[float, float]]:
         """Generate stars with Poisson disk sampling for even distribution."""
         positions = []
-        min_distance = (self.width * self.height / self.star_count) ** 0.5 * 0.5 * self.density_factor
+        # Minimum distance: ~70% of average spacing between stars
+        min_distance = (self.width * self.height / self.star_count) ** 0.5 * 0.7 * self.density_factor
 
         # Use rejection sampling
         max_attempts = self.star_count * 100
@@ -224,8 +225,10 @@ class GalaxyGenerator:
 
     def _apply_minimum_distance(self, positions: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
         """Apply Lloyd's relaxation to improve star distribution."""
-        min_dist = 8 * self.density_factor
-        iterations = 3
+        # Minimum distance: ~50% of average spacing
+        avg_spacing = (self.width * self.height / self.star_count) ** 0.5
+        min_dist = avg_spacing * 0.5 * self.density_factor
+        iterations = 5
 
         for _ in range(iterations):
             new_positions = []
