@@ -51,15 +51,16 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="games/:gameId/play"
-              element={
-                <ProtectedRoute>
-                  <GameView />
-                </ProtectedRoute>
-              }
-            />
           </Route>
+          {/* GameView has its own header, outside Layout */}
+          <Route
+            path="games/:gameId/play"
+            element={
+              <ProtectedRoute>
+                <GameView />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

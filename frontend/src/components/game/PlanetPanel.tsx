@@ -1,12 +1,10 @@
-import { useState, useCallback } from 'react';
-import type { Planet, Player } from '../../hooks/useGameState';
-import BudgetSlider from './BudgetSlider';
+import { useState, useCallback, useEffect } from 'react';
+import type { Planet, ProductionQueueItem, ShipDesign } from '../../hooks/useGameState';
 import api from '../../services/api';
 import './PlanetPanel.css';
 
 interface PlanetPanelProps {
   planet: Planet;
-  starName: string;
   isOwned: boolean;
   ownerColor: string;
   ownerName?: string;
@@ -17,7 +15,6 @@ interface PlanetPanelProps {
 
 function PlanetPanel({
   planet,
-  starName,
   isOwned,
   ownerColor,
   ownerName,
@@ -27,27 +24,120 @@ function PlanetPanel({
 }: PlanetPanelProps) {
   const [terraformBudget, setTerraformBudget] = useState(planet.terraform_budget);
   const [miningBudget, setMiningBudget] = useState(planet.mining_budget);
+  const [shipsBudget, setShipsBudget] = useState(planet.ships_budget || 0);
   const [isSaving, setIsSaving] = useState(false);
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
   const [stripMine, setStripMine] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Production queue state
+  const [productionQueue, setProductionQueue] = useState<ProductionQueueItem[]>([]);
+  const [designs, setDesigns] = useState<ShipDesign[]>([]);
+  const [selectedDesign, setSelectedDesign] = useState<number | null>(null);
+  const [productionOutput, setProductionOutput] = useState(0);
+  const [showAddProduction, setShowAddProduction] = useState(false);
 
   const hasChanges =
-    terraformBudget !== planet.terraform_budget || miningBudget !== planet.mining_budget;
+    terraformBudget !== planet.terraform_budget ||
+    miningBudget !== planet.mining_budget ||
+    shipsBudget !== (planet.ships_budget || 0);
 
-  const handleTerraformChange = useCallback((value: number) => {
-    setTerraformBudget(value);
-    setMiningBudget(100 - value);
-  }, []);
+  useEffect(() => {
+    if (isOwned) {
+      loadProductionQueue();
+      loadDesigns();
+    }
+  }, [isOwned, planet.id]);
 
-  const handleMiningChange = useCallback((value: number) => {
-    setMiningBudget(value);
-    setTerraformBudget(100 - value);
-  }, []);
+  const loadProductionQueue = async () => {
+    try {
+      const data = await api.getProductionQueue(planet.id);
+      setProductionQueue(data.queue || []);
+      setProductionOutput(data.production_output_per_turn || 0);
+    } catch (err) {
+      console.error('Erreur chargement file de production:', err);
+    }
+  };
+
+  const loadDesigns = async () => {
+    try {
+      const gamesData = await api.getMyGames();
+      if (gamesData.games && gamesData.games.length > 0) {
+        const gameId = gamesData.games[0].id;
+        const designsData = await api.getDesigns(gameId);
+        setDesigns(designsData.designs || []);
+      }
+    } catch (err) {
+      console.error('Erreur chargement designs:', err);
+    }
+  };
+
+  const handleBudgetBarClick = (type: 'terraform' | 'mining' | 'ships', e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickY = e.clientY - rect.top;
+    const percentage = Math.round(100 - (clickY / rect.height) * 100);
+    const clampedValue = Math.max(0, Math.min(100, percentage));
+
+    handleBudgetChange(type, clampedValue);
+  };
+
+  const handleBudgetChange = useCallback(
+    (type: 'terraform' | 'mining' | 'ships', value: number) => {
+      const total = 100;
+      let newTerraform = terraformBudget;
+      let newMining = miningBudget;
+      let newShips = shipsBudget;
+
+      if (type === 'terraform') {
+        newTerraform = value;
+        const remaining = total - value;
+        const oldOtherSum = miningBudget + shipsBudget;
+        if (oldOtherSum > 0) {
+          newMining = Math.round((miningBudget / oldOtherSum) * remaining);
+          newShips = remaining - newMining;
+        } else {
+          newMining = Math.round(remaining / 2);
+          newShips = remaining - newMining;
+        }
+      } else if (type === 'mining') {
+        newMining = value;
+        const remaining = total - value;
+        const oldOtherSum = terraformBudget + shipsBudget;
+        if (oldOtherSum > 0) {
+          newTerraform = Math.round((terraformBudget / oldOtherSum) * remaining);
+          newShips = remaining - newTerraform;
+        } else {
+          newTerraform = Math.round(remaining / 2);
+          newShips = remaining - newTerraform;
+        }
+      } else {
+        newShips = value;
+        const remaining = total - value;
+        const oldOtherSum = terraformBudget + miningBudget;
+        if (oldOtherSum > 0) {
+          newTerraform = Math.round((terraformBudget / oldOtherSum) * remaining);
+          newMining = remaining - newTerraform;
+        } else {
+          newTerraform = Math.round(remaining / 2);
+          newMining = remaining - newTerraform;
+        }
+      }
+
+      newTerraform = Math.max(0, Math.min(100, newTerraform));
+      newMining = Math.max(0, Math.min(100, newMining));
+      newShips = Math.max(0, Math.min(100, newShips));
+
+      setTerraformBudget(newTerraform);
+      setMiningBudget(newMining);
+      setShipsBudget(newShips);
+    },
+    [terraformBudget, miningBudget, shipsBudget]
+  );
 
   const handleSaveBudget = async () => {
     setIsSaving(true);
     try {
-      await api.updatePlanetBudget(planet.id, terraformBudget, miningBudget);
+      await api.updatePlanetBudget(planet.id, terraformBudget, miningBudget, shipsBudget);
       onBudgetChange();
     } catch (err) {
       console.error('Erreur lors de la sauvegarde du budget:', err);
@@ -63,169 +153,241 @@ function PlanetPanel({
       setShowAbandonConfirm(false);
       onAbandon();
     } catch (err) {
-      console.error('Erreur lors de l\'abandon:', err);
+      console.error("Erreur lors de l'abandon:", err);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Calcul des indicateurs
-  const tempDiff = Math.abs(planet.current_temperature - 22);
-  const tempStatus = tempDiff <= 5 ? 'optimal' : tempDiff <= 20 ? 'acceptable' : 'hostile';
-  const gravityDiff = Math.abs(planet.gravity - 1.0);
-  const gravityStatus = gravityDiff <= 0.2 ? 'optimal' : gravityDiff <= 0.5 ? 'acceptable' : 'hostile';
+  const handleAddToQueue = async () => {
+    if (!selectedDesign) return;
+    setIsSaving(true);
+    try {
+      await api.addToProductionQueue(planet.id, selectedDesign);
+      await loadProductionQueue();
+      setShowAddProduction(false);
+      setSelectedDesign(null);
+    } catch (err) {
+      console.error('Erreur ajout à la file:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRemoveFromQueue = async (queueId: number) => {
+    try {
+      await api.removeFromProductionQueue(queueId);
+      await loadProductionQueue();
+    } catch (err) {
+      console.error('Erreur suppression de la file:', err);
+    }
+  };
+
+  // Calcul revenu estimé
+  const estimatedIncome = planet.population > 0
+    ? Math.round(planet.population * planet.habitability * 0.1)
+    : 0;
 
   return (
-    <div className="planet-panel">
-      <div className="panel-header">
-        <div className="planet-title">
-          <h2>{planet.name}</h2>
-          {planet.is_home_planet && <span className="home-badge">Capitale</span>}
+    <div className="planet-panel compact">
+      {/* Header avec nom et barres budget */}
+      <div className="panel-header-compact">
+        <div className="planet-info-left">
+          <div className="planet-name-row">
+            <h2>{planet.name}</h2>
+            {planet.is_home_planet && <span className="home-badge">★</span>}
+            {planet.state !== 'unexplored' && (planet.history_line1 || planet.history_line2) && (
+              <button
+                className="btn-history"
+                onClick={() => setShowHistory(true)}
+                title="Histoire de la planète"
+              >
+                📖
+              </button>
+            )}
+            <button className="close-btn" onClick={onClose}>×</button>
+          </div>
+
+          {/* Stats compactes style Spaceward Ho! */}
+          <div className="stats-compact">
+            <div className="stat-row">
+              <span className="stat-label">Revenu:</span>
+              <span className="stat-value">${estimatedIncome.toLocaleString()}</span>
+            </div>
+            <div className="stat-row">
+              <span className="stat-label">Pop:</span>
+              <span className="stat-value">{(planet.population / 1000).toFixed(0)}k</span>
+            </div>
+            <div className="stat-row">
+              <span className="stat-label">Temp:</span>
+              <span className="stat-value">{planet.current_temperature.toFixed(1)}°C</span>
+            </div>
+            <div className="stat-row">
+              <span className="stat-label">Gravité:</span>
+              <span className="stat-value">{planet.gravity.toFixed(2)}G</span>
+            </div>
+            <div className="stat-row">
+              <span className="stat-label">Métal:</span>
+              <span className="stat-value">{planet.metal_remaining.toLocaleString()}</span>
+            </div>
+          </div>
         </div>
-        <button className="close-btn" onClick={onClose}>
-          ×
-        </button>
+
+        {/* Barres budget verticales */}
+        {isOwned && (
+          <div className="budget-bars-vertical">
+            <div
+              className="budget-bar-v"
+              onClick={(e) => handleBudgetBarClick('terraform', e)}
+              title={`Terra: ${terraformBudget}%`}
+            >
+              <div className="bar-fill terra" style={{ height: `${terraformBudget}%` }} />
+              <span className="bar-label">T</span>
+            </div>
+            <div
+              className="budget-bar-v"
+              onClick={(e) => handleBudgetBarClick('mining', e)}
+              title={`Mine: ${miningBudget}%`}
+            >
+              <div className="bar-fill mine" style={{ height: `${miningBudget}%` }} />
+              <span className="bar-label">M</span>
+            </div>
+            <div
+              className="budget-bar-v"
+              onClick={(e) => handleBudgetBarClick('ships', e)}
+              title={`Vsx: ${shipsBudget}%`}
+            >
+              <div className="bar-fill ship" style={{ height: `${shipsBudget}%` }} />
+              <span className="bar-label">V</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      <p className="planet-location">
-        Orbite {planet.orbit_index + 1} de {starName}
-      </p>
+      {/* Bouton sauvegarder si changements */}
+      {isOwned && hasChanges && (
+        <button
+          className="btn-save-compact"
+          onClick={handleSaveBudget}
+          disabled={isSaving}
+        >
+          {isSaving ? '...' : 'Appliquer'}
+        </button>
+      )}
 
-      {/* Owner info */}
-      {planet.owner_id && (
-        <div className="owner-info" style={{ borderColor: ownerColor }}>
+      {/* Owner info si pas à nous */}
+      {planet.owner_id && !isOwned && (
+        <div className="owner-info-compact" style={{ borderColor: ownerColor }}>
           <span className="owner-dot" style={{ backgroundColor: ownerColor }} />
-          <span>{isOwned ? 'Votre colonie' : `Colonie de ${ownerName || 'inconnu'}`}</span>
+          <span>Colonie de {ownerName || 'inconnu'}</span>
         </div>
       )}
 
-      {/* Characteristics */}
-      <section className="planet-section">
-        <h3>Caractéristiques</h3>
-        <div className="characteristics-grid">
-          <div className={`characteristic ${tempStatus}`}>
-            <span className="char-label">Température</span>
-            <span className="char-value">{planet.current_temperature.toFixed(1)}°C</span>
-            {planet.current_temperature !== planet.temperature && (
-              <span className="char-original">(base: {planet.temperature.toFixed(1)}°C)</span>
+      {/* Modal Histoire */}
+      {showHistory && (
+        <div className="history-modal-overlay" onClick={() => setShowHistory(false)}>
+          <div className="history-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="history-modal-header">
+              <span>📖 Histoire de {planet.name}</span>
+              <button onClick={() => setShowHistory(false)}>×</button>
+            </div>
+            <div className="history-modal-content">
+              {planet.history_line1 && <p>{planet.history_line1}</p>}
+              {planet.history_line2 && <p>{planet.history_line2}</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Production Queue compact */}
+      {isOwned && (
+        <div className="production-compact">
+          <div className="production-header">
+            <span>Production ({productionOutput.toFixed(0)} pts/tour)</span>
+            {!showAddProduction && (
+              <button
+                className="btn-add-small"
+                onClick={() => setShowAddProduction(true)}
+                disabled={designs.length === 0}
+              >
+                +
+              </button>
             )}
           </div>
-          <div className={`characteristic ${gravityStatus}`}>
-            <span className="char-label">Gravité</span>
-            <span className="char-value">{planet.gravity.toFixed(2)}g</span>
-          </div>
-          <div className="characteristic">
-            <span className="char-label">Habitabilité</span>
-            <span className="char-value">{(planet.habitability * 100).toFixed(0)}%</span>
-          </div>
-          <div className="characteristic">
-            <span className="char-label">Métal restant</span>
-            <span className="char-value">{planet.metal_remaining.toLocaleString()}</span>
-            <span className="char-original">/ {planet.metal_reserves.toLocaleString()}</span>
-          </div>
-        </div>
-      </section>
 
-      {/* Population (only if colonized) */}
-      {planet.state !== 'unexplored' && planet.state !== 'explored' && (
-        <section className="planet-section">
-          <h3>Population</h3>
-          <div className="population-bar-container">
-            <div className="population-info">
-              <span>{(planet.population / 1000).toFixed(0)}k</span>
-              <span className="population-max">/ {(planet.max_population / 1000).toFixed(0)}k</span>
+          {productionQueue.length > 0 ? (
+            <div className="queue-list-compact">
+              {productionQueue.map((item) => (
+                <div key={item.id} className="queue-item-compact">
+                  <span className="queue-name">{item.design_name}</span>
+                  <span className="queue-progress">{item.production_progress.toFixed(0)}%</span>
+                  <button
+                    className="queue-remove"
+                    onClick={() => handleRemoveFromQueue(item.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
             </div>
-            <div className="population-bar">
-              <div
-                className="population-fill"
-                style={{
-                  width: `${planet.max_population > 0 ? (planet.population / planet.max_population) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Budget sliders (only if owned) */}
-      {isOwned && (
-        <section className="planet-section">
-          <h3>Allocation du budget</h3>
-          <BudgetSlider
-            label="Terraformation"
-            value={terraformBudget}
-            onChange={handleTerraformChange}
-            color="#4a9eff"
-            disabled={isSaving}
-          />
-          <BudgetSlider
-            label="Extraction minière"
-            value={miningBudget}
-            onChange={handleMiningChange}
-            color="#ffa500"
-            disabled={isSaving}
-          />
-
-          {hasChanges && (
-            <button
-              className="btn-primary btn-save-budget"
-              onClick={handleSaveBudget}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Sauvegarde...' : 'Appliquer'}
-            </button>
+          ) : (
+            <p className="no-production-compact">Aucune production</p>
           )}
-        </section>
+
+          {showAddProduction && (
+            <div className="add-production-compact">
+              <select
+                value={selectedDesign || ''}
+                onChange={(e) => setSelectedDesign(Number(e.target.value) || null)}
+              >
+                <option value="">Choisir...</option>
+                {designs.map((design) => (
+                  <option key={design.id} value={design.id}>
+                    {design.name}
+                  </option>
+                ))}
+              </select>
+              <button onClick={handleAddToQueue} disabled={!selectedDesign || isSaving}>OK</button>
+              <button onClick={() => { setShowAddProduction(false); setSelectedDesign(null); }}>×</button>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Abandon button (only if owned and not home planet) */}
+      {/* Abandon (compact) */}
       {isOwned && !planet.is_home_planet && (
-        <section className="planet-section danger-section">
+        <div className="abandon-compact">
           {!showAbandonConfirm ? (
             <button
-              className="btn-danger"
+              className="btn-abandon-small"
               onClick={() => setShowAbandonConfirm(true)}
               disabled={isSaving}
             >
-              Abandonner la planète
+              Abandonner
             </button>
           ) : (
-            <div className="abandon-confirm">
-              <p>Êtes-vous sûr de vouloir abandonner cette planète ?</p>
-              <label className="strip-mine-option">
+            <div className="abandon-confirm-compact">
+              <label>
                 <input
                   type="checkbox"
                   checked={stripMine}
                   onChange={(e) => setStripMine(e.target.checked)}
                 />
-                Extraire le métal restant avant abandon
+                Extraire métal
               </label>
-              <div className="abandon-buttons">
-                <button
-                  className="btn-danger"
-                  onClick={handleAbandon}
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'En cours...' : 'Confirmer l\'abandon'}
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => setShowAbandonConfirm(false)}
-                  disabled={isSaving}
-                >
-                  Annuler
-                </button>
-              </div>
+              <button className="btn-danger-small" onClick={handleAbandon} disabled={isSaving}>
+                OK
+              </button>
+              <button onClick={() => setShowAbandonConfirm(false)}>×</button>
             </div>
           )}
-        </section>
+        </div>
       )}
 
-      {/* Unexplored planet message */}
+      {/* Message planète non explorée */}
       {planet.state === 'unexplored' && (
-        <div className="unexplored-message">
-          <p>Cette planète n'a pas encore été explorée.</p>
-          <p>Envoyez un vaisseau pour découvrir ses caractéristiques.</p>
+        <div className="unexplored-compact">
+          <p>Planète non explorée</p>
         </div>
       )}
     </div>

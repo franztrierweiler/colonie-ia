@@ -1,5 +1,5 @@
 """
-Galaxy, Star and Planet models
+Galaxy and Planet models
 """
 from datetime import datetime
 from enum import Enum
@@ -32,7 +32,7 @@ class PlanetState(str, Enum):
 
 
 class Galaxy(db.Model):
-    """Galaxy model - contains all stars for a game."""
+    """Galaxy model - contains all planets for a game."""
 
     __tablename__ = "galaxies"
 
@@ -42,7 +42,7 @@ class Galaxy(db.Model):
     # Configuration
     shape = db.Column(db.String(20), default=GalaxyShape.RANDOM.value, nullable=False)
     density = db.Column(db.String(20), default=GalaxyDensity.MEDIUM.value, nullable=False)
-    star_count = db.Column(db.Integer, default=50, nullable=False)
+    planet_count = db.Column(db.Integer, default=50, nullable=False)
 
     # Dimensions (unites de jeu)
     width = db.Column(db.Float, default=200.0, nullable=False)
@@ -53,65 +53,21 @@ class Galaxy(db.Model):
 
     # Relationships
     game = db.relationship("Game", back_populates="galaxy")
-    stars = db.relationship("Star", back_populates="galaxy", lazy="dynamic", cascade="all, delete-orphan")
+    planets = db.relationship("Planet", back_populates="galaxy", lazy="dynamic", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Galaxy {self.id} ({self.shape}, {self.star_count} stars)>"
+        return f"<Galaxy {self.id} ({self.shape}, {self.planet_count} planets)>"
 
-    def to_dict(self, include_stars=False):
+    def to_dict(self, include_planets=False):
         """Serialize galaxy to dictionary."""
         data = {
             "id": self.id,
             "game_id": self.game_id,
             "shape": self.shape,
             "density": self.density,
-            "star_count": self.star_count,
+            "planet_count": self.planet_count,
             "width": self.width,
             "height": self.height,
-        }
-        if include_stars:
-            data["stars"] = [star.to_dict() for star in self.stars]
-        return data
-
-
-class Star(db.Model):
-    """Star/Solar system model."""
-
-    __tablename__ = "stars"
-
-    id = db.Column(db.Integer, primary_key=True)
-    galaxy_id = db.Column(db.Integer, db.ForeignKey("galaxies.id"), nullable=False)
-
-    # Identity
-    name = db.Column(db.String(50), nullable=False)
-
-    # Position in galaxy
-    x = db.Column(db.Float, nullable=False)
-    y = db.Column(db.Float, nullable=False)
-
-    # Nova event
-    is_nova = db.Column(db.Boolean, default=False, nullable=False)
-    nova_turn = db.Column(db.Integer, nullable=True)  # Turn when nova will occur
-
-    # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-    # Relationships
-    galaxy = db.relationship("Galaxy", back_populates="stars")
-    planets = db.relationship("Planet", back_populates="star", lazy="dynamic", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<Star {self.name} at ({self.x:.1f}, {self.y:.1f})>"
-
-    def to_dict(self, include_planets=False):
-        """Serialize star to dictionary."""
-        data = {
-            "id": self.id,
-            "name": self.name,
-            "x": self.x,
-            "y": self.y,
-            "is_nova": self.is_nova,
-            "planet_count": self.planets.count(),
         }
         if include_planets:
             data["planets"] = [planet.to_dict() for planet in self.planets]
@@ -119,16 +75,23 @@ class Star(db.Model):
 
 
 class Planet(db.Model):
-    """Planet model."""
+    """Planet model - a colonizable world in the galaxy."""
 
     __tablename__ = "planets"
 
     id = db.Column(db.Integer, primary_key=True)
-    star_id = db.Column(db.Integer, db.ForeignKey("stars.id"), nullable=False)
+    galaxy_id = db.Column(db.Integer, db.ForeignKey("galaxies.id"), nullable=False)
 
     # Identity
     name = db.Column(db.String(50), nullable=False)
-    orbit_index = db.Column(db.Integer, default=0)  # Position in solar system (0-3)
+
+    # Position in galaxy (previously on Star)
+    x = db.Column(db.Float, nullable=False)
+    y = db.Column(db.Float, nullable=False)
+
+    # Nova event (previously on Star)
+    is_nova = db.Column(db.Boolean, default=False, nullable=False)
+    nova_turn = db.Column(db.Integer, nullable=True)
 
     # Physical characteristics (fixed)
     temperature = db.Column(db.Float, nullable=False)  # Celsius, ideal = 22
@@ -150,22 +113,32 @@ class Planet(db.Model):
     current_temperature = db.Column(db.Float, nullable=False)  # Current temp after terraforming
 
     # Economy (per turn allocations in %)
-    terraform_budget = db.Column(db.Integer, default=50)  # 0-100
-    mining_budget = db.Column(db.Integer, default=50)  # 0-100
+    # Note: terraform_budget + mining_budget + ships_budget = 100
+    terraform_budget = db.Column(db.Integer, default=34)  # 0-100
+    mining_budget = db.Column(db.Integer, default=33)  # 0-100
+    ships_budget = db.Column(db.Integer, default=33)  # 0-100
+
+    # Ship production accumulator
+    ship_production_points = db.Column(db.Float, default=0.0)  # Accumulated production
 
     # Flags
     is_home_planet = db.Column(db.Boolean, default=False)
 
+    # History (generated upon exploration)
+    history_line1 = db.Column(db.String(200), nullable=True)
+    history_line2 = db.Column(db.String(200), nullable=True)
+
     # Timestamps
     colonized_at = db.Column(db.DateTime, nullable=True)
     explored_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
-    star = db.relationship("Star", back_populates="planets")
+    galaxy = db.relationship("Galaxy", back_populates="planets")
     owner = db.relationship("GamePlayer", back_populates="planets", foreign_keys=[owner_id])
 
     def __repr__(self):
-        return f"<Planet {self.name} ({self.state})>"
+        return f"<Planet {self.name} at ({self.x:.1f}, {self.y:.1f}) ({self.state})>"
 
     @property
     def habitability(self):
@@ -189,9 +162,12 @@ class Planet(db.Model):
         """Serialize planet to dictionary."""
         return {
             "id": self.id,
-            "star_id": self.star_id,
+            "galaxy_id": self.galaxy_id,
             "name": self.name,
-            "orbit_index": self.orbit_index,
+            "x": self.x,
+            "y": self.y,
+            "is_nova": self.is_nova,
+            "nova_turn": self.nova_turn,
             "temperature": self.temperature,
             "current_temperature": self.current_temperature,
             "gravity": self.gravity,
@@ -204,5 +180,9 @@ class Planet(db.Model):
             "habitability": round(self.habitability, 2),
             "terraform_budget": self.terraform_budget,
             "mining_budget": self.mining_budget,
+            "ships_budget": self.ships_budget,
+            "ship_production_points": self.ship_production_points,
             "is_home_planet": self.is_home_planet,
+            "history_line1": self.history_line1,
+            "history_line2": self.history_line2,
         }

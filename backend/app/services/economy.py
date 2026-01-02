@@ -5,8 +5,9 @@ Handles resource management: money (taxation), metal (mining), and debt.
 import math
 from typing import Dict, List, Optional, Tuple
 
+from datetime import datetime
 from app import db
-from app.models import GamePlayer, Planet, PlanetState
+from app.models import GamePlayer, Planet, PlanetState, ProductionQueue, Ship, Fleet
 
 
 # =============================================================================
@@ -38,6 +39,10 @@ MAX_GROWTH_RATE = 0.10  # 10% max with ideal conditions
 IDEAL_TEMPERATURE = 22.0  # Ideal temperature in Celsius
 BASE_TERRAFORM_RATE = 5.0  # Base degrees change per turn at 100% budget
 MIN_TERRAFORM_CHANGE = 0.1  # Minimum temperature change per turn
+
+# Ship Production
+BASE_SHIP_PRODUCTION_RATE = 100  # Base production points per turn at 100% budget
+PRODUCTION_POPULATION_FACTOR = 50000  # Population per 1x production multiplier
 
 
 # =============================================================================
@@ -626,12 +631,14 @@ class EconomyService:
                 "name": planet.name,
                 "income": EconomyService.calculate_planet_income(planet),
                 "mining_output": EconomyService.calculate_mining_output(planet),
+                "ship_production_output": EconomyService.calculate_ship_production_output(planet),
                 "metal_remaining": planet.metal_remaining,
                 "population": planet.population,
                 "max_population": planet.max_population,
                 "habitability": round(planet.habitability, 2),
                 "terraform_budget": planet.terraform_budget,
                 "mining_budget": planet.mining_budget,
+                "ships_budget": planet.ships_budget,
             })
 
         return {
@@ -645,3 +652,344 @@ class EconomyService:
             "can_borrow": max_debt - player.debt,
             "planets": planets_economy,
         }
+
+    # -------------------------------------------------------------------------
+    # Ship Production (US 6.4)
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def calculate_ship_production_output(planet: Planet) -> float:
+        """
+        Calculate ship production points with diminishing returns.
+
+        Production depends on:
+        - ships_budget percentage
+        - Population (more pop = more workers)
+        - Habitability
+
+        Args:
+            planet: Planet instance
+
+        Returns:
+            Production points generated this turn
+        """
+        if planet.state not in [PlanetState.COLONIZED.value, PlanetState.DEVELOPED.value]:
+            return 0.0
+
+        # Use planet's ships budget percentage
+        budget_percentage = planet.ships_budget / 100.0 if planet.ships_budget else 0
+
+        if budget_percentage <= 0:
+            return 0.0
+
+        # Population factor: more population = more production capacity
+        population_mult = 1 + (planet.population / PRODUCTION_POPULATION_FACTOR)
+
+        # Habitability affects productivity
+        habitability_factor = 0.5 + (planet.habitability * 0.5)
+
+        # Calculate base output with diminishing returns
+        base_output = BASE_SHIP_PRODUCTION_RATE * population_mult * habitability_factor
+        effective_output = diminishing_returns(budget_percentage, base_output)
+
+        return effective_output
+
+    @staticmethod
+    def process_planet_ship_production(planet: Planet) -> dict:
+        """
+        Process ship production on a planet.
+
+        1. Calculate production points generated
+        2. Apply to first item in queue
+        3. If ship is completed, create it and deduct resources
+        4. Continue to next item if there's remaining production
+
+        Args:
+            planet: Planet instance
+
+        Returns:
+            Dictionary with production results
+        """
+        result = {
+            "planet_id": planet.id,
+            "planet_name": planet.name,
+            "production_generated": 0.0,
+            "ships_completed": [],
+            "ships_in_progress": [],
+        }
+
+        production_points = EconomyService.calculate_ship_production_output(planet)
+        result["production_generated"] = production_points
+
+        if production_points <= 0:
+            return result
+
+        # Get queue items ordered by priority
+        queue_items = planet.production_queue.filter_by(is_completed=False).order_by(
+            ProductionQueue.priority
+        ).all()
+
+        if not queue_items:
+            # No ships to build, accumulate points on planet
+            planet.ship_production_points += production_points
+            return result
+
+        remaining_points = production_points
+
+        for item in queue_items:
+            if remaining_points <= 0:
+                break
+
+            # Check if player has resources for this ship
+            player = planet.owner
+            if not player:
+                continue
+
+            design = item.design
+            if not design:
+                continue
+
+            # Determine cost (prototype vs production)
+            if design.is_prototype_built:
+                metal_cost = design.production_cost_metal
+                money_cost = design.production_cost_money
+            else:
+                metal_cost = design.prototype_cost_metal
+                money_cost = design.prototype_cost_money
+
+            # Check resources before investing more production
+            if player.metal < metal_cost or player.money < money_cost:
+                result["ships_in_progress"].append({
+                    "design_name": design.name,
+                    "progress": item.production_progress,
+                    "blocked": "insufficient_resources",
+                })
+                continue
+
+            # Apply production points
+            points_needed = item.production_required - item.production_invested
+            points_to_apply = min(remaining_points, points_needed)
+            item.production_invested += points_to_apply
+            remaining_points -= points_to_apply
+
+            # Check if ship is complete
+            if item.is_ready:
+                # Deduct resources
+                player.metal -= metal_cost
+                player.money -= money_cost
+
+                # Create the ship
+                ship = EconomyService._create_ship_from_queue(item)
+
+                if ship:
+                    item.is_completed = True
+                    item.completed_at = datetime.utcnow()
+                    design.ships_built += 1
+
+                    if not design.is_prototype_built:
+                        design.is_prototype_built = True
+
+                    result["ships_completed"].append({
+                        "design_name": design.name,
+                        "ship_id": ship.id,
+                        "fleet_id": ship.fleet_id,
+                    })
+            else:
+                result["ships_in_progress"].append({
+                    "design_name": design.name,
+                    "progress": item.production_progress,
+                })
+
+        return result
+
+    @staticmethod
+    def _create_ship_from_queue(queue_item: ProductionQueue) -> Optional[Ship]:
+        """
+        Create a ship from a completed queue item.
+
+        Args:
+            queue_item: ProductionQueue instance
+
+        Returns:
+            Created Ship or None
+        """
+        design = queue_item.design
+        fleet = queue_item.fleet
+
+        # If no fleet specified, find or create one at this planet
+        if not fleet:
+            planet = queue_item.planet
+            player = planet.owner
+
+            if not player:
+                return None
+
+            # Find existing fleet at this planet
+            fleet = Fleet.query.filter_by(
+                player_id=player.id,
+                current_planet_id=planet.id,
+                status='stationed'
+            ).first()
+
+            # Create new fleet if none exists
+            if not fleet:
+                fleet = Fleet(
+                    player_id=player.id,
+                    name=f"Flotte de {planet.name}",
+                    current_planet_id=planet.id,
+                    status='stationed',
+                )
+                db.session.add(fleet)
+                db.session.flush()
+
+        # Create the ship
+        ship = Ship(
+            design_id=design.id,
+            fleet_id=fleet.id,
+        )
+        db.session.add(ship)
+
+        return ship
+
+    @staticmethod
+    def process_player_ship_production(player: GamePlayer) -> dict:
+        """
+        Process ship production on all planets owned by a player.
+
+        Args:
+            player: GamePlayer instance
+
+        Returns:
+            Dictionary with production results per planet
+        """
+        results = {
+            "planets": {},
+            "total_ships_completed": 0,
+        }
+
+        for planet in player.planets:
+            if planet.state in [PlanetState.COLONIZED.value, PlanetState.DEVELOPED.value]:
+                result = EconomyService.process_planet_ship_production(planet)
+                results["planets"][planet.id] = result
+                results["total_ships_completed"] += len(result["ships_completed"])
+
+        return results
+
+    @staticmethod
+    def add_to_production_queue(
+        planet: Planet,
+        design_id: int,
+        fleet_id: Optional[int] = None,
+        count: int = 1
+    ) -> Tuple[bool, str, List[ProductionQueue]]:
+        """
+        Add ships to a planet's production queue.
+
+        Args:
+            planet: Planet to build at
+            design_id: Ship design to build
+            fleet_id: Target fleet (optional)
+            count: Number of ships to queue
+
+        Returns:
+            Tuple of (success, message, list of queue items)
+        """
+        from app.models import ShipDesign
+
+        # Verify planet is owned and colonized
+        if not planet.owner:
+            return False, "Planet has no owner", []
+
+        if planet.state not in [PlanetState.COLONIZED.value, PlanetState.DEVELOPED.value]:
+            return False, "Planet is not colonized", []
+
+        # Verify design belongs to planet owner
+        design = ShipDesign.query.get(design_id)
+        if not design:
+            return False, "Design not found", []
+
+        if design.player_id != planet.owner_id:
+            return False, "Design does not belong to planet owner", []
+
+        # Verify fleet if specified
+        if fleet_id:
+            fleet = Fleet.query.get(fleet_id)
+            if not fleet:
+                return False, "Fleet not found", []
+            if fleet.player_id != planet.owner_id:
+                return False, "Fleet does not belong to planet owner", []
+            if fleet.current_planet_id != planet.id:
+                return False, "Fleet is not at this planet", []
+
+        # Get current max priority
+        max_priority = db.session.query(db.func.max(ProductionQueue.priority)).filter_by(
+            planet_id=planet.id,
+            is_completed=False
+        ).scalar() or 0
+
+        # Add items to queue
+        items = []
+        for i in range(count):
+            item = ProductionQueue(
+                planet_id=planet.id,
+                design_id=design_id,
+                fleet_id=fleet_id,
+                priority=max_priority + i + 1,
+            )
+            db.session.add(item)
+            items.append(item)
+
+        db.session.flush()
+
+        return True, f"Added {count} ship(s) to production queue", items
+
+    @staticmethod
+    def remove_from_production_queue(queue_id: int) -> Tuple[bool, str]:
+        """
+        Remove an item from the production queue.
+
+        Args:
+            queue_id: ProductionQueue ID
+
+        Returns:
+            Tuple of (success, message)
+        """
+        item = ProductionQueue.query.get(queue_id)
+        if not item:
+            return False, "Queue item not found"
+
+        if item.is_completed:
+            return False, "Cannot remove completed item"
+
+        db.session.delete(item)
+        return True, "Item removed from queue"
+
+    @staticmethod
+    def reorder_production_queue(planet_id: int, queue_ids: List[int]) -> Tuple[bool, str]:
+        """
+        Reorder production queue items.
+
+        Args:
+            planet_id: Planet ID
+            queue_ids: List of queue IDs in desired order
+
+        Returns:
+            Tuple of (success, message)
+        """
+        items = ProductionQueue.query.filter(
+            ProductionQueue.id.in_(queue_ids),
+            ProductionQueue.planet_id == planet_id,
+            ProductionQueue.is_completed == False
+        ).all()
+
+        if len(items) != len(queue_ids):
+            return False, "Some queue items not found"
+
+        # Update priorities
+        for i, queue_id in enumerate(queue_ids):
+            for item in items:
+                if item.id == queue_id:
+                    item.priority = i
+                    break
+
+        return True, "Queue reordered"

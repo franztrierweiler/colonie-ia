@@ -98,6 +98,7 @@ class TurnService:
             "interest": 0,
             "mining": {"total": 0, "planets": {}},
             "population_growth": {"total": 0, "planets": {}},
+            "ship_production": {"total_ships": 0, "planets": {}},
             "after": {},
         }
 
@@ -138,6 +139,11 @@ class TurnService:
                     "population": planet.population,
                 }
                 result["population_growth"]["total"] += growth
+
+        # 6. Process ship production on all planets
+        ship_production_results = EconomyService.process_player_ship_production(player)
+        result["ship_production"]["planets"] = ship_production_results["planets"]
+        result["ship_production"]["total_ships"] = ship_production_results["total_ships_completed"]
 
         # Update planet count
         player.planet_count = len([p for p in player.planets

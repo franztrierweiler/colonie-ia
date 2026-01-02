@@ -10,7 +10,7 @@ from app.routes import api_bp
 from app.services.auth import token_required
 from app.services import FleetService
 from app.models import (
-    Game, GamePlayer, Planet, Star, GameStatus,
+    Game, GamePlayer, Planet, GameStatus,
     Ship, ShipDesign, Fleet, ShipType, FleetStatus,
 )
 
@@ -39,13 +39,12 @@ class BuildShipsSchema(BaseModel):
 class CreateFleetSchema(BaseModel):
     """Schema for creating a fleet."""
     name: str = Field(min_length=1, max_length=50)
-    star_id: Optional[int] = None
     planet_id: Optional[int] = None
 
 
 class MoveFleetSchema(BaseModel):
     """Schema for moving a fleet."""
-    destination_star_id: int
+    destination_planet_id: int
 
 
 class SplitFleetSchema(BaseModel):
@@ -348,8 +347,6 @@ def create_fleet(game_id: int):
           properties:
             name:
               type: string
-            star_id:
-              type: integer
             planet_id:
               type: integer
     responses:
@@ -368,14 +365,7 @@ def create_fleet(game_id: int):
     if game.status != GameStatus.RUNNING.value:
         return jsonify({"error": "Game is not running"}), 400
 
-    star = None
     planet = None
-
-    if data.star_id:
-        star = Star.query.get(data.star_id)
-        if not star:
-            return jsonify({"error": "Star not found"}), 404
-
     if data.planet_id:
         planet = Planet.query.get(data.planet_id)
         if not planet:
@@ -383,9 +373,8 @@ def create_fleet(game_id: int):
         # Must own the planet to create fleet there
         if planet.owner_id != player.id:
             return jsonify({"error": "You don't own this planet"}), 403
-        star = planet.star
 
-    fleet = FleetService.create_fleet(player, data.name, star, planet)
+    fleet = FleetService.create_fleet(player, data.name, planet)
     db.session.commit()
 
     return jsonify(fleet.to_dict()), 201
@@ -420,7 +409,7 @@ def get_fleet(fleet_id: int):
 @token_required
 def move_fleet(fleet_id: int):
     """
-    Déplacer une flotte vers une étoile
+    Déplacer une flotte vers une planète
     ---
     tags:
       - Flottes
@@ -437,9 +426,9 @@ def move_fleet(fleet_id: int):
         schema:
           type: object
           required:
-            - destination_star_id
+            - destination_planet_id
           properties:
-            destination_star_id:
+            destination_planet_id:
               type: integer
     responses:
       200:
@@ -468,9 +457,9 @@ def move_fleet(fleet_id: int):
     if game.status != GameStatus.RUNNING.value:
         return jsonify({"error": "Game is not running"}), 400
 
-    destination = Star.query.get(data.destination_star_id)
+    destination = Planet.query.get(data.destination_planet_id)
     if not destination:
-        return jsonify({"error": "Destination star not found"}), 404
+        return jsonify({"error": "Destination planet not found"}), 404
 
     success, message = FleetService.move_fleet(fleet, destination, game.current_turn)
 

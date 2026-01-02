@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Tuple
 
 from app import db
 from app.models import (
-    GamePlayer, Planet, Star, PlanetState,
+    GamePlayer, Planet, PlanetState,
     Ship, ShipDesign, Fleet,
     ShipType, FleetStatus, SHIP_BASE_STATS,
 )
@@ -274,7 +274,6 @@ class FleetService:
     def create_fleet(
         player: GamePlayer,
         name: str,
-        star: Star = None,
         planet: Planet = None,
     ) -> Fleet:
         """
@@ -283,8 +282,7 @@ class FleetService:
         Args:
             player: Player who owns the fleet
             name: Name for the fleet
-            star: Star where fleet is stationed (optional)
-            planet: Planet the fleet is orbiting (optional)
+            planet: Planet where the fleet is stationed (optional)
 
         Returns:
             New Fleet instance
@@ -292,8 +290,7 @@ class FleetService:
         fleet = Fleet(
             player_id=player.id,
             name=name,
-            current_star_id=star.id if star else None,
-            orbiting_planet_id=planet.id if planet else None,
+            current_planet_id=planet.id if planet else None,
             status=FleetStatus.STATIONED.value,
             fuel_remaining=BASE_FUEL_CAPACITY,
             max_fuel=BASE_FUEL_CAPACITY,
@@ -309,7 +306,7 @@ class FleetService:
             return False
 
         # Ships can only join fleets at the same location
-        if ship.fleet and ship.fleet.current_star_id != fleet.current_star_id:
+        if ship.fleet and ship.fleet.current_planet_id != fleet.current_planet_id:
             return False
 
         ship.fleet_id = fleet.id
@@ -361,8 +358,7 @@ class FleetService:
         new_fleet = Fleet(
             player_id=fleet.player_id,
             name=new_name,
-            current_star_id=fleet.current_star_id,
-            orbiting_planet_id=fleet.orbiting_planet_id,
+            current_planet_id=fleet.current_planet_id,
             status=FleetStatus.STATIONED.value,
             fuel_remaining=fleet.fuel_remaining,
             max_fuel=fleet.max_fuel,
@@ -391,7 +387,7 @@ class FleetService:
         if fleet1.player_id != fleet2.player_id:
             return False, "Fleets belong to different players"
 
-        if fleet1.current_star_id != fleet2.current_star_id:
+        if fleet1.current_planet_id != fleet2.current_planet_id:
             return False, "Fleets must be at the same location"
 
         if fleet1.status != FleetStatus.STATIONED.value or fleet2.status != FleetStatus.STATIONED.value:
@@ -416,32 +412,32 @@ class FleetService:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def calculate_distance(star1: Star, star2: Star) -> float:
-        """Calculate distance between two stars."""
-        dx = star2.x - star1.x
-        dy = star2.y - star1.y
+    def calculate_distance(planet1: Planet, planet2: Planet) -> float:
+        """Calculate distance between two planets."""
+        dx = planet2.x - planet1.x
+        dy = planet2.y - planet1.y
         return math.sqrt(dx * dx + dy * dy)
 
     @staticmethod
-    def calculate_travel_time(fleet: Fleet, destination: Star) -> int:
+    def calculate_travel_time(fleet: Fleet, destination: Planet) -> int:
         """
         Calculate number of turns to reach destination.
 
         Args:
             fleet: Fleet to move
-            destination: Target star
+            destination: Target planet
 
         Returns:
             Number of turns (0 if at destination)
         """
-        if fleet.current_star_id == destination.id:
+        if fleet.current_planet_id == destination.id:
             return 0
 
-        current_star = Star.query.get(fleet.current_star_id)
-        if not current_star:
+        current_planet = Planet.query.get(fleet.current_planet_id)
+        if not current_planet:
             return -1
 
-        distance = FleetService.calculate_distance(current_star, destination)
+        distance = FleetService.calculate_distance(current_planet, destination)
         speed = fleet.fleet_speed
 
         if speed <= 0:
@@ -450,13 +446,13 @@ class FleetService:
         return math.ceil(distance / speed)
 
     @staticmethod
-    def can_reach(fleet: Fleet, destination: Star) -> Tuple[bool, str]:
+    def can_reach(fleet: Fleet, destination: Planet) -> Tuple[bool, str]:
         """
         Check if fleet can reach destination with current fuel.
 
         Args:
             fleet: Fleet to check
-            destination: Target star
+            destination: Target planet
 
         Returns:
             Tuple of (can_reach, reason)
@@ -464,14 +460,14 @@ class FleetService:
         if fleet.status != FleetStatus.STATIONED.value:
             return False, "Fleet is already in transit"
 
-        if fleet.current_star_id == destination.id:
+        if fleet.current_planet_id == destination.id:
             return False, "Already at destination"
 
-        current_star = Star.query.get(fleet.current_star_id)
-        if not current_star:
+        current_planet = Planet.query.get(fleet.current_planet_id)
+        if not current_planet:
             return False, "Fleet has no current location"
 
-        distance = FleetService.calculate_distance(current_star, destination)
+        distance = FleetService.calculate_distance(current_planet, destination)
 
         if distance > fleet.fleet_range:
             return False, f"Destination too far (distance: {distance:.1f}, range: {fleet.fleet_range:.1f})"
@@ -489,7 +485,7 @@ class FleetService:
     @staticmethod
     def move_fleet(
         fleet: Fleet,
-        destination: Star,
+        destination: Planet,
         current_turn: int,
     ) -> Tuple[bool, str]:
         """
@@ -497,7 +493,7 @@ class FleetService:
 
         Args:
             fleet: Fleet to move
-            destination: Target star
+            destination: Target planet
             current_turn: Current game turn
 
         Returns:
@@ -507,18 +503,17 @@ class FleetService:
         if not can_move:
             return False, reason
 
-        current_star = Star.query.get(fleet.current_star_id)
-        distance = FleetService.calculate_distance(current_star, destination)
+        current_planet = Planet.query.get(fleet.current_planet_id)
+        distance = FleetService.calculate_distance(current_planet, destination)
         travel_time = FleetService.calculate_travel_time(fleet, destination)
 
         # Update fleet
         fleet.status = FleetStatus.IN_TRANSIT.value
-        fleet.destination_star_id = destination.id
+        fleet.destination_planet_id = destination.id
         fleet.departure_turn = current_turn
         fleet.arrival_turn = current_turn + travel_time
         fleet.fuel_remaining -= distance
-        fleet.current_star_id = None
-        fleet.orbiting_planet_id = None
+        fleet.current_planet_id = None
 
         return True, f"Fleet departing, will arrive in {travel_time} turns"
 
@@ -551,8 +546,8 @@ class FleetService:
                 if fleet.arrival_turn <= current_turn:
                     # Fleet has arrived
                     fleet.status = FleetStatus.STATIONED.value
-                    fleet.current_star_id = fleet.destination_star_id
-                    fleet.destination_star_id = None
+                    fleet.current_planet_id = fleet.destination_planet_id
+                    fleet.destination_planet_id = None
                     fleet.departure_turn = None
                     fleet.arrival_turn = None
 
@@ -560,7 +555,7 @@ class FleetService:
                         "fleet_id": fleet.id,
                         "fleet_name": fleet.name,
                         "player_id": fleet.player_id,
-                        "star_id": fleet.current_star_id,
+                        "planet_id": fleet.current_planet_id,
                     })
                 else:
                     results["in_transit"].append({
@@ -604,20 +599,11 @@ class FleetService:
             return False, "Fleet must be stationed to refuel"
 
         # Check if at a planet where we can refuel
-        if fleet.orbiting_planet_id:
-            planet = Planet.query.get(fleet.orbiting_planet_id)
+        if fleet.current_planet_id:
+            planet = Planet.query.get(fleet.current_planet_id)
             if planet and FleetService.can_refuel_at(fleet, planet):
                 fleet.fuel_remaining = fleet.max_fuel
                 return True, f"Refueled at {planet.name}"
-
-        # Check all planets at current star
-        star = Star.query.get(fleet.current_star_id)
-        if star:
-            for planet in star.planets:
-                if FleetService.can_refuel_at(fleet, planet):
-                    fleet.fuel_remaining = fleet.max_fuel
-                    fleet.orbiting_planet_id = planet.id
-                    return True, f"Refueled at {planet.name}"
 
         return False, "No friendly planet available for refueling"
 
@@ -673,11 +659,11 @@ class FleetService:
 
         # Must be at a friendly planet
         planet = None
-        if fleet.orbiting_planet_id:
-            planet = Planet.query.get(fleet.orbiting_planet_id)
+        if fleet.current_planet_id:
+            planet = Planet.query.get(fleet.current_planet_id)
 
         if not planet or planet.owner_id != fleet.player_id:
-            return False, "Must be orbiting a friendly planet to disband", 0
+            return False, "Must be at a friendly planet to disband", 0
 
         # Calculate metal recovery
         metal_recovered = int(ship.design.production_cost_metal * DISBAND_METAL_RECOVERY)

@@ -596,12 +596,8 @@ def get_game_map(game_id: int):
     if not galaxy:
         return jsonify({"error": "Galaxy not generated"}), 500
 
-    # Étoiles avec leurs planètes
-    stars_data = []
-    for star in galaxy.stars:
-        star_dict = star.to_dict()
-        star_dict["planets"] = [planet.to_dict() for planet in star.planets]
-        stars_data.append(star_dict)
+    # Planètes
+    planets_data = [planet.to_dict() for planet in galaxy.planets]
 
     # Flottes visibles (les siennes + celles sur ses planètes)
     # Pour l'instant, on retourne toutes les flottes du jeu (fog of war à implémenter plus tard)
@@ -623,9 +619,9 @@ def get_game_map(game_id: int):
             "width": galaxy.width,
             "height": galaxy.height,
             "shape": galaxy.shape,
-            "star_count": galaxy.star_count,
+            "planet_count": galaxy.planet_count,
         },
-        "stars": stars_data,
+        "planets": planets_data,
         "fleets": fleets_data,
         "players": players_data,
     })

@@ -80,7 +80,15 @@ def register():
     try:
         data = RegisterSchema(**request.get_json())
     except ValidationError as e:
-        return jsonify({"error": "Validation error", "details": e.errors()}), 400
+        # Convert errors to JSON-serializable format
+        errors = []
+        for err in e.errors():
+            errors.append({
+                "loc": err.get("loc", []),
+                "msg": err.get("msg", ""),
+                "type": err.get("type", "")
+            })
+        return jsonify({"error": "Validation error", "details": errors}), 400
 
     # Vérifier si l'email existe déjà
     existing_user = db.session.query(User).filter_by(email=data.email.lower()).first()

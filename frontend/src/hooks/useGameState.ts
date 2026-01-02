@@ -5,8 +5,11 @@ import api from '../services/api';
 export interface Planet {
   id: number;
   name: string;
-  star_id: number;
-  orbit_index: number;
+  galaxy_id: number;
+  x: number;
+  y: number;
+  is_nova: boolean;
+  nova_turn: number | null;
   temperature: number;
   current_temperature: number;
   gravity: number;
@@ -19,17 +22,26 @@ export interface Planet {
   habitability: number;
   terraform_budget: number;
   mining_budget: number;
+  ships_budget: number;
+  ship_production_points: number;
   is_home_planet: boolean;
+  history_line1: string | null;
+  history_line2: string | null;
 }
 
-export interface Star {
+export interface ProductionQueueItem {
   id: number;
-  name: string;
-  x: number;
-  y: number;
-  is_nova: boolean;
-  planet_count: number;
-  planets: Planet[];
+  planet_id: number;
+  design_id: number;
+  design_name: string | null;
+  ship_type: string | null;
+  fleet_id: number | null;
+  priority: number;
+  production_invested: number;
+  production_required: number;
+  production_progress: number;
+  is_completed: boolean;
+  is_ready: boolean;
 }
 
 export interface Fleet {
@@ -37,17 +49,65 @@ export interface Fleet {
   name: string;
   player_id: number;
   status: string;
-  current_star_id: number | null;
-  destination_star_id: number | null;
+  current_planet_id: number | null;
+  destination_planet_id: number | null;
   departure_turn: number | null;
   arrival_turn: number | null;
   ship_count: number;
   fleet_speed: number;
   fleet_range: number;
+  fuel_remaining: number;
+  max_fuel: number;
   total_weapons: number;
   total_shields: number;
+  combat_behavior: string;
+  can_colonize: boolean;
   ships_by_type: Record<string, number>;
 }
+
+export interface ShipDesign {
+  id: number;
+  player_id: number;
+  name: string;
+  ship_type: string;
+  range_level: number;
+  speed_level: number;
+  weapons_level: number;
+  shields_level: number;
+  mini_level: number;
+  effective_range: number;
+  effective_speed: number;
+  effective_weapons: number;
+  effective_shields: number;
+  prototype_cost_money: number;
+  prototype_cost_metal: number;
+  production_cost_money: number;
+  production_cost_metal: number;
+  is_prototype_built: boolean;
+  ships_built: number;
+}
+
+export interface Ship {
+  id: number;
+  design_id: number;
+  design_name: string;
+  ship_type: string;
+  fleet_id: number | null;
+  damage: number;
+  health_percent: number;
+  is_destroyed: boolean;
+}
+
+export const SHIP_TYPES = {
+  fighter: { name: 'Chasseur', icon: '⚔️' },
+  scout: { name: 'Éclaireur', icon: '🔭' },
+  colony: { name: 'Vaisseau Colonial', icon: '🏠' },
+  satellite: { name: 'Satellite', icon: '🛰️' },
+  tanker: { name: 'Ravitailleur', icon: '⛽' },
+  battleship: { name: 'Cuirassé', icon: '🚀' },
+  decoy: { name: 'Leurre', icon: '🎭' },
+  biological: { name: 'Biologique', icon: '🦠' },
+} as const;
 
 export interface Player {
   id: number;
@@ -63,7 +123,7 @@ export interface Galaxy {
   width: number;
   height: number;
   shape: string;
-  star_count: number;
+  planet_count: number;
 }
 
 export interface GameState {
@@ -71,7 +131,7 @@ export interface GameState {
   turn: number;
   myPlayerId: number;
   galaxy: Galaxy;
-  stars: Star[];
+  planets: Planet[];
   fleets: Fleet[];
   players: Player[];
 }
@@ -80,15 +140,15 @@ interface UseGameStateReturn {
   gameState: GameState | null;
   isLoading: boolean;
   error: string | null;
-  selectedStarId: number | null;
+  selectedPlanetId: number | null;
   selectedFleetId: number | null;
-  setSelectedStarId: (id: number | null) => void;
+  setSelectedPlanetId: (id: number | null) => void;
   setSelectedFleetId: (id: number | null) => void;
   refreshMap: () => Promise<void>;
   getPlayerColor: (playerId: number | null) => string;
-  getStarById: (starId: number) => Star | undefined;
+  getPlanetById: (planetId: number) => Planet | undefined;
   getFleetById: (fleetId: number) => Fleet | undefined;
-  getFleetsAtStar: (starId: number) => Fleet[];
+  getFleetsAtPlanet: (planetId: number) => Fleet[];
   getMyFleets: () => Fleet[];
 }
 
@@ -96,7 +156,7 @@ export function useGameState(gameId: number | undefined): UseGameStateReturn {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStarId, setSelectedStarId] = useState<number | null>(null);
+  const [selectedPlanetId, setSelectedPlanetId] = useState<number | null>(null);
   const [selectedFleetId, setSelectedFleetId] = useState<number | null>(null);
 
   const refreshMap = useCallback(async () => {
@@ -111,7 +171,7 @@ export function useGameState(gameId: number | undefined): UseGameStateReturn {
         turn: data.turn,
         myPlayerId: data.my_player_id,
         galaxy: data.galaxy,
-        stars: data.stars,
+        planets: data.planets,
         fleets: data.fleets,
         players: data.players,
       });
@@ -137,9 +197,9 @@ export function useGameState(gameId: number | undefined): UseGameStateReturn {
     [gameState]
   );
 
-  const getStarById = useCallback(
-    (starId: number): Star | undefined => {
-      return gameState?.stars.find((s) => s.id === starId);
+  const getPlanetById = useCallback(
+    (planetId: number): Planet | undefined => {
+      return gameState?.planets.find((p) => p.id === planetId);
     },
     [gameState]
   );
@@ -151,9 +211,9 @@ export function useGameState(gameId: number | undefined): UseGameStateReturn {
     [gameState]
   );
 
-  const getFleetsAtStar = useCallback(
-    (starId: number): Fleet[] => {
-      return gameState?.fleets.filter((f) => f.current_star_id === starId) || [];
+  const getFleetsAtPlanet = useCallback(
+    (planetId: number): Fleet[] => {
+      return gameState?.fleets.filter((f) => f.current_planet_id === planetId) || [];
     },
     [gameState]
   );
@@ -166,15 +226,15 @@ export function useGameState(gameId: number | undefined): UseGameStateReturn {
     gameState,
     isLoading,
     error,
-    selectedStarId,
+    selectedPlanetId,
     selectedFleetId,
-    setSelectedStarId,
+    setSelectedPlanetId,
     setSelectedFleetId,
     refreshMap,
     getPlayerColor,
-    getStarById,
+    getPlanetById,
     getFleetById,
-    getFleetsAtStar,
+    getFleetsAtPlanet,
     getMyFleets,
   };
 }

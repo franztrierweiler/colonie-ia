@@ -101,7 +101,27 @@
 
 /* Planet marker */
 .planet-marker {
-  pointer-events: none;
+  cursor: pointer;
+}
+
+.planet-marker:hover .planet-core {
+  filter: brightness(1.3);
+}
+
+/* Auto-rotation des planètes - terminateur jour/nuit qui traverse */
+.planet-terminator {
+  animation: planetSpin 12s ease-in-out infinite;
+}
+
+@keyframes planetSpin {
+  0%, 100% {
+    transform: translateX(-6px);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translateX(6px);
+    opacity: 0.25;
+  }
 }
 
 .planet-details text {
@@ -137,6 +157,71 @@
   50% { opacity: 1; }
 }
 
+@keyframes haloBreath {
+  0%, 100% {
+    opacity: 0.5;
+    stroke-width: 1.5;
+  }
+  50% {
+    opacity: 0.8;
+    stroke-width: 2;
+  }
+}
+
+@keyframes haloGlow {
+  0%, 100% {
+    opacity: 0.3;
+    stroke-width: 1;
+  }
+  50% {
+    opacity: 0.6;
+    stroke-width: 1.5;
+  }
+}
+
+@keyframes gaseousPulse {
+  0%, 100% {
+    opacity: 0.4;
+    r: calc(var(--base-r, 8) * 1px);
+  }
+  50% {
+    opacity: 0.7;
+    r: calc(var(--base-r, 8) * 1.1px);
+  }
+}
+
 .star-system.selected .star-core {
   animation: pulse 1.5s infinite;
+}
+
+/* Animation du halo de la planète mère */
+.home-planet-halo-inner {
+  animation: haloBreath 2s ease-in-out infinite;
+}
+
+.home-planet-halo-outer {
+  animation: haloGlow 2s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+/* Animation du halo des planètes gazeuses hostiles */
+.gaseous-halo {
+  animation: haloBreath 3s ease-in-out infinite;
+}
+
+/* Fleet drag styles */
+.fleet-marker.dragging {
+  opacity: 0.5;
+}
+
+.fleet-marker.mine {
+  cursor: grab;
+}
+
+.fleet-marker.mine:active {
+  cursor: grabbing;
+}
+
+.fleet-drag-line {
+  pointer-events: none;
 }

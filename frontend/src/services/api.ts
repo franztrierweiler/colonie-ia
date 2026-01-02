@@ -209,12 +209,49 @@ class ApiClient {
     return response.data;
   }
 
+  // Economy endpoint
+  async getEconomy(gameId: number) {
+    const response = await this.client.get(`/games/${gameId}/economy`);
+    return response.data;
+  }
+
   // Planet endpoints
-  async updatePlanetBudget(planetId: number, terraformBudget: number, miningBudget: number) {
+  async updatePlanetBudget(
+    planetId: number,
+    terraformBudget: number,
+    miningBudget: number,
+    shipsBudget: number
+  ) {
     const response = await this.client.patch(`/planets/${planetId}/budget`, {
       terraform_budget: terraformBudget,
       mining_budget: miningBudget,
+      ships_budget: shipsBudget,
     });
+    return response.data;
+  }
+
+  // Production Queue endpoints
+  async getProductionQueue(planetId: number) {
+    const response = await this.client.get(`/planets/${planetId}/production`);
+    return response.data;
+  }
+
+  async addToProductionQueue(
+    planetId: number,
+    designId: number,
+    fleetId?: number,
+    count: number = 1
+  ) {
+    const response = await this.client.post(`/planets/${planetId}/production`, {
+      design_id: designId,
+      fleet_id: fleetId,
+      count,
+    });
+    return response.data;
+  }
+
+  async removeFromProductionQueue(queueId: number) {
+    const response = await this.client.delete(`/production/${queueId}`);
     return response.data;
   }
 
@@ -222,6 +259,98 @@ class ApiClient {
     const response = await this.client.post(`/planets/${planetId}/abandon`, {
       strip_mine: stripMine,
     });
+    return response.data;
+  }
+
+  // ==========================================================================
+  // Ship Design endpoints
+  // ==========================================================================
+
+  async getDesigns(gameId: number) {
+    const response = await this.client.get(`/games/${gameId}/designs`);
+    return response.data;
+  }
+
+  async createDesign(
+    gameId: number,
+    data: {
+      name: string;
+      ship_type: string;
+      range_level?: number;
+      speed_level?: number;
+      weapons_level?: number;
+      shields_level?: number;
+      mini_level?: number;
+    }
+  ) {
+    const response = await this.client.post(`/games/${gameId}/designs`, data);
+    return response.data;
+  }
+
+  async getDesignCosts(gameId: number, designId: number) {
+    const response = await this.client.get(`/games/${gameId}/designs/${designId}/costs`);
+    return response.data;
+  }
+
+  async buildShips(gameId: number, designId: number, fleetId: number, count: number = 1) {
+    const response = await this.client.post(`/games/${gameId}/designs/${designId}/build`, {
+      fleet_id: fleetId,
+      count,
+    });
+    return response.data;
+  }
+
+  // ==========================================================================
+  // Fleet endpoints
+  // ==========================================================================
+
+  async getFleets(gameId: number) {
+    const response = await this.client.get(`/games/${gameId}/fleets`);
+    return response.data;
+  }
+
+  async getFleet(fleetId: number) {
+    const response = await this.client.get(`/fleets/${fleetId}`);
+    return response.data;
+  }
+
+  async createFleet(gameId: number, name: string, planetId?: number) {
+    const response = await this.client.post(`/games/${gameId}/fleets`, {
+      name,
+      planet_id: planetId,
+    });
+    return response.data;
+  }
+
+  async moveFleet(fleetId: number, destinationPlanetId: number) {
+    const response = await this.client.post(`/fleets/${fleetId}/move`, {
+      destination_planet_id: destinationPlanetId,
+    });
+    return response.data;
+  }
+
+  async splitFleet(fleetId: number, shipIds: number[], newFleetName: string) {
+    const response = await this.client.post(`/fleets/${fleetId}/split`, {
+      ship_ids: shipIds,
+      new_fleet_name: newFleetName,
+    });
+    return response.data;
+  }
+
+  async mergeFleets(fleetId: number, fleetIdToMerge: number) {
+    const response = await this.client.post(`/fleets/${fleetId}/merge`, {
+      fleet_id_to_merge: fleetIdToMerge,
+    });
+    return response.data;
+  }
+
+  async disbandFleet(fleetId: number) {
+    const response = await this.client.post(`/fleets/${fleetId}/disband`);
+    return response.data;
+  }
+
+  async disbandShip(shipId: number) {
+    const response = await this.client.post(`/ships/${shipId}/disband`);
     return response.data;
   }
 }

@@ -66,31 +66,42 @@ Ce fichier consigne les discussions et décisions techniques prises au cours du 
 
 ---
 
-## 2025-12-31 : Refactorisation modèle Star/Planet (À FAIRE)
+## 2025-12-31 : Refactorisation modèle Star/Planet (TERMINÉ)
 
-**Contexte** : Le modèle actuel implémente une hiérarchie `Galaxie → Étoiles → Planètes` (1-4 planètes par étoile), alors que dans le jeu original Spaceward Ho!, chaque point sur la carte est directement une planète colonisable.
+**Contexte** : Le modèle actuel implémentait une hiérarchie `Galaxie → Étoiles → Planètes` (1-4 planètes par étoile), alors que dans le jeu original Spaceward Ho!, chaque point sur la carte est directement une planète colonisable.
 
 **Problème** :
-- Le modèle actuel est trop complexe pour le gameplay voulu
+- Le modèle actuel était trop complexe pour le gameplay voulu
 - Dans Spaceward Ho!, on ne voit que des planètes sur la carte, pas des systèmes stellaires
-- L'interface actuelle montre une liste de planètes par étoile, ce qui alourdit l'UX
+- L'interface actuelle montrait une liste de planètes par étoile, ce qui alourdissait l'UX
 
-**Refactorisation proposée** :
-1. Fusionner `Star` et `Planet` en un seul modèle `Planet`
-2. Chaque planète a : position (x, y), nom, température, gravité, métal, population, etc.
-3. Supprimer la relation parent/enfant Star→Planet
-4. Simplifier le frontend (plus de liste imbriquée)
+**Décision** : Fusionner `Star` et `Planet` en un seul modèle `Planet`
 
-**Impact** :
-- Migration de base de données (drop + recreate)
-- Modification du générateur de galaxie
-- Simplification des routes API
-- Mise à jour du frontend (GalaxyMap, GameView)
-- Perte des parties de développement existantes (acceptable)
+**Implémentation réalisée** :
 
-**Risque** : Faible (projet en développement, pas de données de production)
+Backend (7 fichiers modifiés) :
+- `models/galaxy.py` : Suppression de `Star`, `Planet` avec x, y, is_nova, galaxy_id
+- `models/fleet.py` : `current_star_id` → `current_planet_id`, `destination_star_id` → `destination_planet_id`
+- `services/galaxy_generator.py` : Génération directe de planètes avec positions
+- `services/fleet.py` : Toutes les références Star remplacées par Planet
+- `routes/games.py` : API retourne `planets` au lieu de `stars`
+- `routes/fleet.py` : Routes adaptées pour planet_id
 
-**Statut** : En attente - À planifier pour une prochaine session
+Frontend (6 fichiers modifiés) :
+- `hooks/useGameState.ts` : Type `Star` supprimé, `Planet` avec x, y, is_nova
+- `components/game/PlanetMarker.tsx` : Fusionné avec StarSystem, affiche planètes directement
+- `components/game/GalaxyMap.tsx` : Utilise `planets` au lieu de `stars`
+- `components/game/PlanetPanel.tsx` : Plus de référence à `starName` ou `orbit_index`
+- `pages/GameView.tsx` : Interface simplifiée, plus de sélection d'étoile
+- `components/game/index.ts` : Export de StarSystem supprimé
+
+Branche de sauvegarde : `mini_sys_solaire` (contient l'ancien modèle)
+
+**Migration BDD** : Réinitialisation requise (supprimer et recréer la base)
+
+**Statut** : ✅ Terminé - 2025-12-31
+
+**Plan détaillé** : Voir `plan/refactoring_star_planet.md`
 
 ---
 

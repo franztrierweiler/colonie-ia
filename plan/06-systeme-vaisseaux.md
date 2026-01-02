@@ -4,15 +4,20 @@
 
 | Phase | Description | Statut |
 |-------|-------------|--------|
-| 1 | Modèles de données | ✅ Terminé |
-| 2 | Service FleetService | ✅ Terminé |
-| 3 | Déplacement et trajectoires | ✅ Terminé |
-| 4 | Ravitaillement | ✅ Terminé |
-| 5 | Démantèlement | ✅ Terminé |
-| 6 | API Endpoints | ✅ Terminé |
-| 7 | Tests | ✅ Terminé (17 tests) |
+| 1 | Modèles de données (Backend) | ✅ Terminé |
+| 2 | Service FleetService (Backend) | ✅ Terminé |
+| 3 | Déplacement et trajectoires (Backend) | ✅ Terminé |
+| 4 | Ravitaillement (Backend) | ✅ Terminé |
+| 5 | Démantèlement (Backend) | ✅ Terminé |
+| 6 | API Endpoints (Backend) | ✅ Terminé |
+| 7 | Tests Backend | ✅ Terminé (17 tests) |
+| 8 | Services API Frontend | ✅ Terminé |
+| 9 | Panneau de gestion des flottes | ✅ Terminé |
+| 10 | Concepteur de vaisseaux | ✅ Terminé |
+| 11 | Déplacement par glisser-déposer | ✅ Terminé |
+| 12 | Affichage trajectoires | ✅ Terminé |
 
-**Commit** : `b9dd4bb` - EPIC 6 : Système de Vaisseaux - Modèles, Service et API
+**Commit Backend** : `b9dd4bb` - EPIC 6 : Système de Vaisseaux - Modèles, Service et API
 
 ---
 
@@ -38,9 +43,13 @@ L'EPIC 6 implémente le système de vaisseaux : types, conception, flottes, dép
 
 ---
 
-## Phase 1 : Modèles de données
+## BACKEND (TERMINÉ)
 
-### 1.1 Énumérations
+### Phase 1 : Modèles de données ✅
+
+**Fichier** : `backend/app/models/fleet.py`
+
+#### 1.1 Énumérations
 
 ```python
 class ShipType(str, Enum):
@@ -59,276 +68,184 @@ class FleetStatus(str, Enum):
     ARRIVING = "arriving"         # Arrivée ce tour
 ```
 
-### 1.2 Modèle ShipDesign
+#### 1.2 Modèles
 
-Design personnalisé d'un type de vaisseau.
+- **ShipDesign** : Design personnalisé avec 5 niveaux tech
+- **Ship** : Instance de vaisseau avec dégâts
+- **Fleet** : Groupe de vaisseaux avec statut et destination
 
-```python
-class ShipDesign(db.Model):
-    id: int (PK)
-    player_id: int (FK GamePlayer)
-    name: str                     # Nom donné par le joueur
-    ship_type: ShipType
+#### 1.3 Caractéristiques par type
 
-    # Niveaux technologiques (0-10+)
-    range_level: int = 1
-    speed_level: int = 1
-    weapons_level: int = 1
-    shields_level: int = 1
-    mini_level: int = 1
+| Type | Range Bonus | Speed | Weapons | Shields | Metal Base | Money Base |
+|------|-------------|-------|---------|---------|------------|------------|
+| Fighter | 0 | 1.0 | 1.0 | 1.0 | 50 | 100 |
+| Scout | +3 | 1.2 | 0.3 | 0.3 | 30 | 80 |
+| Colony | -1 | 0.5 | 0.1 | 0.5 | 200 | 500 |
+| Satellite | 0 (fixe) | 0 | 0.8 | 1.5 | 20 | 30 |
+| Tanker | 0 | 0.8 | 0.1 | 0.5 | 100 | 200 |
+| Battleship | 0 | 0.7 | 2.0 | 2.0 | 300 | 600 |
+| Decoy | 0 | 1.5 | 0 | 0.1 | 5 | 10 |
+| Biological | 0 | 1.0 | 1.5 | 0.5 | 0 | 300 |
 
-    # Coûts calculés
-    prototype_cost_money: int     # Coût prototype en argent
-    prototype_cost_metal: int     # Coût prototype en métal
-    production_cost_money: int    # Coût production en argent
-    production_cost_metal: int    # Coût production en métal
+### Phase 2 : Service FleetService ✅
 
-    # État
-    is_prototype_built: bool = False
-    created_at: datetime
-```
+**Fichier** : `backend/app/services/fleet_service.py`
 
-### 1.3 Modèle Ship
+- `calculate_design_costs()` - Calcul des coûts prototype/production
+- `create_design()` - Créer un design de vaisseau
+- `build_ships()` - Construire des vaisseaux
+- `create_fleet()` - Créer une flotte vide
+- `split_fleet()` - Diviser une flotte
+- `merge_fleets()` - Fusionner deux flottes
 
-Instance d'un vaisseau.
+### Phase 3 : Déplacement et trajectoires ✅
 
-```python
-class Ship(db.Model):
-    id: int (PK)
-    design_id: int (FK ShipDesign)
-    fleet_id: int (FK Fleet, nullable)
+- `calculate_travel_time()` - Calcul durée de voyage
+- `get_fleet_speed()` - Vitesse = min des vaisseaux
+- `get_fleet_range()` - Portée = min des vaisseaux (bonus tanker)
+- `move_fleet()` - Déplacer vers une destination
+- `process_fleet_movements()` - Traitement fin de tour
 
-    # État
-    damage: int = 0               # Dégâts subis
-    is_destroyed: bool = False
-```
+### Phase 4 : Ravitaillement ✅
 
-### 1.4 Modèle Fleet
+- `can_refuel_at()` - Vérification planète alliée
+- `refuel_fleet()` - Ravitaillement manuel
+- `process_refueling()` - Ravitaillement automatique fin de tour
 
-Groupe de vaisseaux.
+### Phase 5 : Démantèlement ✅
 
-```python
-class Fleet(db.Model):
-    id: int (PK)
-    player_id: int (FK GamePlayer)
-    name: str
+- `disband_ship()` - Démanteler un vaisseau (75% métal)
+- `disband_fleet()` - Démanteler toute une flotte
 
-    # Position actuelle
-    current_star_id: int (FK Star, nullable)  # null si en transit
-    current_planet_id: int (FK Planet, nullable)
+### Phase 6 : API Endpoints ✅
 
-    # Déplacement
-    status: FleetStatus
-    destination_star_id: int (FK Star, nullable)
-    departure_turn: int (nullable)
-    arrival_turn: int (nullable)
-
-    # Carburant
-    fuel_remaining: float         # Distance restante
-
-    # Combat
-    combat_behavior: str = "normal"  # normal, aggressive, defensive
-```
-
-### 1.5 Caractéristiques par type de vaisseau
-
-| Type | Range Bonus | Speed | Weapons | Shields | Metal Base | Money Base | Capacité |
-|------|-------------|-------|---------|---------|------------|------------|----------|
-| Fighter | 0 | 1.0 | 1.0 | 1.0 | 50 | 100 | - |
-| Scout | +3 | 1.2 | 0.3 | 0.3 | 30 | 80 | - |
-| Colony | -1 | 0.5 | 0.1 | 0.5 | 200 | 500 | 10000 colons |
-| Satellite | 0 (fixe) | 0 | 0.8 | 1.5 | 20 | 30 | - |
-| Tanker | 0 | 0.8 | 0.1 | 0.5 | 100 | 200 | Ravitaillement |
-| Battleship | 0 | 0.7 | 2.0 | 2.0 | 300 | 600 | - |
-| Decoy | 0 | 1.5 | 0 | 0.1 | 5 | 10 | - |
-| Biological | 0 | 1.0 | 1.5 | 0.5 | 0 | 300 | Spécial |
-
----
-
-## Phase 2 : Service FleetService
-
-### 2.1 Calcul des coûts
-
-```python
-class FleetService:
-    @staticmethod
-    def calculate_design_costs(design: ShipDesign) -> dict:
-        """Calcule les coûts d'un design."""
-        base = SHIP_BASE_COSTS[design.ship_type]
-
-        # Facteurs technologiques
-        tech_factor = (
-            design.range_level +
-            design.speed_level +
-            design.weapons_level +
-            design.shields_level
-        ) / 4
-
-        # Miniaturisation : réduit métal, augmente argent
-        mini_factor = 1 - (design.mini_level * 0.08)  # -8% métal par niveau
-        money_increase = 1 + (design.mini_level * 0.10)  # +10% argent par niveau
-
-        metal_cost = int(base.metal * tech_factor * mini_factor)
-        money_cost = int(base.money * tech_factor * money_increase)
-
-        return {
-            "prototype_money": money_cost * 2,  # Prototype = 2x
-            "prototype_metal": metal_cost * 2,
-            "production_money": money_cost,
-            "production_metal": metal_cost,
-        }
-```
-
-### 2.2 Construction de vaisseaux
-
-```python
-    @staticmethod
-    def build_prototype(player: GamePlayer, design: ShipDesign) -> Ship:
-        """Construit le prototype (premier exemplaire)."""
-
-    @staticmethod
-    def build_ship(player: GamePlayer, design: ShipDesign,
-                   planet: Planet) -> Ship:
-        """Construit un vaisseau à partir d'un design existant."""
-
-    @staticmethod
-    def build_ships(player: GamePlayer, design: ShipDesign,
-                    planet: Planet, count: int) -> List[Ship]:
-        """Construit plusieurs vaisseaux."""
-```
-
-### 2.3 Gestion des flottes
-
-```python
-    @staticmethod
-    def create_fleet(player: GamePlayer, name: str,
-                     planet: Planet) -> Fleet:
-        """Crée une nouvelle flotte vide."""
-
-    @staticmethod
-    def add_ships_to_fleet(fleet: Fleet, ships: List[Ship]):
-        """Ajoute des vaisseaux à une flotte."""
-
-    @staticmethod
-    def split_fleet(fleet: Fleet, ship_ids: List[int],
-                    new_name: str) -> Fleet:
-        """Divise une flotte en deux."""
-
-    @staticmethod
-    def merge_fleets(fleet1: Fleet, fleet2: Fleet) -> Fleet:
-        """Fusionne deux flottes."""
-```
-
----
-
-## Phase 3 : Déplacement et trajectoires
-
-### 3.1 Calcul de distance et durée
-
-```python
-    @staticmethod
-    def calculate_travel_time(fleet: Fleet,
-                              destination: Star) -> int:
-        """Calcule le nombre de tours pour atteindre la destination."""
-        distance = calculate_distance(fleet.current_star, destination)
-        fleet_speed = FleetService.get_fleet_speed(fleet)
-        return math.ceil(distance / fleet_speed)
-
-    @staticmethod
-    def get_fleet_speed(fleet: Fleet) -> float:
-        """Vitesse = min des vitesses des vaisseaux."""
-
-    @staticmethod
-    def get_fleet_range(fleet: Fleet) -> float:
-        """Portée = min des portées des vaisseaux."""
-```
-
-### 3.2 Mouvement
-
-```python
-    @staticmethod
-    def move_fleet(fleet: Fleet, destination: Star) -> dict:
-        """Envoie une flotte vers une destination."""
-        # Vérifie la portée
-        # Vérifie le carburant
-        # Définit la trajectoire (fixe, pas de changement)
-
-    @staticmethod
-    def process_fleet_movements(game: Game):
-        """Traite les mouvements de toutes les flottes (fin de tour)."""
-        # Avance chaque flotte d'un tour
-        # Détecte les arrivées
-```
-
----
-
-## Phase 4 : Ravitaillement
-
-```python
-    @staticmethod
-    def can_refuel_at(fleet: Fleet, planet: Planet) -> bool:
-        """Vérifie si la flotte peut se ravitailler."""
-        # Planète du joueur ou allié
-
-    @staticmethod
-    def refuel_fleet(fleet: Fleet, planet: Planet):
-        """Ravitaille une flotte."""
-        # Remet le carburant au max
-
-    @staticmethod
-    def process_refueling(game: Game):
-        """Ravitaillement automatique en fin de tour."""
-```
-
----
-
-## Phase 5 : Démantèlement
-
-```python
-    @staticmethod
-    def disband_ship(ship: Ship, planet: Planet) -> int:
-        """Démantèle un vaisseau, récupère 75% du métal."""
-        metal_recovered = int(ship.design.production_cost_metal * 0.75)
-        planet.owner.metal += metal_recovered
-        ship.is_destroyed = True
-        return metal_recovered
-
-    @staticmethod
-    def disband_fleet(fleet: Fleet, planet: Planet) -> int:
-        """Démantèle toute une flotte."""
-```
-
----
-
-## Phase 6 : API Endpoints
+**Fichier** : `backend/app/routes/fleet.py`
 
 | Méthode | Endpoint | Description |
 |---------|----------|-------------|
 | GET | `/api/games/:id/designs` | Liste des designs du joueur |
 | POST | `/api/games/:id/designs` | Créer un design |
+| GET | `/api/games/:id/designs/:id/costs` | Coûts d'un design |
 | POST | `/api/games/:id/designs/:id/build` | Construire vaisseau(x) |
 | GET | `/api/games/:id/fleets` | Liste des flottes |
 | POST | `/api/games/:id/fleets` | Créer une flotte |
-| PATCH | `/api/fleets/:id` | Modifier une flotte |
+| GET | `/api/fleets/:id` | Détails d'une flotte |
 | POST | `/api/fleets/:id/move` | Déplacer une flotte |
 | POST | `/api/fleets/:id/split` | Diviser une flotte |
 | POST | `/api/fleets/:id/merge` | Fusionner des flottes |
 | POST | `/api/fleets/:id/disband` | Démanteler une flotte |
 | POST | `/api/ships/:id/disband` | Démanteler un vaisseau |
 
----
-
-## Phase 7 : Tests
-
-- [x] Tests calcul des coûts
-- [x] Tests construction prototype vs production
-- [x] Tests création/gestion flottes
-- [x] Tests déplacement et trajectoires
-- [x] Tests ravitaillement
-- [x] Tests démantèlement (75% métal)
-- [x] Tests API endpoints
+### Phase 7 : Tests Backend ✅
 
 **Fichier** : `backend/tests/test_fleet.py` (17 tests)
+
+---
+
+## FRONTEND (TERMINÉ)
+
+### Phase 8 : Services API Frontend ✅
+
+**Fichier** : `frontend/src/services/api.ts`
+
+Ajouter les méthodes suivantes :
+
+```typescript
+// Ship Designs
+async getDesigns(gameId: number)
+async createDesign(gameId: number, data: CreateDesignData)
+async buildShips(gameId: number, designId: number, fleetId: number, count: number)
+
+// Fleets
+async getFleets(gameId: number)
+async getFleet(fleetId: number)
+async createFleet(gameId: number, name: string, planetId?: number)
+async moveFleet(fleetId: number, destinationPlanetId: number)
+async splitFleet(fleetId: number, shipIds: number[], newFleetName: string)
+async mergeFleets(fleetId: number, fleetIdToMerge: number)
+async disbandFleet(fleetId: number)
+async disbandShip(shipId: number)
+```
+
+### Phase 9 : Panneau de gestion des flottes ✅
+
+**Composants créés** :
+
+#### 9.1 FleetPanel.tsx
+Panneau latéral affichant :
+- Liste des flottes du joueur
+- Flotte sélectionnée : détails, vaisseaux, actions
+- Boutons : déplacer, diviser, fusionner, démanteler
+
+#### 9.2 FleetList.tsx
+Liste compacte des flottes avec :
+- Nom et nombre de vaisseaux
+- Statut (en orbite, en transit)
+- Icône de destination si en transit
+
+#### 9.3 FleetDetails.tsx
+Détails d'une flotte :
+- Statistiques (vitesse, portée, puissance)
+- Liste des vaisseaux par type
+- Carburant restant
+- Configuration de combat
+
+### Phase 10 : Concepteur de vaisseaux ✅
+
+**Composants créés** (intégrés dans FleetPanel.tsx) :
+
+#### 10.1 ShipDesigner.tsx
+Interface de création de design :
+- Sélection du type de vaisseau
+- 5 sliders pour les niveaux technologiques
+- Prévisualisation des coûts (prototype/production)
+- Bouton "Créer le design"
+
+#### 10.2 ShipDesignList.tsx
+Liste des designs existants :
+- Nom, type, niveaux tech
+- Coûts de production
+- Bouton "Construire"
+
+#### 10.3 BuildShipModal.tsx
+Modal de construction :
+- Sélection de la flotte cible
+- Quantité à construire
+- Coût total affiché
+- Validation
+
+### Phase 11 : Déplacement par glisser-déposer ✅
+
+**Modifications apportées** :
+
+#### 11.1 GalaxyMap.tsx
+- État de drag : flotte source
+- Gestionnaires onDragStart, onDragOver, onDrop
+- Feedback visuel pendant le drag
+
+#### 11.2 FleetMarker.tsx
+- Attribut draggable
+- Style pendant le drag
+- Annulation si hors carte
+
+#### 11.3 PlanetMarker.tsx
+- Zone de drop
+- Highlight si destination valide
+- Calcul de la portée affichée
+
+### Phase 12 : Affichage des trajectoires ✅
+
+**Modifications apportées** :
+
+#### 12.1 FleetTrajectory.tsx (existant, à améliorer)
+- Ligne pointillée entre position actuelle et destination
+- Segments par tour (avec graduation)
+- Icône de flotte animée sur le trajet
+- Indicateur du tour d'arrivée
+
+#### 12.2 GalaxyMap.tsx
+- Rendu des trajectoires pour toutes les flottes en transit
+- Z-order correct (trajectoires sous les marqueurs)
 
 ---
 
@@ -360,6 +277,7 @@ effective_range = base_range + tanker_bonus (si ravitailleur présent)
 
 ## Critères d'acceptation
 
+### Backend ✅
 - [x] 8 types de vaisseaux disponibles
 - [x] Les designs sont personnalisables (5 valeurs tech)
 - [x] Prototype coûte 2x, production normale ensuite
@@ -369,7 +287,16 @@ effective_range = base_range + tanker_bonus (si ravitailleur présent)
 - [x] La vitesse de flotte = min des vaisseaux
 - [x] La portée de flotte = min des vaisseaux
 
+### Frontend ✅
+- [x] Le joueur peut créer des designs de vaisseaux
+- [x] Le joueur peut construire des vaisseaux
+- [x] Le joueur peut voir ses flottes dans un panneau
+- [x] Le joueur peut déplacer une flotte par drag & drop
+- [x] Les trajectoires des flottes en transit sont visibles
+- [x] Le joueur peut diviser/fusionner des flottes
+- [x] Le joueur peut démanteler des vaisseaux
+
 ---
 
-*Document généré pour EPIC 6 - Système de Vaisseaux*
+*Document mis à jour pour EPIC 6 - Système de Vaisseaux*
 *Projet Colonie-IA*

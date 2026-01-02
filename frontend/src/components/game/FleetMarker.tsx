@@ -7,7 +7,9 @@ interface FleetMarkerProps {
   color: string;
   isMine: boolean;
   zoom: number;
+  isDragging?: boolean;
   onClick: () => void;
+  onDragStart?: () => void;
 }
 
 function FleetMarker({
@@ -17,7 +19,9 @@ function FleetMarker({
   color,
   isMine,
   zoom,
+  isDragging = false,
   onClick,
+  onDragStart,
 }: FleetMarkerProps) {
   // Position du marqueur (décalé par rapport à l'étoile)
   const offsetX = 6;
@@ -25,14 +29,23 @@ function FleetMarker({
   const markerX = x + offsetX;
   const markerY = y + offsetY;
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isMine && onDragStart) {
+      e.stopPropagation();
+      e.preventDefault();
+      onDragStart();
+    }
+  };
+
   return (
     <g
-      className={`fleet-marker ${isMine ? 'mine' : 'enemy'}`}
+      className={`fleet-marker ${isMine ? 'mine' : 'enemy'} ${isDragging ? 'dragging' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
       }}
-      style={{ cursor: 'pointer' }}
+      onMouseDown={handleMouseDown}
+      style={{ cursor: isMine ? 'grab' : 'pointer' }}
     >
       {/* Icône vaisseau (triangle/flèche) */}
       <polygon

@@ -5,6 +5,10 @@ interface FleetTrajectoryProps {
   toY: number;
   color: string;
   isMine: boolean;
+  progress?: number; // 0-1, position actuelle sur le trajet
+  arrivalTurn?: number;
+  fleetName?: string;
+  shipCount?: number;
 }
 
 function FleetTrajectory({
@@ -14,6 +18,10 @@ function FleetTrajectory({
   toY,
   color,
   isMine,
+  progress = 0.5,
+  arrivalTurn,
+  fleetName,
+  shipCount,
 }: FleetTrajectoryProps) {
   // Calcul de la distance et du nombre de segments (1 par tour estimé)
   const dx = toX - fromX;
@@ -75,6 +83,45 @@ function FleetTrajectory({
           fill={color}
           opacity="0.8"
         />
+      )}
+
+      {/* Position actuelle de la flotte en transit */}
+      {isMine && (
+        <g transform={`translate(${fromX + dx * progress}, ${fromY + dy * progress})`}>
+          {/* Icône de flotte (triangle) */}
+          <polygon
+            points="-2,-3 4,0 -2,3 0,0"
+            fill={color}
+            stroke="#fff"
+            strokeWidth="0.3"
+            transform={`rotate(${Math.atan2(dy, dx) * 180 / Math.PI})`}
+          />
+          {/* Nombre de vaisseaux */}
+          {shipCount && (
+            <text
+              x="5"
+              y="1"
+              fill={color}
+              fontSize="3"
+              fontWeight="bold"
+            >
+              {shipCount}
+            </text>
+          )}
+        </g>
+      )}
+
+      {/* Indicateur de tour d'arrivée */}
+      {isMine && arrivalTurn && (
+        <text
+          x={toX + 4}
+          y={toY}
+          fill={color}
+          fontSize="2.5"
+          opacity="0.8"
+        >
+          T{arrivalTurn}
+        </text>
       )}
     </g>
   );

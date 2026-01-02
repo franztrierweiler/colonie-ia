@@ -1,25 +1,25 @@
 """
 Galaxy generation service.
-Generates galaxies with different shapes and distributes stars/planets.
+Generates galaxies with planets distributed according to various shapes.
 """
 import math
 import random
 from typing import List, Tuple
 
 from app import db
-from app.models import Galaxy, Star, Planet, GalaxyShape, GalaxyDensity, PlanetState
-from app.data import STAR_NAMES, PLANET_SUFFIXES, get_random_star_name
+from app.models import Galaxy, Planet, GalaxyShape, GalaxyDensity, PlanetState
+from app.data import get_random_star_name, get_random_hostile_name, generate_planet_history
 
 
-# Galaxy size presets (larger dimensions for better star spacing)
+# Galaxy size presets
 GALAXY_PRESETS = {
-    "small": {"stars": 20, "width": 150, "height": 150},
-    "medium": {"stars": 50, "width": 300, "height": 300},
-    "large": {"stars": 100, "width": 450, "height": 450},
-    "huge": {"stars": 200, "width": 700, "height": 700},
+    "small": {"planets": 20, "width": 150, "height": 150},
+    "medium": {"planets": 50, "width": 300, "height": 300},
+    "large": {"planets": 100, "width": 450, "height": 450},
+    "huge": {"planets": 200, "width": 700, "height": 700},
 }
 
-# Density factors (affects minimum distance between stars)
+# Density factors (affects minimum distance between planets)
 DENSITY_FACTORS = {
     GalaxyDensity.LOW.value: 1.8,
     GalaxyDensity.MEDIUM.value: 1.3,
@@ -38,53 +38,48 @@ class GalaxyGenerator:
             game_id: ID of the game this galaxy belongs to
             shape: Galaxy shape (circle, spiral, cluster, random)
             size: Galaxy size preset (small, medium, large, huge)
-            density: Star density (low, medium, high)
+            density: Planet density (low, medium, high)
         """
         self.game_id = game_id
         self.shape = shape
         self.density = density
 
         preset = GALAXY_PRESETS.get(size, GALAXY_PRESETS["medium"])
-        self.star_count = preset["stars"]
+        self.planet_count = preset["planets"]
         self.width = preset["width"]
         self.height = preset["height"]
 
         self.density_factor = DENSITY_FACTORS.get(density, 1.0)
-        self.used_star_names: set = set()
+        self.used_names: set = set()
+        self.used_hostile_names: set = set()
 
     def generate(self) -> Galaxy:
-        """Generate the complete galaxy with stars and planets."""
+        """Generate the complete galaxy with planets."""
         # Create galaxy record
         galaxy = Galaxy(
             game_id=self.game_id,
             shape=self.shape,
             density=self.density,
-            star_count=self.star_count,
+            planet_count=self.planet_count,
             width=self.width,
             height=self.height,
         )
         db.session.add(galaxy)
         db.session.flush()  # Get galaxy ID
 
-        # Generate star positions based on shape
-        positions = self._generate_star_positions()
+        # Generate planet positions based on shape
+        positions = self._generate_positions()
 
-        # Create stars with planets
-        for i, (x, y) in enumerate(positions):
-            star = self._create_star(galaxy.id, x, y)
-            db.session.add(star)
-            db.session.flush()  # Get star ID
-
-            # Generate planets for this star
-            planets = self._generate_planets(star.id)
-            for planet in planets:
-                db.session.add(planet)
+        # Create planets at each position
+        for x, y in positions:
+            planet = self._create_planet(galaxy.id, x, y)
+            db.session.add(planet)
 
         db.session.commit()
         return galaxy
 
-    def _generate_star_positions(self) -> List[Tuple[float, float]]:
-        """Generate star positions based on galaxy shape."""
+    def _generate_positions(self) -> List[Tuple[float, float]]:
+        """Generate planet positions based on galaxy shape."""
         generators = {
             GalaxyShape.CIRCLE.value: self._generate_circle,
             GalaxyShape.SPIRAL.value: self._generate_spiral,
@@ -96,13 +91,13 @@ class GalaxyGenerator:
         return generator()
 
     def _generate_circle(self) -> List[Tuple[float, float]]:
-        """Generate stars in a circular distribution."""
+        """Generate planets in a circular distribution."""
         positions = []
         center_x = self.width / 2
         center_y = self.height / 2
         max_radius = min(self.width, self.height) / 2 * 0.9
 
-        for _ in range(self.star_count):
+        for _ in range(self.planet_count):
             # Random angle and radius (sqrt for uniform distribution in disk)
             angle = random.uniform(0, 2 * math.pi)
             radius = max_radius * math.sqrt(random.uniform(0, 1))
@@ -114,7 +109,7 @@ class GalaxyGenerator:
         return self._apply_minimum_distance(positions)
 
     def _generate_spiral(self) -> List[Tuple[float, float]]:
-        """Generate stars in a spiral galaxy pattern."""
+        """Generate planets in a spiral galaxy pattern."""
         positions = []
         center_x = self.width / 2
         center_y = self.height / 2
@@ -124,12 +119,12 @@ class GalaxyGenerator:
         arm_spread = 0.4  # How spread out the arms are
         rotation_factor = 3.0  # How tightly wound the spiral is
 
-        for i in range(self.star_count):
+        for i in range(self.planet_count):
             # Assign to an arm
             arm = i % num_arms
             arm_offset = (2 * math.pi / num_arms) * arm
 
-            # Distance from center (more stars near center)
+            # Distance from center (more planets near center)
             t = random.uniform(0, 1)
             radius = max_radius * t
 
@@ -152,7 +147,7 @@ class GalaxyGenerator:
         return self._apply_minimum_distance(positions)
 
     def _generate_cluster(self) -> List[Tuple[float, float]]:
-        """Generate stars in multiple clusters."""
+        """Generate planets in multiple clusters."""
         positions = []
 
         # Create 3-6 cluster centers
@@ -164,13 +159,13 @@ class GalaxyGenerator:
             cy = random.uniform(self.height * 0.2, self.height * 0.8)
             cluster_centers.append((cx, cy))
 
-        # Distribute stars among clusters
-        stars_per_cluster = self.star_count // num_clusters
-        extra_stars = self.star_count % num_clusters
+        # Distribute planets among clusters
+        planets_per_cluster = self.planet_count // num_clusters
+        extra_planets = self.planet_count % num_clusters
 
         for i, (cx, cy) in enumerate(cluster_centers):
-            # Some clusters get extra stars
-            count = stars_per_cluster + (1 if i < extra_stars else 0)
+            # Some clusters get extra planets
+            count = planets_per_cluster + (1 if i < extra_planets else 0)
 
             # Cluster radius
             cluster_radius = min(self.width, self.height) / (num_clusters + 1)
@@ -189,20 +184,20 @@ class GalaxyGenerator:
         return self._apply_minimum_distance(positions)
 
     def _generate_random(self) -> List[Tuple[float, float]]:
-        """Generate stars with Poisson disk sampling for even distribution."""
+        """Generate planets with Poisson disk sampling for even distribution."""
         positions = []
-        # Minimum distance: ~70% of average spacing between stars
-        min_distance = (self.width * self.height / self.star_count) ** 0.5 * 0.7 * self.density_factor
+        # Minimum distance: ~70% of average spacing between planets
+        min_distance = (self.width * self.height / self.planet_count) ** 0.5 * 0.7 * self.density_factor
 
         # Use rejection sampling
-        max_attempts = self.star_count * 100
+        max_attempts = self.planet_count * 100
         attempts = 0
 
-        while len(positions) < self.star_count and attempts < max_attempts:
+        while len(positions) < self.planet_count and attempts < max_attempts:
             x = random.uniform(5, self.width - 5)
             y = random.uniform(5, self.height - 5)
 
-            # Check minimum distance from existing stars
+            # Check minimum distance from existing planets
             too_close = False
             for px, py in positions:
                 dist = math.sqrt((x - px) ** 2 + (y - py) ** 2)
@@ -215,8 +210,8 @@ class GalaxyGenerator:
 
             attempts += 1
 
-        # If we couldn't place all stars, reduce constraints and fill remaining
-        while len(positions) < self.star_count:
+        # If we couldn't place all planets, reduce constraints and fill remaining
+        while len(positions) < self.planet_count:
             x = random.uniform(5, self.width - 5)
             y = random.uniform(5, self.height - 5)
             positions.append((x, y))
@@ -224,16 +219,16 @@ class GalaxyGenerator:
         return positions
 
     def _apply_minimum_distance(self, positions: List[Tuple[float, float]]) -> List[Tuple[float, float]]:
-        """Apply Lloyd's relaxation to improve star distribution."""
+        """Apply Lloyd's relaxation to improve planet distribution."""
         # Minimum distance: ~50% of average spacing
-        avg_spacing = (self.width * self.height / self.star_count) ** 0.5
+        avg_spacing = (self.width * self.height / self.planet_count) ** 0.5
         min_dist = avg_spacing * 0.5 * self.density_factor
         iterations = 5
 
         for _ in range(iterations):
             new_positions = []
             for i, (x, y) in enumerate(positions):
-                # Find nearby stars
+                # Find nearby planets
                 fx, fy = 0, 0
                 for j, (ox, oy) in enumerate(positions):
                     if i != j:
@@ -254,53 +249,34 @@ class GalaxyGenerator:
 
         return positions
 
-    def _create_star(self, galaxy_id: int, x: float, y: float) -> Star:
-        """Create a star at the given position."""
-        name = get_random_star_name(self.used_star_names)
-        self.used_star_names.add(name)
+    def _create_planet(self, galaxy_id: int, x: float, y: float) -> Planet:
+        """Create a planet at the given position with random characteristics."""
+        # Small chance of being a future nova (5%)
+        is_future_nova = random.random() < 0.05
+        nova_turn = random.randint(50, 200) if is_future_nova else None
 
-        # Small chance of being a future nova
-        is_future_nova = random.random() < 0.05  # 5% chance
-
-        return Star(
-            galaxy_id=galaxy_id,
-            name=name,
-            x=x,
-            y=y,
-            is_nova=False,
-            nova_turn=random.randint(50, 200) if is_future_nova else None,
-        )
-
-    def _generate_planets(self, star_id: int) -> List[Planet]:
-        """Generate planets for a star system."""
-        planets = []
-        num_planets = random.randint(1, 4)
-
-        for orbit_index in range(num_planets):
-            planet = self._create_planet(star_id, orbit_index)
-            planets.append(planet)
-
-        return planets
-
-    def _create_planet(self, star_id: int, orbit_index: int) -> Planet:
-        """Create a planet with random characteristics."""
-        # Get the star name for planet naming
-        star = Star.query.get(star_id)
-
-        if orbit_index == 0:
-            name = star.name
-        else:
-            suffix = PLANET_SUFFIXES[min(orbit_index, len(PLANET_SUFFIXES) - 1)]
-            name = f"{star.name} {suffix}"
-
-        # Temperature: varies by orbit (inner = hotter, outer = colder)
-        base_temp = random.gauss(0, 100)  # Base variation
-        orbit_effect = (orbit_index - 1.5) * 50  # Inner orbits hotter
-        temperature = base_temp - orbit_effect
-        temperature = max(-200, min(400, temperature))  # Clamp
+        # Temperature: normal distribution centered around a random value
+        temperature = random.gauss(20, 80)
+        temperature = max(-200, min(400, temperature))
 
         # Gravity: normal distribution around 1.0
         gravity = max(0.1, min(3.0, random.gauss(1.0, 0.4)))
+
+        # Check if this planet is hostile (extreme conditions)
+        is_hostile = (
+            temperature < -50 or
+            temperature > 80 or
+            gravity > 3.0 or
+            gravity < 0.1
+        )
+
+        # Use barbaric name for hostile planets, napoleonic name for others
+        if is_hostile:
+            name = get_random_hostile_name(self.used_hostile_names)
+            self.used_hostile_names.add(name)
+        else:
+            name = get_random_star_name(self.used_names)
+            self.used_names.add(name)
 
         # Metal reserves: exponential distribution (many poor, few rich)
         base_metal = int(random.expovariate(1/500))
@@ -312,10 +288,16 @@ class GalaxyGenerator:
         habitability = temp_factor * gravity_factor
         max_population = int(1_000_000 * habitability)
 
+        # Generate planet history (revealed upon exploration)
+        history_line1, history_line2 = generate_planet_history(temperature, gravity, metal_reserves)
+
         return Planet(
-            star_id=star_id,
+            galaxy_id=galaxy_id,
             name=name,
-            orbit_index=orbit_index,
+            x=round(x, 2),
+            y=round(y, 2),
+            is_nova=False,
+            nova_turn=nova_turn,
             temperature=round(temperature, 1),
             current_temperature=round(temperature, 1),
             gravity=round(gravity, 2),
@@ -324,6 +306,8 @@ class GalaxyGenerator:
             state=PlanetState.UNEXPLORED.value,
             population=0,
             max_population=max_population,
+            history_line1=history_line1,
+            history_line2=history_line2,
         )
 
 
@@ -335,7 +319,7 @@ def generate_galaxy(game_id: int, shape: str, size: str, density: str) -> Galaxy
         game_id: ID of the game
         shape: Galaxy shape (circle, spiral, cluster, random)
         size: Size preset (small, medium, large, huge)
-        density: Star density (low, medium, high)
+        density: Planet density (low, medium, high)
 
     Returns:
         Generated Galaxy instance
@@ -357,15 +341,13 @@ def find_home_planets(galaxy: Galaxy, num_players: int) -> List[Planet]:
     """
     # Find all planets with decent habitability
     candidates = []
-    for star in galaxy.stars:
-        for planet in star.planets:
-            habitability = planet.habitability
-            if habitability > 0.3:  # At least 30% habitable
-                candidates.append({
-                    "planet": planet,
-                    "star": star,
-                    "habitability": habitability,
-                })
+    for planet in galaxy.planets:
+        habitability = planet.habitability
+        if habitability > 0.3:  # At least 30% habitable
+            candidates.append({
+                "planet": planet,
+                "habitability": habitability,
+            })
 
     if len(candidates) < num_players:
         raise ValueError(f"Not enough habitable planets for {num_players} players")
@@ -389,8 +371,8 @@ def find_home_planets(galaxy: Galaxy, num_players: int) -> List[Planet]:
             min_dist = float("inf")
             for sel in selected:
                 dist = math.sqrt(
-                    (candidate["star"].x - sel["star"].x) ** 2 +
-                    (candidate["star"].y - sel["star"].y) ** 2
+                    (candidate["planet"].x - sel["planet"].x) ** 2 +
+                    (candidate["planet"].y - sel["planet"].y) ** 2
                 )
                 min_dist = min(min_dist, dist)
 

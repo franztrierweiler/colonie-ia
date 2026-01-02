@@ -263,16 +263,15 @@ class Fleet(db.Model):
     name = db.Column(db.String(50), nullable=False)
 
     # Current position (null if in transit)
-    current_star_id = db.Column(db.Integer, db.ForeignKey("stars.id"), nullable=True)
-    orbiting_planet_id = db.Column(db.Integer, db.ForeignKey("planets.id"), nullable=True)
+    current_planet_id = db.Column(db.Integer, db.ForeignKey("planets.id"), nullable=True)
 
     # Movement
     status = db.Column(db.String(20), default=FleetStatus.STATIONED.value, nullable=False)
-    destination_star_id = db.Column(db.Integer, db.ForeignKey("stars.id"), nullable=True)
+    destination_planet_id = db.Column(db.Integer, db.ForeignKey("planets.id"), nullable=True)
     departure_turn = db.Column(db.Integer, nullable=True)
     arrival_turn = db.Column(db.Integer, nullable=True)
 
-    # Travel path (stored as JSON: list of star IDs for multi-hop journeys)
+    # Travel path (stored as JSON: list of planet IDs for multi-hop journeys)
     travel_path = db.Column(db.JSON, nullable=True)
 
     # Fuel (distance units remaining before needing refuel)
@@ -287,10 +286,9 @@ class Fleet(db.Model):
 
     # Relationships
     player = db.relationship("GamePlayer", backref=db.backref("fleets", lazy="dynamic"))
-    current_star = db.relationship("Star", foreign_keys=[current_star_id],
-                                   backref=db.backref("stationed_fleets", lazy="dynamic"))
-    destination_star = db.relationship("Star", foreign_keys=[destination_star_id])
-    orbiting_planet = db.relationship("Planet", backref=db.backref("orbiting_fleets", lazy="dynamic"))
+    current_planet = db.relationship("Planet", foreign_keys=[current_planet_id],
+                                     backref=db.backref("stationed_fleets", lazy="dynamic"))
+    destination_planet = db.relationship("Planet", foreign_keys=[destination_planet_id])
     ships = db.relationship("Ship", backref="fleet", lazy="dynamic")
 
     def __repr__(self):
@@ -365,9 +363,8 @@ class Fleet(db.Model):
             "player_id": self.player_id,
             "name": self.name,
             "status": self.status,
-            "current_star_id": self.current_star_id,
-            "orbiting_planet_id": self.orbiting_planet_id,
-            "destination_star_id": self.destination_star_id,
+            "current_planet_id": self.current_planet_id,
+            "destination_planet_id": self.destination_planet_id,
             "departure_turn": self.departure_turn,
             "arrival_turn": self.arrival_turn,
             "fuel_remaining": self.fuel_remaining,
@@ -459,4 +456,82 @@ class Ship(db.Model):
             "health_percent": self.health_percent,
             "is_destroyed": self.is_destroyed,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# =============================================================================
+# Production Queue Model
+# =============================================================================
+
+class ProductionQueue(db.Model):
+    """
+    Tracks ships being built at a planet.
+    Each entry represents a ship design being produced.
+    """
+    __tablename__ = "production_queue"
+
+    id = db.Column(db.Integer, primary_key=True)
+    planet_id = db.Column(db.Integer, db.ForeignKey("planets.id"), nullable=False)
+    design_id = db.Column(db.Integer, db.ForeignKey("ship_designs.id"), nullable=False)
+    fleet_id = db.Column(db.Integer, db.ForeignKey("fleets.id"), nullable=True)  # Target fleet
+
+    # Queue order (lower = higher priority)
+    priority = db.Column(db.Integer, default=0, nullable=False)
+
+    # Production state
+    production_invested = db.Column(db.Float, default=0.0, nullable=False)  # Points already invested
+    is_completed = db.Column(db.Boolean, default=False, nullable=False)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+    # Relationships
+    planet = db.relationship("Planet", backref=db.backref("production_queue", lazy="dynamic",
+                             order_by="ProductionQueue.priority"))
+    design = db.relationship("ShipDesign")
+    fleet = db.relationship("Fleet")
+
+    def __repr__(self):
+        return f"<ProductionQueue {self.id}: {self.design.name if self.design else '?'} at planet {self.planet_id}>"
+
+    @property
+    def production_required(self) -> float:
+        """Total production points required to complete this ship."""
+        if not self.design:
+            return 0
+        # Production cost = metal + money (combined metric)
+        # First ship of a design costs 2x (prototype)
+        if not self.design.is_prototype_built:
+            return self.design.prototype_cost_metal + self.design.prototype_cost_money
+        return self.design.production_cost_metal + self.design.production_cost_money
+
+    @property
+    def production_progress(self) -> float:
+        """Progress as percentage (0-100)."""
+        required = self.production_required
+        if required <= 0:
+            return 100
+        return min(100, (self.production_invested / required) * 100)
+
+    @property
+    def is_ready(self) -> bool:
+        """Check if production is complete."""
+        return self.production_invested >= self.production_required
+
+    def to_dict(self):
+        """Convert to dictionary."""
+        return {
+            "id": self.id,
+            "planet_id": self.planet_id,
+            "design_id": self.design_id,
+            "design_name": self.design.name if self.design else None,
+            "ship_type": self.design.ship_type if self.design else None,
+            "fleet_id": self.fleet_id,
+            "priority": self.priority,
+            "production_invested": self.production_invested,
+            "production_required": self.production_required,
+            "production_progress": self.production_progress,
+            "is_completed": self.is_completed,
+            "is_ready": self.is_ready,
         }

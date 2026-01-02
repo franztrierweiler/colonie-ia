@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import type { Star, Fleet, Player } from '../../hooks/useGameState';
-import StarSystem from './StarSystem';
+import type { Planet, Fleet, Player } from '../../hooks/useGameState';
+import PlanetMarker from './PlanetMarker';
 import FleetMarker from './FleetMarker';
 import FleetTrajectory from './FleetTrajectory';
 import './GalaxyMap.css';
@@ -8,13 +8,15 @@ import './GalaxyMap.css';
 interface GalaxyMapProps {
   width: number;
   height: number;
-  stars: Star[];
+  planets: Planet[];
   fleets: Fleet[];
   players: Player[];
   myPlayerId: number;
-  selectedStarId: number | null;
-  onStarClick: (starId: number) => void;
+  currentTurn?: number;
+  selectedPlanetId: number | null;
+  onPlanetClick: (planetId: number) => void;
   onFleetClick: (fleetId: number) => void;
+  onMoveFleet?: (fleetId: number, destinationPlanetId: number) => void;
 }
 
 // Niveaux de zoom prédéfinis
@@ -31,19 +33,27 @@ const ZOOM_SENSITIVITY = 0.001;
 function GalaxyMap({
   width,
   height,
-  stars,
+  planets,
   fleets,
   players,
   myPlayerId,
-  selectedStarId,
-  onStarClick,
+  currentTurn = 1,
+  selectedPlanetId,
+  onPlanetClick,
   onFleetClick,
+  onMoveFleet,
 }: GalaxyMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
+
+  // État pour le drag de flotte
+  const [draggingFleetId, setDraggingFleetId] = useState<number | null>(null);
+  const [dragLine, setDragLine] = useState<{ fromX: number; fromY: number; toX: number; toY: number } | null>(null);
+  const [hoveredPlanetId, setHoveredPlanetId] = useState<number | null>(null);
 
   const getPlayerColor = useCallback(
     (playerId: number | null): string => {
@@ -59,31 +69,6 @@ function GalaxyMap({
     e.preventDefault();
     const delta = -e.deltaY * ZOOM_SENSITIVITY;
     setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z * (1 + delta))));
-  }, []);
-
-  // Gestion du pan avec drag
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 0) { // Clic gauche
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    }
-  }, [pan]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isDragging) {
-      setPan({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-  }, [isDragging, dragStart]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
   }, []);
 
   // Zoom prédéfinis
@@ -107,31 +92,119 @@ function GalaxyMap({
     setPan({ x: 0, y: 0 });
   }, []);
 
-  // Centrer sur une étoile sélectionnée
+  // Gestion du drag de flotte (déclarés avant handleMouseMove qui les utilise)
+  const handleFleetDragStart = useCallback((fleetId: number, startX: number, startY: number) => {
+    const fleet = fleets.find(f => f.id === fleetId);
+    if (!fleet || fleet.player_id !== myPlayerId || fleet.status !== 'stationed') return;
+
+    setDraggingFleetId(fleetId);
+    setDragLine({ fromX: startX, fromY: startY, toX: startX, toY: startY });
+  }, [fleets, myPlayerId]);
+
+  const handleFleetDragMove = useCallback((e: React.MouseEvent) => {
+    if (!draggingFleetId || !containerRef.current || !dragLine) return;
+
+    const container = containerRef.current;
+    const rect = container.getBoundingClientRect();
+
+    // Convertir les coordonnées écran en coordonnées SVG
+    const svgX = (e.clientX - rect.left - pan.x) / zoom;
+    const svgY = (e.clientY - rect.top - pan.y) / zoom;
+
+    setDragLine(prev => prev ? { ...prev, toX: svgX, toY: svgY } : null);
+
+    // Vérifier si on survole une planète
+    const hovered = planets.find(p => {
+      const dx = p.x - svgX;
+      const dy = p.y - svgY;
+      return Math.sqrt(dx * dx + dy * dy) < 10; // Rayon de détection
+    });
+    setHoveredPlanetId(hovered?.id || null);
+  }, [draggingFleetId, dragLine, pan, zoom, planets]);
+
+  const handleFleetDragEnd = useCallback(() => {
+    if (draggingFleetId && hoveredPlanetId && onMoveFleet) {
+      const fleet = fleets.find(f => f.id === draggingFleetId);
+      // Ne pas déplacer vers la même planète
+      if (fleet && fleet.current_planet_id !== hoveredPlanetId) {
+        onMoveFleet(draggingFleetId, hoveredPlanetId);
+      }
+    }
+    setDraggingFleetId(null);
+    setDragLine(null);
+    setHoveredPlanetId(null);
+  }, [draggingFleetId, hoveredPlanetId, onMoveFleet, fleets]);
+
+  // Gestion du pan avec drag
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 0) { // Clic gauche
+      setIsDragging(true);
+      setHasMoved(false);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  }, [pan]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    // Si on drag une flotte, gérer ça en priorité
+    if (draggingFleetId) {
+      handleFleetDragMove(e);
+      return;
+    }
+
+    if (isDragging) {
+      const dx = Math.abs(e.clientX - (dragStart.x + pan.x));
+      const dy = Math.abs(e.clientY - (dragStart.y + pan.y));
+      // Ne commencer le drag que si on a bougé de plus de 3 pixels
+      if (dx > 3 || dy > 3) {
+        setHasMoved(true);
+        setPan({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      }
+    }
+  }, [isDragging, dragStart, pan, draggingFleetId, handleFleetDragMove]);
+
+  const handleMouseUp = useCallback(() => {
+    if (draggingFleetId) {
+      handleFleetDragEnd();
+    }
+    setIsDragging(false);
+  }, [draggingFleetId, handleFleetDragEnd]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (draggingFleetId) {
+      handleFleetDragEnd();
+    }
+    setIsDragging(false);
+    setHasMoved(false);
+  }, [draggingFleetId, handleFleetDragEnd]);
+
+  // Centrer sur une planète sélectionnée
   useEffect(() => {
-    if (selectedStarId && containerRef.current) {
-      const star = stars.find((s) => s.id === selectedStarId);
-      if (star) {
+    if (selectedPlanetId && containerRef.current) {
+      const planet = planets.find((p) => p.id === selectedPlanetId);
+      if (planet) {
         const container = containerRef.current;
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
 
-        // Centrer la vue sur l'étoile
-        const targetX = containerWidth / 2 - star.x * zoom;
-        const targetY = containerHeight / 2 - star.y * zoom;
+        // Centrer la vue sur la planète
+        const targetX = containerWidth / 2 - planet.x * zoom;
+        const targetY = containerHeight / 2 - planet.y * zoom;
         setPan({ x: targetX, y: targetY });
       }
     }
-  }, [selectedStarId, stars, zoom]);
+  }, [selectedPlanetId, planets, zoom]);
 
   // Flottes en transit (pour trajectoires)
   const fleetsInTransit = fleets.filter(
-    (f) => f.status === 'in_transit' && f.current_star_id && f.destination_star_id
+    (f) => f.status === 'in_transit' && f.destination_planet_id
   );
 
   // Flottes stationnées (pour marqueurs)
   const stationedFleets = fleets.filter(
-    (f) => f.status === 'stationed' && f.current_star_id
+    (f) => f.status === 'stationed' && f.current_planet_id
   );
 
   return (
@@ -186,7 +259,7 @@ function GalaxyMap({
           transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
         }}
       >
-        {/* Fond étoilé */}
+        {/* Fond étoilé et textures */}
         <defs>
           <radialGradient id="starGlow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
@@ -199,6 +272,55 @@ function GalaxyMap({
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+
+          {/* Texture planète inconnue - points de balayage */}
+          <pattern id="unknownPattern" patternUnits="userSpaceOnUse" width="2" height="2">
+            <rect width="2" height="2" fill="#3a3a4a" />
+            <circle cx="1" cy="1" r="0.4" fill="#4a4a5a" />
+            <rect x="0" y="0" width="0.5" height="0.5" fill="#2a2a3a" />
+          </pattern>
+
+          {/* Texture astéroïde - surface lunaire avec cratères */}
+          <pattern id="asteroidPattern" patternUnits="userSpaceOnUse" width="3" height="3">
+            <rect width="3" height="3" fill="#888" />
+            <circle cx="0.8" cy="0.8" r="0.5" fill="#666" />
+            <circle cx="2.2" cy="1.8" r="0.4" fill="#777" />
+            <circle cx="1.5" cy="2.5" r="0.3" fill="#6a6a6a" />
+          </pattern>
+
+          {/* Texture planète hostile rocheuse - gris foncé avec cratères */}
+          <pattern id="hostilePattern" patternUnits="userSpaceOnUse" width="3" height="3">
+            <rect width="3" height="3" fill="#444" />
+            <circle cx="0.7" cy="0.7" r="0.6" fill="#333" />
+            <circle cx="2.3" cy="1.5" r="0.5" fill="#3a3a3a" />
+            <circle cx="1.2" cy="2.3" r="0.4" fill="#383838" />
+          </pattern>
+
+          {/* Texture planète gazeuse hostile - orange-rouge en mouvement */}
+          <pattern id="gaseousPattern" patternUnits="userSpaceOnUse" width="4" height="4">
+            <rect width="4" height="4" fill="#884422" />
+            <ellipse cx="2" cy="1" rx="1.5" ry="0.4" fill="#aa5533" opacity="0.8" />
+            <ellipse cx="2" cy="2.5" rx="1.8" ry="0.5" fill="#cc6644" opacity="0.7" />
+            <ellipse cx="1" cy="3.5" rx="1.2" ry="0.3" fill="#995533" opacity="0.6" />
+          </pattern>
+
+          {/* Texture planète habitable - aspect Terre (bleu/vert) */}
+          <pattern id="habitablePattern" patternUnits="userSpaceOnUse" width="4" height="4">
+            <rect width="4" height="4" fill="#2266aa" />
+            {/* Continents */}
+            <ellipse cx="1" cy="1.5" rx="0.8" ry="1" fill="#338844" />
+            <ellipse cx="3" cy="2.5" rx="1" ry="0.7" fill="#448855" />
+            <circle cx="2.5" cy="0.8" r="0.5" fill="#44aa66" />
+            {/* Nuages */}
+            <ellipse cx="0.5" cy="0.5" rx="0.6" ry="0.3" fill="#ffffff" opacity="0.3" />
+            <ellipse cx="3" cy="3.5" rx="0.8" ry="0.25" fill="#ffffff" opacity="0.25" />
+          </pattern>
+
+          {/* Gradient pour effet 3D sur astéroïde */}
+          <radialGradient id="asteroidGradient" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#aaa" />
+            <stop offset="100%" stopColor="#666" />
+          </radialGradient>
         </defs>
 
         {/* Background */}
@@ -218,52 +340,99 @@ function GalaxyMap({
 
         {/* Trajectoires des flottes */}
         {fleetsInTransit.map((fleet) => {
-          const fromStar = stars.find((s) => s.id === fleet.current_star_id);
-          const toStar = stars.find((s) => s.id === fleet.destination_star_id);
-          if (!fromStar || !toStar) return null;
+          const toPlanet = planets.find((p) => p.id === fleet.destination_planet_id);
+          if (!toPlanet) return null;
+
+          // Calculer la progression (0-1) basée sur le tour actuel
+          let progress = 0.5;
+          if (fleet.departure_turn && fleet.arrival_turn) {
+            const totalTurns = fleet.arrival_turn - fleet.departure_turn;
+            const elapsedTurns = currentTurn - fleet.departure_turn;
+            progress = totalTurns > 0 ? Math.min(1, Math.max(0, elapsedTurns / totalTurns)) : 0.5;
+          }
+
+          // Estimer la position de départ
+          // On utilise un angle basé sur l'ID de flotte pour avoir une direction stable
+          const estimatedDistance = fleet.fleet_speed * (fleet.arrival_turn! - fleet.departure_turn!);
+          const angle = (fleet.id * 137.5) % 360 * (Math.PI / 180); // Angle stable basé sur l'ID
+
+          // Position de départ estimée (opposée à la destination)
+          const fromX = toPlanet.x - estimatedDistance * Math.cos(angle);
+          const fromY = toPlanet.y - estimatedDistance * Math.sin(angle);
+
           return (
             <FleetTrajectory
               key={`trajectory-${fleet.id}`}
-              fromX={fromStar.x}
-              fromY={fromStar.y}
-              toX={toStar.x}
-              toY={toStar.y}
+              fromX={fromX}
+              fromY={fromY}
+              toX={toPlanet.x}
+              toY={toPlanet.y}
               color={getPlayerColor(fleet.player_id)}
               isMine={fleet.player_id === myPlayerId}
+              progress={progress}
+              arrivalTurn={fleet.arrival_turn || undefined}
+              fleetName={fleet.name}
+              shipCount={fleet.ship_count}
             />
           );
         })}
 
-        {/* Systèmes stellaires */}
-        {stars.map((star) => (
-          <StarSystem
-            key={star.id}
-            star={star}
-            isSelected={star.id === selectedStarId}
+        {/* Planètes */}
+        {planets.map((planet) => (
+          <PlanetMarker
+            key={planet.id}
+            planet={planet}
+            isSelected={planet.id === selectedPlanetId}
             myPlayerId={myPlayerId}
             zoom={zoom}
             getPlayerColor={getPlayerColor}
-            onClick={() => onStarClick(star.id)}
+            onClick={() => onPlanetClick(planet.id)}
           />
         ))}
 
         {/* Marqueurs de flottes */}
         {stationedFleets.map((fleet) => {
-          const star = stars.find((s) => s.id === fleet.current_star_id);
-          if (!star) return null;
+          const planet = planets.find((p) => p.id === fleet.current_planet_id);
+          if (!planet) return null;
           return (
             <FleetMarker
               key={`fleet-${fleet.id}`}
               fleet={fleet}
-              x={star.x}
-              y={star.y}
+              x={planet.x}
+              y={planet.y}
               color={getPlayerColor(fleet.player_id)}
               isMine={fleet.player_id === myPlayerId}
               zoom={zoom}
+              isDragging={draggingFleetId === fleet.id}
               onClick={() => onFleetClick(fleet.id)}
+              onDragStart={() => handleFleetDragStart(fleet.id, planet.x, planet.y)}
             />
           );
         })}
+
+        {/* Ligne de drag de flotte */}
+        {dragLine && (
+          <g className="fleet-drag-line">
+            <line
+              x1={dragLine.fromX}
+              y1={dragLine.fromY}
+              x2={dragLine.toX}
+              y2={dragLine.toY}
+              stroke={hoveredPlanetId ? '#4ade80' : '#ffa500'}
+              strokeWidth="1"
+              strokeDasharray="4 2"
+              opacity="0.8"
+            />
+            {/* Cercle à la destination */}
+            <circle
+              cx={dragLine.toX}
+              cy={dragLine.toY}
+              r="3"
+              fill={hoveredPlanetId ? '#4ade80' : '#ffa500'}
+              opacity="0.6"
+            />
+          </g>
+        )}
       </svg>
     </div>
   );

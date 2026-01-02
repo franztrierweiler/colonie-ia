@@ -26,10 +26,11 @@
   --bg-dark: #12121a;
   --bg-darker: #0a0a12;
   --bg-panel: #1a1a24;
-  --text-light: #e8e8f0;
+  --text-light: #ffffff;
+  --text-light-secondary: #c8c8d0;
   --border-color: #2a2a3a;
-  --font-pixel: 'Press Start 2P', 'Courier New', monospace;
-  --font-mono: 'Fira Code', 'Monaco', monospace;
+  --font-pixel: 'Press Start 2P', Arial, sans-serif;
+  --font-mono: Arial, sans-serif;
 }
 
 * {
