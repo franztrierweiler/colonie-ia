@@ -24,125 +24,45 @@ function PlanetMarker({
   const isHomePlanet = planet.is_home_planet;
   const ownerColor = getPlayerColor(planet.owner_id);
 
-  // Détection planète gazeuse : gravité quasi-nulle (< 0.2g)
-  const isGaseous = planet.gravity < 0.2;
-
-  // Détection planète hostile : température extrême OU gravité extrême
+  // Type de planète et conditions (pour affichage des halos)
+  const isGaseous = planet.texture_type === 'gas';
   const isHostile = !isUnexplored && (
-    planet.current_temperature < -50 ||
-    planet.current_temperature > 80 ||
-    planet.gravity > 3.0 ||
-    planet.gravity < 0.1
+    planet.texture_type === 'volcanic' ||
+    planet.texture_type === 'ice' ||
+    (planet.texture_type === 'barren' && planet.habitability < 0.2)
   );
-
-  // Détection astéroïde/minerai : faible habitabilité et présence de métal
-  const isAsteroid = !isUnexplored && !isHostile && planet.habitability < 0.2 && planet.metal_reserves > 0;
-
-  // Niveau de terraformation basé sur l'habitabilité (0 à 1)
-  // L'habitabilité combine température et gravité
-  const terraformLevel = isUnexplored ? 0 : planet.habitability;
-
-  // Potentiel max de terraformation basé uniquement sur la gravité
-  // (la température peut être modifiée, pas la gravité)
-  const getMaxTerraformPotential = () => {
-    const gravityDiff = Math.abs(planet.gravity - 1.0);
-    return Math.max(0, 1 - gravityDiff / 2);
-  };
-  const maxTerraformPotential = getMaxTerraformPotential();
 
   // Taille selon sélection (plus grand pour voir les textures)
   const planetRadius = isSelected ? 6 : 5;
   const glowRadius = isSelected ? 8 : 7;
 
-  // Couleur ou texture de la planète selon UI_SPECS.md
-  const getPlanetFill = () => {
-    // Planète inexplorée = texture mystérieuse gris foncé
-    if (isUnexplored) return 'url(#unknownPattern)';
+  // Construit le chemin de texture à partir des valeurs stockées en base
+  const getPlanetTexture = (): string => {
+    // Planète inexplorée = pas de texture (gris uniforme)
+    if (isUnexplored) return '';
 
-    // Planète hostile gazeuse = orange-rouge
-    if (isHostile && isGaseous) return 'url(#gaseousPattern)';
+    // Utiliser les valeurs stockées en base de données
+    const textureType = planet.texture_type || 'barren';
+    const textureIdx = planet.texture_index || 1;
+    const paddedIdx = String(textureIdx).padStart(3, '0');
 
-    // Planète hostile rocheuse = gris foncé avec points de lave
-    if (isHostile) return 'url(#hostilePattern)';
-
-    // Astéroïde/minerai = texture rocheuse lunaire
-    if (isAsteroid) return 'url(#asteroidPattern)';
-
-    // Planète bien terraformée (>85%) = bleu intense avec aspect Terre
-    if (terraformLevel > 0.85) {
-      return 'url(#habitablePattern)';
-    }
-
-    // Planètes terraformables : gradient de gris clair vers bleu
-    // Basé sur le pourcentage de terraformation actuel
-    // Gris clair (180, 180, 190) vers bleu (70, 130, 200)
-    const r = Math.floor(180 - terraformLevel * 110);
-    const g = Math.floor(180 - terraformLevel * 50);
-    const b = Math.floor(190 + terraformLevel * 10);
-    return `rgb(${r}, ${g}, ${b})`;
+    return `/planets/${textureType}/planet-${paddedIdx}.png`;
   };
 
-  // Génère des cratères selon le potentiel de terraformation
-  // < 20% potentiel = cratères très prononcés (beaucoup de métal)
-  // < 50% potentiel = quelques cratères (un peu de métal)
-  // > 50% potentiel = pas de cratères visibles
-  const renderCraters = () => {
-    // Pas de cratères pour les planètes inexplorées, hostiles ou bien terraformables
-    if (isUnexplored || isHostile || maxTerraformPotential > 0.5) return null;
-    // Pas de cratères pour les planètes déjà bien terraformées
-    if (terraformLevel > 0.5) return null;
+  const planetTexture = getPlanetTexture();
 
-    const craters = [];
-    const seed = planet.id;
-
-    // Nombre et taille des cratères selon le potentiel
-    const craterCount = maxTerraformPotential < 0.2 ? 6 : 3;
-    const craterSizeMultiplier = maxTerraformPotential < 0.2 ? 1.5 : 1.0;
-
-    for (let i = 0; i < craterCount; i++) {
-      const angle = ((seed * (i + 1) * 137) % 360) * (Math.PI / 180);
-      const distance = 0.3 + ((seed * (i + 2)) % 50) / 100;
-      const cx = planet.x + Math.cos(angle) * planetRadius * distance;
-      const cy = planet.y + Math.sin(angle) * planetRadius * distance;
-      const r = (0.3 + ((seed * (i + 3)) % 30) / 100) * craterSizeMultiplier;
-      craters.push(
-        <circle
-          key={`crater-${i}`}
-          cx={cx}
-          cy={cy}
-          r={r}
-          fill="#555"
-          opacity="0.7"
-        />
-      );
+  // Fallback couleur selon le type de texture stocké
+  const getFallbackFill = () => {
+    if (isUnexplored) return '#3a3a4a';
+    switch (planet.texture_type) {
+      case 'gas': return '#884422';
+      case 'volcanic': return '#aa3300';
+      case 'ice': return '#aaddff';
+      case 'desert': return '#cc9966';
+      case 'habitable': return '#2266aa';
+      case 'barren':
+      default: return '#888888';
     }
-    return craters;
-  };
-
-  // Génère des points de lave pour les planètes hostiles rocheuses
-  const renderLavaPoints = () => {
-    if (!isHostile || isGaseous) return null;
-
-    const lavaPoints = [];
-    const seed = planet.id;
-
-    for (let i = 0; i < 5; i++) {
-      const angle = ((seed * (i + 1) * 97) % 360) * (Math.PI / 180);
-      const distance = 0.2 + ((seed * (i + 2)) % 40) / 100;
-      const cx = planet.x + Math.cos(angle) * planetRadius * distance;
-      const cy = planet.y + Math.sin(angle) * planetRadius * distance;
-      lavaPoints.push(
-        <circle
-          key={`lava-${i}`}
-          cx={cx}
-          cy={cy}
-          r={0.4}
-          fill="#ff4422"
-          opacity="0.8"
-        />
-      );
-    }
-    return lavaPoints;
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -203,35 +123,65 @@ function PlanetMarker({
           cx={planet.x}
           cy={planet.y}
           r={glowRadius}
-          fill={planet.is_nova ? '#ff4444' : getPlanetFill()}
+          fill={planet.is_nova ? '#ff4444' : getFallbackFill()}
           opacity="0.2"
           filter="url(#glow)"
         />
       )}
 
-      {/* Coeur de la planète */}
-      <circle
-        cx={planet.x}
-        cy={planet.y}
-        r={planetRadius}
-        fill={planet.is_nova ? '#ff0000' : getPlanetFill()}
-        className="planet-core"
-      />
+      {/* ClipPath pour découpage circulaire de la texture */}
+      <defs>
+        <clipPath id={`planet-clip-${planet.id}`}>
+          <circle cx={planet.x} cy={planet.y} r={planetRadius} />
+        </clipPath>
+      </defs>
 
-      {/* Effet d'auto-rotation (ombre qui traverse la surface) */}
-      {!isUnexplored && !planet.is_nova && (
+      {/* Coeur de la planète avec texture */}
+      {planet.is_nova ? (
+        <circle
+          cx={planet.x}
+          cy={planet.y}
+          r={planetRadius}
+          fill="#ff0000"
+          className="planet-core"
+        />
+      ) : isUnexplored ? (
+        /* Planète non explorée = cercle gris uniforme */
+        <circle
+          cx={planet.x}
+          cy={planet.y}
+          r={planetRadius}
+          fill="#555"
+          stroke="#666"
+          strokeWidth="0.5"
+          className="planet-core"
+        />
+      ) : (
         <g clipPath={`url(#planet-clip-${planet.id})`}>
-          <defs>
-            <clipPath id={`planet-clip-${planet.id}`}>
-              <circle cx={planet.x} cy={planet.y} r={planetRadius - 0.5} />
-            </clipPath>
-          </defs>
+          {/* Cercle de fond (fallback) */}
+          <circle
+            cx={planet.x}
+            cy={planet.y}
+            r={planetRadius}
+            fill={getFallbackFill()}
+          />
+          {/* Image de texture */}
+          <image
+            href={planetTexture}
+            x={planet.x - planetRadius}
+            y={planet.y - planetRadius}
+            width={planetRadius * 2}
+            height={planetRadius * 2}
+            preserveAspectRatio="xMidYMid slice"
+            className="planet-core"
+          />
+          {/* Effet d'auto-rotation (ombre qui traverse la surface) */}
           <ellipse
             cx={planet.x}
             cy={planet.y}
             rx={planetRadius * 0.4}
             ry={planetRadius * 1.2}
-            fill="rgba(0,0,0,0.2)"
+            fill="rgba(0,0,0,0.15)"
             className="planet-terminator"
             style={{
               ['--planet-x' as string]: `${planet.x}px`,
@@ -240,12 +190,6 @@ function PlanetMarker({
           />
         </g>
       )}
-
-      {/* Cratères pour planètes à faible potentiel */}
-      {renderCraters()}
-
-      {/* Points de lave pour planètes hostiles rocheuses */}
-      {renderLavaPoints()}
 
       {/* Point d'interrogation pour planètes inexplorées - toujours visible */}
       {isUnexplored && (
@@ -433,27 +377,15 @@ function PlanetMarker({
         </g>
       )}
 
-      {/* Panneau danger triangulaire pour nova imminente */}
+      {/* Point rouge clignotant pour nova imminente */}
       {planet.nova_turn && !planet.is_nova && (
-        <g transform={`translate(${planet.x + planetRadius + 2}, ${planet.y - planetRadius - 2})`}>
-          {/* Triangle d'avertissement */}
-          <path
-            d="M6,0 L12,10 L0,10 Z"
-            fill="#ffcc00"
-            stroke="#222"
-            strokeWidth="0.5"
-          />
-          {/* Bordure intérieure */}
-          <path
-            d="M6,1.5 L10.5,9 L1.5,9 Z"
-            fill="none"
-            stroke="#222"
-            strokeWidth="0.3"
-          />
-          {/* Point d'exclamation */}
-          <rect x="5" y="3.5" width="2" height="3.5" fill="#222" />
-          <circle cx="6" cy="8" r="1" fill="#222" />
-        </g>
+        <circle
+          cx={planet.x + planetRadius + 2}
+          cy={planet.y - planetRadius - 2}
+          r={2}
+          fill="#ff0000"
+          className="danger-blink"
+        />
       )}
     </g>
   );

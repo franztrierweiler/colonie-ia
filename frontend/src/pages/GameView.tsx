@@ -173,6 +173,18 @@ function GameView() {
           <span className="turn-label">Tour {mapData.turn}</span>
         </div>
         <div className="header-right">
+          <button
+            className="btn-debug"
+            onClick={async () => {
+              if (gameId) {
+                await api.debugConquerAll(parseInt(gameId));
+                loadMap();
+              }
+            }}
+            title="[DEBUG] Conquérir toutes les planètes"
+          >
+            Conquérir tout
+          </button>
           <button className="btn-refresh" onClick={() => { loadMap(); loadEconomy(); }}>
             Actualiser
           </button>

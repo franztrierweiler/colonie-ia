@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import type { Planet, Fleet, Player } from '../../hooks/useGameState';
 import PlanetMarker from './PlanetMarker';
 import FleetMarker from './FleetMarker';
@@ -179,23 +179,6 @@ function GalaxyMap({
     setIsDragging(false);
     setHasMoved(false);
   }, [draggingFleetId, handleFleetDragEnd]);
-
-  // Centrer sur une planète sélectionnée
-  useEffect(() => {
-    if (selectedPlanetId && containerRef.current) {
-      const planet = planets.find((p) => p.id === selectedPlanetId);
-      if (planet) {
-        const container = containerRef.current;
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
-
-        // Centrer la vue sur la planète
-        const targetX = containerWidth / 2 - planet.x * zoom;
-        const targetY = containerHeight / 2 - planet.y * zoom;
-        setPan({ x: targetX, y: targetY });
-      }
-    }
-  }, [selectedPlanetId, planets, zoom]);
 
   // Flottes en transit (pour trajectoires)
   const fleetsInTransit = fleets.filter(

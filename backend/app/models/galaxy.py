@@ -128,6 +128,10 @@ class Planet(db.Model):
     history_line1 = db.Column(db.String(200), nullable=True)
     history_line2 = db.Column(db.String(200), nullable=True)
 
+    # Visual appearance (fixed at creation)
+    texture_type = db.Column(db.String(20), nullable=True)  # habitable, desert, ice, volcanic, barren, gas
+    texture_index = db.Column(db.Integer, nullable=True)  # 1-100 for texture variety
+
     # Timestamps
     colonized_at = db.Column(db.DateTime, nullable=True)
     explored_at = db.Column(db.DateTime, nullable=True)
@@ -185,4 +189,6 @@ class Planet(db.Model):
             "is_home_planet": self.is_home_planet,
             "history_line1": self.history_line1,
             "history_line2": self.history_line2,
+            "texture_type": self.texture_type,
+            "texture_index": self.texture_index,
         }

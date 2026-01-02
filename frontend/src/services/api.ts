@@ -353,6 +353,15 @@ class ApiClient {
     const response = await this.client.post(`/ships/${shipId}/disband`);
     return response.data;
   }
+
+  // ==========================================================================
+  // Debug endpoints
+  // ==========================================================================
+
+  async debugConquerAll(gameId: number) {
+    const response = await this.client.post(`/games/${gameId}/debug/conquer-all`);
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

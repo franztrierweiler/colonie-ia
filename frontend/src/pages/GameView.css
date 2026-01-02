@@ -100,6 +100,23 @@ body:has(.game-view) {
   color: var(--orange-primary);
 }
 
+.btn-debug {
+  padding: 0.2rem 0.5rem;
+  background: #ff6b3530;
+  border: 1px solid #ff6b35;
+  color: #ff6b35;
+  cursor: pointer;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-debug:hover {
+  background: #ff6b35;
+  color: #000;
+}
+
 .btn-end-turn {
   padding: 0.25rem 0.6rem;
   background: var(--orange-primary);

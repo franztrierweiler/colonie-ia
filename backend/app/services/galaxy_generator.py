@@ -26,6 +26,55 @@ DENSITY_FACTORS = {
     GalaxyDensity.HIGH.value: 1.0,
 }
 
+# Texture types for planet visuals
+TEXTURE_TYPES = ["habitable", "desert", "ice", "volcanic", "barren", "gas"]
+TEXTURES_PER_TYPE = 8  # Nombre de textures par type (colonnes dans la planche unifiée)
+
+
+def determine_texture_type(temperature: float, gravity: float, metal_reserves: int) -> str:
+    """
+    Determine the visual texture type for a planet based on its characteristics.
+
+    Args:
+        temperature: Planet temperature in Celsius
+        gravity: Planet gravity in g
+        metal_reserves: Initial metal reserves
+
+    Returns:
+        Texture type string: habitable, desert, ice, volcanic, barren, gas
+    """
+    # Calculate habitability
+    temp_factor = max(0, 1 - abs(temperature - 22) / 100)
+    gravity_factor = max(0, 1 - abs(gravity - 1.0) / 2)
+    habitability = temp_factor * gravity_factor
+
+    # Gas giant: very low or very high gravity, or very large with extreme conditions
+    if gravity < 0.3 or gravity > 2.5:
+        return "gas"
+
+    # Asteroid/barren: very low metal and very low habitability
+    if metal_reserves < 100 and habitability < 0.2:
+        return "barren"
+
+    # Volcanic: extremely hot
+    if temperature > 80:
+        return "volcanic"
+
+    # Ice: extremely cold
+    if temperature < -50:
+        return "ice"
+
+    # Desert: hot and dry (30-80°C)
+    if temperature > 30:
+        return "desert"
+
+    # Habitable: good conditions
+    if habitability > 0.3:
+        return "habitable"
+
+    # Default to barren for poor habitability
+    return "barren"
+
 
 class GalaxyGenerator:
     """Service for generating galaxies."""
@@ -291,6 +340,10 @@ class GalaxyGenerator:
         # Generate planet history (revealed upon exploration)
         history_line1, history_line2 = generate_planet_history(temperature, gravity, metal_reserves)
 
+        # Determine visual texture type and index (fixed at creation)
+        texture_type = determine_texture_type(temperature, gravity, metal_reserves)
+        texture_index = random.randint(1, TEXTURES_PER_TYPE)
+
         return Planet(
             galaxy_id=galaxy_id,
             name=name,
@@ -308,6 +361,8 @@ class GalaxyGenerator:
             max_population=max_population,
             history_line1=history_line1,
             history_line2=history_line2,
+            texture_type=texture_type,
+            texture_index=texture_index,
         )
 
 

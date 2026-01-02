@@ -209,6 +209,20 @@
   animation: haloBreath 3s ease-in-out infinite;
 }
 
+/* Point rouge clignotant pour danger (nova imminente) */
+@keyframes dangerBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.danger-blink {
+  animation: dangerBlink 0.6s ease-in-out infinite;
+}
+
 /* Fleet drag styles */
 .fleet-marker.dragging {
   opacity: 0.5;

@@ -27,6 +27,8 @@ export interface Planet {
   is_home_planet: boolean;
   history_line1: string | null;
   history_line2: string | null;
+  texture_type: string | null;
+  texture_index: number | null;
 }
 
 export interface ProductionQueueItem {

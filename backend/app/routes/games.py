@@ -653,3 +653,44 @@ def my_games():
         games.append(game_data)
 
     return jsonify({"games": games})
+
+
+@api_bp.route("/games/<int:game_id>/debug/conquer-all", methods=["POST"])
+@token_required
+def debug_conquer_all(game_id: int):
+    """
+    [DEBUG] Conquérir toutes les planètes pour tester les textures
+    ---
+    tags:
+      - Debug
+    security:
+      - Bearer: []
+    """
+    from app import db
+    from app.models import GamePlayer, Planet, PlanetState
+
+    game = Game.query.get(game_id)
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+
+    player = GamePlayer.query.filter_by(
+        game_id=game_id,
+        user_id=g.current_user.id
+    ).first()
+
+    if not player:
+        return jsonify({"error": "You are not a player in this game"}), 403
+
+    # Conquérir toutes les planètes
+    count = 0
+    for planet in game.galaxy.planets:
+        planet.owner_id = player.id
+        planet.state = PlanetState.EXPLORED.value
+        count += 1
+
+    db.session.commit()
+
+    return jsonify({
+        "message": f"{count} planètes conquises",
+        "count": count
+    })
