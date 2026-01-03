@@ -231,99 +231,235 @@ function PlanetMarker({
         />
       )}
 
-      {/* Bicorne 3D pour planètes possédées (toujours visible) */}
+      {/* Bicorne 3D Isométrique pour planètes possédées */}
       {isOwned && !isUnexplored && (
-        <g transform={`translate(${planet.x}, ${planet.y - planetRadius * 0.6})`}>
-          {/* Ombre du bicorne sur la planète */}
+        <g transform={`translate(${planet.x}, ${planet.y - planetRadius * 0.9})`}>
+          {/* Définitions des dégradés pour effet 3D LEGO */}
+          <defs>
+            {/* Dégradé face supérieure (lumière du haut) */}
+            <linearGradient id={`top-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#3a3a3a" />
+              <stop offset="100%" stopColor="#252525" />
+            </linearGradient>
+            {/* Dégradé face avant (plus sombre) */}
+            <linearGradient id={`front-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#1a1a1a" />
+              <stop offset="100%" stopColor="#0a0a0a" />
+            </linearGradient>
+            {/* Dégradé doré */}
+            <linearGradient id={`gold-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#ffd700" />
+              <stop offset="50%" stopColor="#daa520" />
+              <stop offset="100%" stopColor="#996515" />
+            </linearGradient>
+            {/* Dégradé bleu 3D */}
+            <linearGradient id={`blue-grad-${planet.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#4488cc" />
+              <stop offset="50%" stopColor="#0055a4" />
+              <stop offset="100%" stopColor="#003366" />
+            </linearGradient>
+            {/* Dégradé rouge 3D */}
+            <linearGradient id={`red-grad-${planet.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ff6655" />
+              <stop offset="50%" stopColor="#ef4135" />
+              <stop offset="100%" stopColor="#aa2020" />
+            </linearGradient>
+            {/* Dégradé ennemi */}
+            <linearGradient id={`enemy-top-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={ownerColor} />
+              <stop offset="100%" stopColor={ownerColor} stopOpacity="0.7" />
+            </linearGradient>
+            <linearGradient id={`enemy-front-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={ownerColor} stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#0a0a0a" />
+            </linearGradient>
+          </defs>
+
+          {/* Ombre portée du bicorne sur la planète */}
           <ellipse
             cx="0"
-            cy={planetRadius * 0.15}
-            rx="3"
-            ry="1"
-            fill="rgba(0,0,0,0.3)"
+            cy={planetRadius * 0.35}
+            rx="6"
+            ry="2"
+            fill="rgba(0,0,0,0.5)"
           />
 
           {isMine ? (
-            /* Bicorne tricolore bleu-blanc-rouge pour le joueur */
-            <g transform="translate(-4, -5)">
-              {/* Ombre portée du bicorne */}
+            /* === BICORNE NAPOLÉONIEN 3D ISOMÉTRIQUE === */
+            <g transform="translate(-7, -8) scale(1.5)">
+
+              {/* === POINTE GAUCHE (BLEUE) - Vue 3D === */}
+              {/* Face supérieure de la pointe gauche */}
               <path
-                d="M0.5,5.5 L4,0.5 L7.5,5.5 L4,4.5 Z"
-                fill="rgba(0,0,0,0.2)"
-                transform="translate(0.3, 0.3)"
+                d="M0.5,5.5 L2.8,1.2 L3.5,1.8 L1.5,5.2 Z"
+                fill={`url(#blue-grad-${planet.id})`}
               />
-              {/* Corps du bicorne - dégradé pour effet 3D */}
-              <defs>
-                <linearGradient id={`bicorne-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="100%" stopColor="#cccccc" />
-                </linearGradient>
-              </defs>
+              {/* Face avant de la pointe gauche (plus sombre) */}
               <path
-                d="M0.5,5 L4,0 L7.5,5 L4,4 Z"
-                fill={`url(#bicorne-grad-${planet.id})`}
-                stroke="#333"
+                d="M0.5,5.5 L1.5,5.2 L1.5,6.2 L0.5,6.5 Z"
+                fill="#002244"
+              />
+              {/* Épaisseur/tranche de la pointe gauche */}
+              <path
+                d="M0.5,5.5 L0.5,6.5 L0.2,6.3 L0.2,5.3 Z"
+                fill="#001133"
+              />
+              {/* Liseré doré pointe gauche */}
+              <path
+                d="M0.5,5.5 L2.8,1.2"
+                fill="none"
+                stroke="#daa520"
                 strokeWidth="0.3"
               />
-              {/* Bande bleue (gauche) avec ombre */}
+              {/* Reflet sur pointe bleue */}
               <path
-                d="M0.5,5 L2.2,1.8 L2.6,2.3 L1.3,5 Z"
-                fill="#0055a4"
+                d="M1.8,3 L2.5,1.8 L2.8,2.1 L2.1,3.3 Z"
+                fill="#6699dd"
+                opacity="0.5"
               />
+
+              {/* === CORPS CENTRAL DU BICORNE === */}
+              {/* Face supérieure du corps (vue de dessus légèrement) */}
               <path
-                d="M0.5,5 L2.2,1.8 L2.4,2 L1.1,5 Z"
-                fill="#003d7a"
+                d="M1.5,5.2 L3.5,1.8 L4.5,1.5 L5.5,1.8 L7.5,5.2 L4.5,4.5 Z"
+                fill={`url(#top-grad-${planet.id})`}
               />
-              {/* Bande rouge (droite) avec ombre */}
+              {/* Face avant du corps (épaisseur 3D) */}
               <path
-                d="M7.5,5 L5.8,1.8 L5.4,2.3 L6.7,5 Z"
-                fill="#ef4135"
+                d="M1.5,5.2 L1.5,6.2 L4.5,5.5 L7.5,6.2 L7.5,5.2 L4.5,4.5 Z"
+                fill={`url(#front-grad-${planet.id})`}
               />
+              {/* Bordure dorée inférieure 3D */}
               <path
-                d="M7.5,5 L5.8,1.8 L5.6,2 L6.9,5 Z"
-                fill="#cc2a20"
+                d="M1.5,6.2 L4.5,5.5 L7.5,6.2 L4.5,5.8 Z"
+                fill={`url(#gold-grad-${planet.id})`}
               />
-              {/* Rebord inférieur du bicorne (effet 3D) */}
+              {/* Ligne de séparation (rebord du chapeau) */}
               <path
-                d="M0.5,5 L4,4 L7.5,5 L4,5.3 Z"
-                fill="#222"
+                d="M1.5,5.2 L4.5,4.5 L7.5,5.2"
+                fill="none"
+                stroke="#4a4a4a"
+                strokeWidth="0.2"
               />
-              {/* Cocarde tricolore en relief */}
-              <circle cx="4" cy="2.5" r="0.9" fill="#003d7a" />
-              <circle cx="4" cy="2.5" r="0.7" fill="#0055a4" />
-              <circle cx="4" cy="2.5" r="0.5" fill="#ffffff" />
-              <circle cx="4" cy="2.5" r="0.25" fill="#ef4135" />
+
+              {/* === POINTE DROITE (ROUGE) - Vue 3D === */}
+              {/* Face supérieure de la pointe droite */}
+              <path
+                d="M8.5,5.5 L6.2,1.2 L5.5,1.8 L7.5,5.2 Z"
+                fill={`url(#red-grad-${planet.id})`}
+              />
+              {/* Face avant de la pointe droite (plus sombre) */}
+              <path
+                d="M8.5,5.5 L7.5,5.2 L7.5,6.2 L8.5,6.5 Z"
+                fill="#661515"
+              />
+              {/* Épaisseur/tranche de la pointe droite */}
+              <path
+                d="M8.5,5.5 L8.5,6.5 L8.8,6.3 L8.8,5.3 Z"
+                fill="#441010"
+              />
+              {/* Liseré doré pointe droite */}
+              <path
+                d="M8.5,5.5 L6.2,1.2"
+                fill="none"
+                stroke="#daa520"
+                strokeWidth="0.3"
+              />
+              {/* Reflet sur pointe rouge */}
+              <path
+                d="M7.2,3 L6.5,1.8 L6.2,2.1 L6.9,3.3 Z"
+                fill="#ff8866"
+                opacity="0.5"
+              />
+
+              {/* === COCARDE TRICOLORE 3D === */}
+              {/* Ombre portée de la cocarde */}
+              <ellipse cx="4.7" cy="3.5" rx="1.2" ry="0.8" fill="rgba(0,0,0,0.4)" />
+
+              {/* Base en relief (cylindre) */}
+              <ellipse cx="4.5" cy="3.2" rx="1.1" ry="0.7" fill="#0a0a0a" />
+              <ellipse cx="4.5" cy="3" rx="1.1" ry="0.7" fill="#1a1a1a" />
+
+              {/* Anneau bleu extérieur */}
+              <ellipse cx="4.5" cy="2.85" rx="1.0" ry="0.65" fill="#002244" />
+              <ellipse cx="4.5" cy="2.8" rx="0.95" ry="0.6" fill="#0055a4" />
+
+              {/* Anneau blanc */}
+              <ellipse cx="4.5" cy="2.75" rx="0.65" ry="0.4" fill="#cccccc" />
+              <ellipse cx="4.5" cy="2.7" rx="0.6" ry="0.38" fill="#ffffff" />
+
+              {/* Centre rouge */}
+              <ellipse cx="4.5" cy="2.68" rx="0.35" ry="0.22" fill="#aa2020" />
+              <ellipse cx="4.5" cy="2.65" rx="0.3" ry="0.2" fill="#ef4135" />
+
+              {/* Bouton doré central en 3D */}
+              <ellipse cx="4.5" cy="2.62" rx="0.15" ry="0.1" fill="#996515" />
+              <ellipse cx="4.5" cy="2.6" rx="0.12" ry="0.08" fill="#ffd700" />
+              <ellipse cx="4.45" cy="2.58" rx="0.04" ry="0.03" fill="#fff8dc" />
+
+              {/* Reflet global sur le bicorne */}
+              <path
+                d="M2,4.5 Q3,2.5 4,2 L4.5,2.2 Q3.5,3 2.5,4.8 Z"
+                fill="rgba(255,255,255,0.15)"
+              />
             </g>
           ) : (
-            /* Bicorne de la couleur de l'ennemi en 3D */
-            <g transform="translate(-4, -5)">
-              {/* Ombre portée */}
+            /* === BICORNE ENNEMI 3D ISOMÉTRIQUE === */
+            <g transform="translate(-7, -8) scale(1.5)">
+
+              {/* Pointe gauche */}
               <path
-                d="M0.5,5.5 L4,0.5 L7.5,5.5 L4,4.5 Z"
-                fill="rgba(0,0,0,0.2)"
-                transform="translate(0.3, 0.3)"
+                d="M0.5,5.5 L2.8,1.2 L3.5,1.8 L1.5,5.2 Z"
+                fill={`url(#enemy-top-${planet.id})`}
               />
-              {/* Corps du bicorne avec dégradé */}
-              <defs>
-                <linearGradient id={`bicorne-enemy-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={ownerColor} />
-                  <stop offset="100%" stopColor="#333" />
-                </linearGradient>
-              </defs>
               <path
-                d="M0.5,5 L4,0 L7.5,5 L4,4 Z"
-                fill={`url(#bicorne-enemy-grad-${planet.id})`}
-                stroke="#111"
-                strokeWidth="0.3"
+                d="M0.5,5.5 L1.5,5.2 L1.5,6.2 L0.5,6.5 Z"
+                fill="rgba(0,0,0,0.5)"
               />
-              {/* Rebord inférieur */}
               <path
-                d="M0.5,5 L4,4 L7.5,5 L4,5.3 Z"
-                fill="#111"
+                d="M0.5,5.5 L0.5,6.5 L0.2,6.3 L0.2,5.3 Z"
+                fill="rgba(0,0,0,0.7)"
               />
-              {/* Insigne ennemi */}
-              <circle cx="4" cy="2.5" r="0.6" fill="#111" />
-              <circle cx="4" cy="2.5" r="0.35" fill="#333" />
+
+              {/* Corps central */}
+              <path
+                d="M1.5,5.2 L3.5,1.8 L4.5,1.5 L5.5,1.8 L7.5,5.2 L4.5,4.5 Z"
+                fill={`url(#enemy-top-${planet.id})`}
+              />
+              <path
+                d="M1.5,5.2 L1.5,6.2 L4.5,5.5 L7.5,6.2 L7.5,5.2 L4.5,4.5 Z"
+                fill={`url(#enemy-front-${planet.id})`}
+              />
+              <path
+                d="M1.5,6.2 L4.5,5.5 L7.5,6.2 L4.5,5.8 Z"
+                fill="#222"
+              />
+
+              {/* Pointe droite */}
+              <path
+                d="M8.5,5.5 L6.2,1.2 L5.5,1.8 L7.5,5.2 Z"
+                fill={`url(#enemy-top-${planet.id})`}
+              />
+              <path
+                d="M8.5,5.5 L7.5,5.2 L7.5,6.2 L8.5,6.5 Z"
+                fill="rgba(0,0,0,0.5)"
+              />
+              <path
+                d="M8.5,5.5 L8.5,6.5 L8.8,6.3 L8.8,5.3 Z"
+                fill="rgba(0,0,0,0.7)"
+              />
+
+              {/* Insigne ennemi 3D */}
+              <ellipse cx="4.7" cy="3.5" rx="1.0" ry="0.7" fill="rgba(0,0,0,0.4)" />
+              <ellipse cx="4.5" cy="3.1" rx="0.9" ry="0.6" fill="#0a0a0a" />
+              <ellipse cx="4.5" cy="2.9" rx="0.85" ry="0.55" fill="#1a1a1a" />
+              <ellipse cx="4.5" cy="2.75" rx="0.6" ry="0.4" fill="#2a2a2a" />
+              <ellipse cx="4.5" cy="2.65" rx="0.35" ry="0.25" fill="#3a3a3a" />
+              <ellipse cx="4.45" cy="2.6" rx="0.1" ry="0.07" fill="#555" />
+
+              {/* Contours */}
+              <path d="M0.5,5.5 L2.8,1.2" fill="none" stroke="#333" strokeWidth="0.2" />
+              <path d="M8.5,5.5 L6.2,1.2" fill="none" stroke="#333" strokeWidth="0.2" />
             </g>
           )}
         </g>
