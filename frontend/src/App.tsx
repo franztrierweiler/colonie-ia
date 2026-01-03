@@ -10,6 +10,7 @@ import GameList from './pages/GameList';
 import CreateGame from './pages/CreateGame';
 import GameLobby from './pages/GameLobby';
 import GameView from './pages/GameView';
+import ShipShowcaseStandalone from './pages/ShipShowcase';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -64,6 +65,8 @@ function App() {
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Page publique de showcase des vaisseaux */}
+          <Route path="/ships" element={<ShipShowcaseStandalone />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

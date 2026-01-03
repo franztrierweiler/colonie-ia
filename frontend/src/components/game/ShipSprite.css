@@ -1,0 +1,142 @@
+/* ShipSprite.css - Styles pour les sprites de vaisseaux LEGO */
+
+.ship-sprite {
+  object-fit: contain;
+  image-rendering: auto; /* Garde la netteté lors du downscale */
+  user-select: none;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Animation de vol subtile */
+.ship-animated {
+  animation: ship-hover 2s ease-in-out infinite;
+}
+
+@keyframes ship-hover {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Animation de propulsion */
+.ship-sprite.propulsion {
+  animation: ship-propulsion 0.5s ease-in-out infinite;
+}
+
+@keyframes ship-propulsion {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.1);
+  }
+}
+
+/* Grille de vaisseaux */
+.ship-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.ship-grid-overflow {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #888);
+  font-weight: bold;
+  padding: 2px 6px;
+  background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+}
+
+/* Galerie de showcase */
+.ship-gallery {
+  padding: 20px;
+  background: var(--color-bg-secondary, #1a1a2e);
+  border-radius: 12px;
+}
+
+.ship-gallery h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: var(--color-text-primary, #fff);
+  font-size: 1.5rem;
+}
+
+.gallery-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.gallery-row {
+  background: var(--color-bg-tertiary, rgba(255, 255, 255, 0.05));
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.gallery-row h3 {
+  color: var(--color-text-secondary, #aaa);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+}
+
+.gallery-levels {
+  display: flex;
+  gap: 16px;
+  justify-content: space-around;
+}
+
+.gallery-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.gallery-label {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary, #666);
+  background: var(--color-bg-quaternary, rgba(0, 0, 0, 0.3));
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Effet de sélection */
+.ship-sprite.selected {
+  filter: drop-shadow(0 0 8px var(--color-accent, #4a9eff));
+}
+
+/* Effet de survol */
+.ship-sprite.hoverable:hover {
+  filter: brightness(1.2);
+  cursor: pointer;
+}
+
+/* États de vaisseaux */
+.ship-sprite.damaged {
+  filter: hue-rotate(-30deg) saturate(1.5);
+}
+
+.ship-sprite.disabled {
+  filter: grayscale(1) opacity(0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .gallery-levels {
+    flex-wrap: wrap;
+  }
+
+  .gallery-item {
+    flex: 1 1 45%;
+  }
+}
