@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import type { RadicalBreakthrough, BreakthroughEffect } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { GalaxyMap, PlanetPanel, FleetPanel } from '../components/game';
+import { GalaxyMap, PlanetPanel, FleetPanel, TechPanel, TechComparisonModal, BreakthroughModal } from '../components/game';
 import { PixelUser, PixelLogout, PixelChevron } from '../components/PixelIcons';
 import type { Fleet, Player, Galaxy, Planet } from '../hooks/useGameState';
 import './GameView.css';
@@ -37,6 +38,11 @@ function GameView() {
   const [selectedFleetId, setSelectedFleetId] = useState<number | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Technology & Breakthrough state
+  const [pendingBreakthrough, setPendingBreakthrough] = useState<RadicalBreakthrough | null>(null);
+  const [showBreakthroughModal, setShowBreakthroughModal] = useState(false);
+  const [showTechComparison, setShowTechComparison] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -83,10 +89,24 @@ function GameView() {
     }
   }, [gameId]);
 
+  const loadBreakthroughs = useCallback(async () => {
+    if (!gameId) return;
+    try {
+      const data = await api.getPendingBreakthroughs(parseInt(gameId));
+      if (data.pending && data.pending.length > 0) {
+        setPendingBreakthrough(data.pending[0]);
+        setShowBreakthroughModal(true);
+      }
+    } catch (err) {
+      console.error('Erreur chargement percées:', err);
+    }
+  }, [gameId]);
+
   useEffect(() => {
     loadMap();
     loadEconomy();
-  }, [loadMap, loadEconomy]);
+    loadBreakthroughs();
+  }, [loadMap, loadEconomy, loadBreakthroughs]);
 
   const handlePlanetClick = (planetId: number) => {
     setSelectedPlanetId(planetId === selectedPlanetId ? null : planetId);
@@ -326,37 +346,15 @@ function GameView() {
 
       {/* ============ BOTTOM BAR ============ */}
       <footer className="bottom-bar">
-        {/* Tech Spending Panel */}
-        <section className="bottom-panel tech-panel">
-          <h4>Dépenses Tech</h4>
-          <div className="tech-bars-vertical">
-            <div className="tech-bar-v" title="Portée: 40%">
-              <span className="tech-bar-value">6</span>
-              <div className="tech-fill-v" style={{ height: '40%' }}></div>
-              <span className="tech-bar-label">Portée</span>
-            </div>
-            <div className="tech-bar-v" title="Vitesse: 20%">
-              <span className="tech-bar-value">2</span>
-              <div className="tech-fill-v" style={{ height: '20%' }}></div>
-              <span className="tech-bar-label">Vitesse</span>
-            </div>
-            <div className="tech-bar-v" title="Armes: 20%">
-              <span className="tech-bar-value">2</span>
-              <div className="tech-fill-v" style={{ height: '20%' }}></div>
-              <span className="tech-bar-label">Armes</span>
-            </div>
-            <div className="tech-bar-v" title="Boucliers: 15%">
-              <span className="tech-bar-value">2</span>
-              <div className="tech-fill-v" style={{ height: '15%' }}></div>
-              <span className="tech-bar-label">Bouclier</span>
-            </div>
-            <div className="tech-bar-v" title="Miniaturisation: 5%">
-              <span className="tech-bar-value">0</span>
-              <div className="tech-fill-v" style={{ height: '5%' }}></div>
-              <span className="tech-bar-label">Miniatur.</span>
-            </div>
-          </div>
-        </section>
+        {/* Tech Panel - Real component */}
+        <TechPanel
+          gameId={parseInt(gameId || '0')}
+          onBreakthroughClick={(breakthrough) => {
+            setPendingBreakthrough(breakthrough);
+            setShowBreakthroughModal(true);
+          }}
+          onComparisonClick={() => setShowTechComparison(true)}
+        />
 
         {/* Reports Panel */}
         <section className="bottom-panel reports-panel">
@@ -375,6 +373,28 @@ function GameView() {
           </div>
         </section>
       </footer>
+
+      {/* ============ MODALS ============ */}
+      {/* Breakthrough Modal */}
+      {pendingBreakthrough && (
+        <BreakthroughModal
+          breakthrough={pendingBreakthrough}
+          isOpen={showBreakthroughModal}
+          onClose={() => setShowBreakthroughModal(false)}
+          onResolved={() => {
+            setShowBreakthroughModal(false);
+            setPendingBreakthrough(null);
+            loadBreakthroughs();
+          }}
+        />
+      )}
+
+      {/* Tech Comparison Modal */}
+      <TechComparisonModal
+        gameId={parseInt(gameId || '0')}
+        isOpen={showTechComparison}
+        onClose={() => setShowTechComparison(false)}
+      />
     </div>
   );
 }
