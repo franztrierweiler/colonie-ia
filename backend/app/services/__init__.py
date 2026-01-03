@@ -19,6 +19,7 @@ from app.services.economy import (
 )
 from app.services.turn import TurnService
 from app.services.fleet import FleetService
+from app.services.technology import TechnologyService
 
 __all__ = [
     "GalaxyGenerator",
@@ -35,4 +36,5 @@ __all__ = [
     "DEBT_INTEREST_RATE",
     "TurnService",
     "FleetService",
+    "TechnologyService",
 ]

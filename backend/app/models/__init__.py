@@ -9,6 +9,10 @@ from app.models.fleet import (
     ShipType, FleetStatus, CombatBehavior,
     SHIP_BASE_STATS,
 )
+from app.models.technology import (
+    PlayerTechnology, RadicalBreakthrough,
+    TechDomain, RadicalBreakthroughType,
+)
 
 __all__ = [
     "User",
@@ -29,4 +33,8 @@ __all__ = [
     "FleetStatus",
     "CombatBehavior",
     "SHIP_BASE_STATS",
+    "PlayerTechnology",
+    "RadicalBreakthrough",
+    "TechDomain",
+    "RadicalBreakthroughType",
 ]

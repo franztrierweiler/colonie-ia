@@ -355,6 +355,55 @@ class ApiClient {
   }
 
   // ==========================================================================
+  // Technology endpoints
+  // ==========================================================================
+
+  async getTechnology(gameId: number): Promise<PlayerTechnology> {
+    const response = await this.client.get(`/games/${gameId}/technology`);
+    return response.data;
+  }
+
+  async updateResearchBudget(gameId: number, budget: TechBudget): Promise<{ success: boolean; budget: TechBudget }> {
+    const response = await this.client.patch(`/games/${gameId}/technology/budget`, budget);
+    return response.data;
+  }
+
+  async getTechComparison(gameId: number): Promise<TechComparison> {
+    const response = await this.client.get(`/games/${gameId}/technology/comparison`);
+    return response.data;
+  }
+
+  async getMaxTechLevels(gameId: number): Promise<{ max_levels: TechLevels }> {
+    const response = await this.client.get(`/games/${gameId}/technology/max-levels`);
+    return response.data;
+  }
+
+  async getPendingBreakthroughs(gameId: number): Promise<{ pending: RadicalBreakthrough[] }> {
+    const response = await this.client.get(`/games/${gameId}/breakthroughs`);
+    return response.data;
+  }
+
+  async getBreakthrough(breakthroughId: number): Promise<RadicalBreakthrough> {
+    const response = await this.client.get(`/breakthroughs/${breakthroughId}`);
+    return response.data;
+  }
+
+  async eliminateBreakthroughOption(
+    breakthroughId: number,
+    option: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    breakthrough: RadicalBreakthrough;
+    effect: BreakthroughEffect;
+  }> {
+    const response = await this.client.post(`/breakthroughs/${breakthroughId}/eliminate`, {
+      option,
+    });
+    return response.data;
+  }
+
+  // ==========================================================================
   // Debug endpoints
   // ==========================================================================
 
@@ -362,6 +411,120 @@ class ApiClient {
     const response = await this.client.post(`/games/${gameId}/debug/conquer-all`);
     return response.data;
   }
+}
+
+// ==========================================================================
+// Technology Types
+// ==========================================================================
+
+export interface TechLevels {
+  range: number;
+  speed: number;
+  weapons: number;
+  shields: number;
+  mini: number;
+  radical?: number;
+}
+
+export interface TechBudget {
+  range_budget: number;
+  speed_budget: number;
+  weapons_budget: number;
+  shields_budget: number;
+  mini_budget: number;
+  radical_budget: number;
+}
+
+export interface TechProgress {
+  range: number;
+  speed: number;
+  weapons: number;
+  shields: number;
+  mini: number;
+  radical: number;
+}
+
+export interface TempBonuses {
+  range: number;
+  speed: number;
+  weapons: number;
+  shields: number;
+  expires_turn: number | null;
+}
+
+export interface TechUnlocks {
+  decoy: boolean;
+  biological: boolean;
+}
+
+export interface PlayerTechnology {
+  player_id: number;
+  levels: TechLevels;
+  effective_levels: {
+    range: number;
+    speed: number;
+    weapons: number;
+    shields: number;
+  };
+  progress: TechProgress;
+  budget: {
+    range: number;
+    speed: number;
+    weapons: number;
+    shields: number;
+    mini: number;
+    radical: number;
+  };
+  unlocks: TechUnlocks;
+  temp_bonuses: TempBonuses;
+  progress_percentages?: {
+    range: number;
+    speed: number;
+    weapons: number;
+    shields: number;
+    mini: number;
+    radical: number;
+  };
+  pending_breakthroughs?: RadicalBreakthrough[];
+  breakthrough_threshold?: number;
+}
+
+export interface RadicalBreakthrough {
+  id: number;
+  player_id: number;
+  options: string[];
+  eliminated_option: string | null;
+  unlocked_option: string | null;
+  is_resolved: boolean;
+  created_turn: number;
+  resolved_turn: number | null;
+}
+
+export interface TechComparison {
+  your_levels: TechLevels;
+  opponents: {
+    player_id: number;
+    player_name: string;
+    color: string;
+    relative: {
+      range: 'ahead' | 'behind' | 'equal';
+      speed: 'ahead' | 'behind' | 'equal';
+      weapons: 'ahead' | 'behind' | 'equal';
+      shields: 'ahead' | 'behind' | 'equal';
+      mini: 'ahead' | 'behind' | 'equal';
+    };
+  }[];
+}
+
+export interface BreakthroughEffect {
+  type: string;
+  description: string;
+  unlock?: string;
+  bonus_value?: number;
+  expires_turn?: number;
+  duration?: number;
+  revealed?: boolean;
+  stolen?: boolean;
 }
 
 export const api = new ApiClient();

@@ -1,0 +1,215 @@
+/* TechComparisonModal.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tech-comparison-modal {
+  background: var(--bg-panel);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  min-width: 400px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.tech-comparison-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--bg-darker);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tech-comparison-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--orange-light);
+}
+
+.tech-comparison-modal .modal-close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.tech-comparison-modal .modal-close:hover {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+}
+
+.tech-comparison-modal .modal-content {
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: calc(80vh - 60px);
+}
+
+.tech-comparison-modal .loading,
+.tech-comparison-modal .error {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+.tech-comparison-modal .error {
+  color: #ff6b6b;
+}
+
+/* Your levels section */
+.your-levels {
+  margin-bottom: 1.5rem;
+}
+
+.your-levels h4,
+.opponents-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.level-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.level-item {
+  flex: 1;
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.level-label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.level-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--orange-primary);
+}
+
+/* Opponents section */
+.opponents-section {
+  margin-bottom: 1rem;
+}
+
+.no-opponents {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 0.5rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.comparison-table th {
+  background: var(--bg-darker);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.comparison-table th:first-child,
+.comparison-table td:first-child {
+  text-align: left;
+}
+
+.comparison-table td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.player-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.player-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.relative-cell {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.relative-cell.ahead {
+  color: #50c878;
+}
+
+.relative-cell.equal {
+  color: var(--text-muted);
+}
+
+.relative-cell.behind {
+  color: #ff6b6b;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.legend-item {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.legend-item.ahead {
+  color: #50c878;
+}
+
+.legend-item.equal {
+  color: var(--text-muted);
+}
+
+.legend-item.behind {
+  color: #ff6b6b;
+}

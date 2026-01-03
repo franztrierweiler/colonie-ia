@@ -8,6 +8,7 @@ from typing import Dict, List, Any
 from app import db
 from app.models import Game, GamePlayer, Planet, GameStatus, PlanetState
 from app.services.economy import EconomyService
+from app.services.technology import TechnologyService
 
 
 class TurnService:
@@ -22,10 +23,12 @@ class TurnService:
         1. Calculate and apply income for all players
         2. Deduct debt interest
         3. Process mining on all planets
-        4. Process terraformation (if implemented)
-        5. Process population growth
-        6. Check for eliminations
-        7. Advance turn counter
+        4. Process terraformation
+        5. Process technology research
+        6. Process population growth
+        7. Process ship production
+        8. Check for eliminations
+        9. Advance turn counter
 
         Args:
             game: Game instance
@@ -99,6 +102,7 @@ class TurnService:
             "mining": {"total": 0, "planets": {}},
             "population_growth": {"total": 0, "planets": {}},
             "ship_production": {"total_ships": 0, "planets": {}},
+            "research": {},
             "after": {},
         }
 
@@ -129,7 +133,12 @@ class TurnService:
         terraformation_results = EconomyService.process_player_terraformation(player)
         result["terraformation"] = terraformation_results
 
-        # 5. Process population growth on all planets
+        # 5. Process technology research
+        game = player.game
+        research_results = TechnologyService.process_player_research(player, game.current_turn)
+        result["research"] = research_results
+
+        # 6. Process population growth on all planets
         for planet in player.planets:
             if planet.state in [PlanetState.COLONIZED.value, PlanetState.DEVELOPED.value]:
                 growth = EconomyService.process_population_growth(planet)
@@ -140,7 +149,7 @@ class TurnService:
                 }
                 result["population_growth"]["total"] += growth
 
-        # 6. Process ship production on all planets
+        # 7. Process ship production on all planets
         ship_production_results = EconomyService.process_player_ship_production(player)
         result["ship_production"]["planets"] = ship_production_results["planets"]
         result["ship_production"]["total_ships"] = ship_production_results["total_ships_completed"]

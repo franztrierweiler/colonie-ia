@@ -62,3 +62,4 @@ from app.routes import oauth  # noqa: F401, E402
 from app.routes import games  # noqa: F401, E402
 from app.routes import economy  # noqa: F401, E402
 from app.routes import fleet  # noqa: F401, E402
+from app.routes import technology  # noqa: F401, E402

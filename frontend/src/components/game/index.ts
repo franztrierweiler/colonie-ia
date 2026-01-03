@@ -5,3 +5,6 @@ export { default as FleetTrajectory } from './FleetTrajectory';
 export { default as BudgetSlider } from './BudgetSlider';
 export { default as PlanetPanel } from './PlanetPanel';
 export { default as FleetPanel } from './FleetPanel';
+export { default as TechPanel } from './TechPanel';
+export { default as TechComparisonModal } from './TechComparisonModal';
+export { default as BreakthroughModal } from './BreakthroughModal';

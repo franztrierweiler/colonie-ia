@@ -66,21 +66,26 @@ class FleetService:
         if isinstance(ship_type, str):
             ship_type = ShipType(ship_type)
 
-        # Check if radical tech is required
-        base_stats = SHIP_BASE_STATS.get(ship_type)
-        if base_stats and base_stats.get("requires_radical"):
-            # TODO: Check player has unlocked this via radical research
-            pass
+        # Check if radical tech is required (Decoy, Biological)
+        from app.services.technology import TechnologyService
+        can_build, reason = TechnologyService.can_build_ship_type(player, ship_type.value)
+        if not can_build:
+            raise ValueError(reason)
+
+        # Validate and clamp tech levels to player's current tech
+        _, _, clamped = TechnologyService.validate_design_tech_levels(
+            player, range_level, speed_level, weapons_level, shields_level, mini_level
+        )
 
         design = ShipDesign(
             player_id=player.id,
             name=name,
             ship_type=ship_type.value,
-            range_level=max(1, range_level),
-            speed_level=max(1, speed_level),
-            weapons_level=max(1, weapons_level),
-            shields_level=max(1, shields_level),
-            mini_level=max(1, mini_level),
+            range_level=max(1, clamped["range"]),
+            speed_level=max(1, clamped["speed"]),
+            weapons_level=max(1, clamped["weapons"]),
+            shields_level=max(1, clamped["shields"]),
+            mini_level=max(1, clamped["mini"]),
         )
 
         # Calculate and cache costs

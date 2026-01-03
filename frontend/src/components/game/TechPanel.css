@@ -1,0 +1,317 @@
+/* TechPanel.css - Technology spending panel styles */
+
+.tech-panel {
+  min-width: 280px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tech-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.tech-header h4 {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.tech-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.btn-tech-edit,
+.btn-tech-save,
+.btn-tech-cancel,
+.btn-tech-compare {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.65rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-tech-edit,
+.btn-tech-compare {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.btn-tech-edit:hover,
+.btn-tech-compare:hover {
+  border-color: var(--orange-primary);
+  color: var(--orange-primary);
+}
+
+.btn-tech-save {
+  background: var(--orange-primary);
+  border: 1px solid var(--orange-primary);
+  color: var(--bg-darker);
+  font-weight: bold;
+}
+
+.btn-tech-save:hover:not(:disabled) {
+  background: var(--orange-light);
+}
+
+.btn-tech-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-tech-cancel {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.btn-tech-cancel:hover {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+.tech-loading {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.tech-error {
+  color: #ff6b6b;
+  font-size: 0.65rem;
+  padding: 0.2rem 0;
+}
+
+.tech-warning {
+  color: #ffa500;
+  font-size: 0.65rem;
+  padding: 0.15rem 0;
+}
+
+/* Tech bars container - override default if needed */
+.tech-panel .tech-bars-vertical {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-height: 55px;
+  margin-bottom: 14px;
+}
+
+/* Individual tech bar */
+.tech-panel .tech-bar-v {
+  flex: 1;
+  max-width: 48px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: visible;
+  cursor: default;
+  transition: border-color 0.2s;
+}
+
+.tech-panel .tech-bar-v.editing {
+  cursor: pointer;
+}
+
+.tech-panel .tech-bar-v:hover {
+  border-color: var(--text-muted);
+}
+
+.tech-panel .tech-bar-v.editing:hover {
+  border-color: var(--tech-color, var(--orange-primary));
+}
+
+.tech-panel .tech-bar-v.has-breakthrough {
+  animation: breakthroughPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes breakthroughPulse {
+  0%, 100% {
+    border-color: var(--border-color);
+    box-shadow: none;
+  }
+  50% {
+    border-color: #ff1493;
+    box-shadow: 0 0 8px #ff149366;
+  }
+}
+
+/* Level value at top */
+.tech-panel .tech-bar-value {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: var(--text-light);
+  z-index: 3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.tech-bonus {
+  color: #50c878;
+  font-size: 0.55rem;
+  margin-left: 1px;
+}
+
+/* Progress bar (thin, shows progress to next level) */
+.tech-progress-v {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0 0 2px 2px;
+  z-index: 1;
+  transition: height 0.3s ease;
+}
+
+/* Budget fill (main visual) */
+.tech-panel .tech-fill-v {
+  position: relative;
+  z-index: 2;
+  transition: height 0.3s ease;
+  border-radius: 0 0 2px 2px;
+}
+
+/* Label below bar */
+.tech-panel .tech-bar-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 2px;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Budget controls when editing */
+.tech-budget-controls {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  z-index: 10;
+}
+
+.budget-btn {
+  width: 16px;
+  height: 14px;
+  padding: 0;
+  font-size: 0.65rem;
+  font-weight: bold;
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  background: var(--bg-darker);
+  color: var(--text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.budget-btn:hover {
+  background: var(--orange-primary);
+  border-color: var(--orange-primary);
+  color: var(--bg-darker);
+}
+
+.budget-btn.up {
+  border-radius: 2px 2px 0 0;
+}
+
+.budget-btn.down {
+  border-radius: 0 0 2px 2px;
+}
+
+.budget-pct {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  background: var(--bg-darker);
+  padding: 0 2px;
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+}
+
+/* Breakthrough indicator */
+.breakthrough-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ff1493;
+  border: 2px solid var(--bg-darker);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: indicatorBounce 0.6s ease-in-out infinite;
+}
+
+.breakthrough-indicator:hover {
+  transform: scale(1.1);
+}
+
+@keyframes indicatorBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Tech unlocks badges */
+.tech-unlocks {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.unlock-badge {
+  padding: 0.1rem 0.3rem;
+  font-size: 0.55rem;
+  font-weight: bold;
+  background: rgba(255, 20, 147, 0.2);
+  border: 1px solid #ff1493;
+  border-radius: 2px;
+  color: #ff1493;
+  text-transform: uppercase;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .tech-panel {
+    min-width: 260px;
+  }
+
+  .tech-panel .tech-bar-v {
+    max-width: 40px;
+  }
+}
