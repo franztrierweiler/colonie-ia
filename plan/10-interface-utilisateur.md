@@ -7,13 +7,19 @@
 | 1 | Infrastructure (Backend + Base Frontend) | ✅ Terminé |
 | 2 | Carte stellaire (US 10.1, 10.2, 10.3) | ✅ Terminé |
 | 3 | Panneau planète (US 10.5, 10.6) | ✅ Terminé |
-| 4 | Gestion flottes (US 10.4, 10.9) | En attente |
-| 5 | Rapports et historique (US 10.7, 10.8) | En attente |
+| 4 | Gestion flottes (US 10.4, 10.9) | ✅ Terminé |
+| 5 | Rapports et historique (US 10.7, 10.8) | 🟡 Partiel |
 | 6 | Finitions (US 10.10) | En attente |
 
 **Commit Phase 1** : `8b1122f` - EPIC 10 Phase 1 : Infrastructure carte de jeu
 **Commit Phase 2** : `37e7f67` - EPIC 10 Phase 2 : Carte stellaire interactive
 **Commit Phase 3** : `82cf33c` - EPIC 10 Phase 3 : Panneau planète avec sliders budget
+**Commit Phase 4** : `d5e8419` - EPIC 10: Interface GameView style Spaceward Ho! + système flottes
+
+### Détail Phase 5 (Partiel)
+- ✅ US 10.8 Rapport de tour : CombatReportPanel implémenté (EPIC 7)
+- ✅ TechPanel avec comparaison technologique (EPIC 5)
+- ❌ US 10.7 Graphique historique : Non implémenté
 
 ## Vue d'ensemble
 

@@ -458,3 +458,4 @@ def _apply_behavior_modifiers(ship):
 | Date | Changement |
 |------|------------|
 | 2026-01-03 | Création du plan |
+| 2026-01-04 | Implémentation complète (8 US) - Commit `e903616` |

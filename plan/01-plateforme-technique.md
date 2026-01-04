@@ -9,7 +9,7 @@
 | 3 | WebSocket temps réel | ✅ Terminé |
 | 4 | Authentification | ✅ Terminé |
 | 5 | Frontend React | ✅ Terminé |
-| 6 | Scalabilité | ⏳ À faire |
+| 6 | Scalabilité | ⏳ Post-MVP |
 
 ---
 
