@@ -20,6 +20,7 @@ from app.services.economy import (
 from app.services.turn import TurnService
 from app.services.fleet import FleetService
 from app.services.technology import TechnologyService
+from app.services.combat import CombatService
 
 __all__ = [
     "GalaxyGenerator",
@@ -37,4 +38,5 @@ __all__ = [
     "TurnService",
     "FleetService",
     "TechnologyService",
+    "CombatService",
 ]

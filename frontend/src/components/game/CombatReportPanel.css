@@ -1,0 +1,221 @@
+.combat-report-panel {
+  background: var(--bg-secondary, #1a1a2e);
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.combat-report-panel h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+  border-bottom: 1px solid var(--border-color, #333);
+  padding-bottom: 8px;
+}
+
+.no-reports {
+  color: var(--text-secondary, #888);
+  font-size: 12px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.combat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.combat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.combat-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.combat-item.selected {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.combat-item.victory {
+  border-left-color: #4caf50;
+}
+
+.combat-item.defeat {
+  border-left-color: #f44336;
+}
+
+.combat-item.draw {
+  border-left-color: #ff9800;
+}
+
+.combat-icon {
+  font-size: 18px;
+}
+
+.combat-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.combat-planet {
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+  font-weight: 500;
+}
+
+.combat-losses {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+}
+
+.captured-badge {
+  background: #2196f3;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+/* Combat Details */
+.combat-details {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #333);
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.details-header h5 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--text-primary, #fff);
+}
+
+.details-section {
+  margin-bottom: 12px;
+}
+
+.details-section h6 {
+  margin: 0 0 6px 0;
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.forces-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.forces-attacker,
+.forces-defender {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.forces-attacker .label,
+.forces-defender .label {
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin-bottom: 4px;
+}
+
+.force-entry span {
+  display: block;
+  color: var(--text-secondary, #888);
+}
+
+.losses-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+}
+
+.pop-casualties {
+  color: #f44336;
+}
+
+.metal-recovered {
+  color: #4caf50;
+  font-size: 12px;
+}
+
+/* Combat Log */
+.combat-log-section {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.combat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.log-entry {
+  font-size: 10px;
+  color: var(--text-secondary, #888);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.log-entry.log-start,
+.log-entry.log-end {
+  color: var(--text-primary, #fff);
+  font-weight: 500;
+}
+
+.log-entry.log-ship_destroyed {
+  color: #f44336;
+}
+
+.log-entry.log-colonization {
+  color: #2196f3;
+}
+
+.log-entry.log-debris_recovery {
+  color: #4caf50;
+}
+
+.log-entry.log-more {
+  font-style: italic;
+  color: var(--text-muted, #666);
+}

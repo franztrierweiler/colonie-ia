@@ -18,7 +18,7 @@ Les combats ne se produisent **qu'au-dessus des planètes**, jamais en hyperespa
 ## User Stories
 
 ### US 7.1 - Combat automatique
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** Les combats se résolvent automatiquement sans contrôle tactique du joueur.
 
@@ -35,7 +35,7 @@ Les combats ne se produisent **qu'au-dessus des planètes**, jamais en hyperespa
 ---
 
 ### US 7.2 - Combat orbital uniquement
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** Les combats ne se produisent qu'au-dessus des planètes, jamais en hyperespace.
 
@@ -52,7 +52,7 @@ Les combats ne se produisent **qu'au-dessus des planètes**, jamais en hyperespa
 ---
 
 ### US 7.3 - Séquence de combat
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** Les batailles suivent la séquence : combat orbital → bombardement → colonisation.
 
@@ -83,7 +83,7 @@ class CombatService:
 ---
 
 ### US 7.4 - Priorité Vitesse
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** La technologie Vitesse détermine qui tire en premier.
 
@@ -116,7 +116,7 @@ def _orbital_combat(attacking, defending):
 ---
 
 ### US 7.5 - Défense au sol
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** La population défend avec la meilleure technologie du défenseur.
 
@@ -148,7 +148,7 @@ def _bombardment(planet, attacking_ships):
 ---
 
 ### US 7.6 - Ciblage IA des Vaisseaux Coloniaux
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** L'IA cible prioritairement les Vaisseaux Coloniaux adverses.
 
@@ -180,7 +180,7 @@ def _select_target(attacker, enemies):
 ---
 
 ### US 7.7 - Récupération de débris
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** Récupérer une partie du métal des vaisseaux détruits au-dessus de ses planètes.
 
@@ -209,7 +209,7 @@ def _process_debris(planet, destroyed_ships):
 ---
 
 ### US 7.8 - Dégâts collatéraux des débris
-**Statut : À FAIRE**
+**Statut : FAIT**
 
 **Description :** Les débris qui tombent peuvent tuer des habitants.
 

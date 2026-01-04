@@ -8,3 +8,4 @@ export { default as FleetPanel } from './FleetPanel';
 export { default as TechPanel } from './TechPanel';
 export { default as TechComparisonModal } from './TechComparisonModal';
 export { default as BreakthroughModal } from './BreakthroughModal';
+export { default as CombatReportPanel } from './CombatReportPanel';

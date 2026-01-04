@@ -404,6 +404,47 @@ class ApiClient {
   }
 
   // ==========================================================================
+  // Combat endpoints
+  // ==========================================================================
+
+  async getCombatReports(
+    gameId: number,
+    turn?: number
+  ): Promise<{ reports: CombatReportSummary[]; count: number }> {
+    const params = turn !== undefined ? { turn } : {};
+    const response = await this.client.get(`/games/${gameId}/combat-reports`, { params });
+    return response.data;
+  }
+
+  async getTurnCombatReports(
+    gameId: number,
+    turn: number
+  ): Promise<{ turn: number; reports: CombatReportFull[]; count: number }> {
+    const response = await this.client.get(`/games/${gameId}/combat-reports/turn/${turn}`);
+    return response.data;
+  }
+
+  async getCombatReport(reportId: number): Promise<CombatReportFull> {
+    const response = await this.client.get(`/combat-reports/${reportId}`);
+    return response.data;
+  }
+
+  async getMyBattles(
+    gameId: number,
+    limit: number = 20
+  ): Promise<{ battles: BattleHistory[]; count: number }> {
+    const response = await this.client.get(`/games/${gameId}/my-battles`, {
+      params: { limit },
+    });
+    return response.data;
+  }
+
+  async getCombatStats(gameId: number): Promise<CombatStats> {
+    const response = await this.client.get(`/games/${gameId}/combat-stats`);
+    return response.data;
+  }
+
+  // ==========================================================================
   // Debug endpoints
   // ==========================================================================
 
@@ -525,6 +566,63 @@ export interface BreakthroughEffect {
   duration?: number;
   revealed?: boolean;
   stolen?: boolean;
+}
+
+// =============================================================================
+// Combat Types
+// =============================================================================
+
+export interface CombatReportSummary {
+  id: number;
+  planet_id: number;
+  planet_name: string;
+  turn: number;
+  victor_id: number | null;
+  attacker_losses: number;
+  defender_losses: number;
+  planet_captured: boolean;
+  planet_colonized: boolean;
+}
+
+export interface CombatReportFull extends CombatReportSummary {
+  game_id: number;
+  attacker_ids: number[];
+  defender_id: number | null;
+  is_draw: boolean;
+  attacker_forces: Record<string, Record<string, number>>;
+  defender_forces: Record<string, number>;
+  attacker_losses_detail: Record<string, Record<string, number>>;
+  defender_losses_detail: Record<string, number>;
+  population_casualties: number;
+  total_debris_metal: number;
+  metal_recovered: number;
+  new_owner_id: number | null;
+  combat_log: CombatLogEntry[];
+  created_at: string;
+}
+
+export interface CombatLogEntry {
+  phase: string;
+  message: string;
+  timestamp: string;
+  details?: Record<string, unknown>;
+}
+
+export interface CombatStats {
+  total_battles: number;
+  victories: number;
+  defeats: number;
+  draws: number;
+  ships_lost: number;
+  ships_destroyed: number;
+  planets_captured: number;
+  planets_lost: number;
+  metal_recovered: number;
+}
+
+export interface BattleHistory extends CombatReportSummary {
+  role: 'attacker' | 'defender';
+  result: 'victory' | 'defeat' | 'draw';
 }
 
 export const api = new ApiClient();

@@ -9,6 +9,8 @@ from app import db
 from app.models import Game, GamePlayer, Planet, GameStatus, PlanetState
 from app.services.economy import EconomyService
 from app.services.technology import TechnologyService
+from app.services.fleet import FleetService
+from app.services.combat import CombatService
 
 
 class TurnService:
@@ -20,15 +22,18 @@ class TurnService:
         Process end of turn for all players in a game.
 
         Order of operations:
-        1. Calculate and apply income for all players
-        2. Deduct debt interest
-        3. Process mining on all planets
-        4. Process terraformation
-        5. Process technology research
-        6. Process population growth
-        7. Process ship production
-        8. Check for eliminations
-        9. Advance turn counter
+        1. Process fleet movements (arrivals)
+        2. Resolve combats on planets with hostile fleets
+        3. Calculate and apply income for all players
+        4. Deduct debt interest
+        5. Process mining on all planets
+        6. Process terraformation
+        7. Process technology research
+        8. Process population growth
+        9. Process ship production
+        10. Process fleet refueling
+        11. Check for eliminations
+        12. Advance turn counter
 
         Args:
             game: Game instance
@@ -44,7 +49,17 @@ class TurnService:
             "year": game.current_year,
             "players": {},
             "eliminations": [],
+            "fleet_movements": {},
+            "combats": [],
         }
+
+        # 1. Process fleet movements
+        fleet_results = FleetService.process_fleet_movements(game.id, game.current_turn)
+        results["fleet_movements"] = fleet_results
+
+        # 2. Resolve combats on all planets
+        combat_reports = TurnService._resolve_all_combats(game)
+        results["combats"] = [r.to_summary_dict() for r in combat_reports]
 
         # Process each player
         for player in game.players.filter_by(is_eliminated=False):
@@ -58,6 +73,10 @@ class TurnService:
                     "player_name": player.player_name,
                     "reason": "bankruptcy" if player.money < -10000 else "no_planets",
                 })
+
+        # 10. Process fleet refueling
+        refuel_results = FleetService.process_refueling(game.id)
+        results["refueling"] = refuel_results
 
         # Advance turn
         game.current_turn += 1
@@ -303,6 +322,31 @@ class TurnService:
             "all_submitted": TurnService.all_players_submitted(game_id),
             "players": players_status,
         }
+
+    @staticmethod
+    def _resolve_all_combats(game: Game) -> List:
+        """
+        Resolve combats on all planets in the game.
+
+        Args:
+            game: Game instance
+
+        Returns:
+            List of CombatReport instances
+        """
+        from app.models.combat import CombatReport
+
+        combat_reports = []
+
+        # Get all planets in the game
+        for star in game.galaxy.stars:
+            for planet in star.planets:
+                if CombatService.check_for_combat(planet):
+                    report = CombatService.resolve_battle(planet, game.current_turn)
+                    if report:
+                        combat_reports.append(report)
+
+        return combat_reports
 
     @staticmethod
     def _notify_turn_end(game: Game, results: Dict[str, Any]):

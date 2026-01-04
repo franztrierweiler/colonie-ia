@@ -13,6 +13,7 @@ from app.models.technology import (
     PlayerTechnology, RadicalBreakthrough,
     TechDomain, RadicalBreakthroughType,
 )
+from app.models.combat import CombatReport
 
 __all__ = [
     "User",
@@ -37,4 +38,5 @@ __all__ = [
     "RadicalBreakthrough",
     "TechDomain",
     "RadicalBreakthroughType",
+    "CombatReport",
 ]
