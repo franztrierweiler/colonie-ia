@@ -51,21 +51,36 @@ frontend/src/
 │   ├── StarSystem.tsx            # Rendu d'une étoile
 │   ├── PlanetMarker.tsx          # Marqueur planète (bicorne/?)
 │   ├── FleetMarker.tsx           # Marqueur flotte
-│   ├── FleetTrajectory.tsx       # Lignes de trajectoire
+│   ├── FleetTrajectory.tsx       # Lignes de trajectoire (en transit)
+│   ├── RoutePreview.tsx          # Prévisualisation route (pendant drag)
+│   ├── WaypointMarker.tsx        # Marqueur escale suggérée
 │   ├── ZoomControls.tsx          # Contrôles de zoom
 │   ├── PlanetPanel.tsx           # Panneau info planète
 │   ├── BudgetSlider.tsx          # Slider budget avec courbe log
 │   ├── FleetSidebar.tsx          # Barre latérale flottes
 │   ├── FleetCard.tsx             # Carte d'une flotte
+│   ├── FleetSelectionModal.tsx   # Sélection flottes à envoyer
 │   ├── TurnReport.tsx            # Rapport de tour
 │   ├── HistoryChart.tsx          # Graphique historique
 │   └── MiniMap.tsx               # Mini-carte (optionnel)
 ├── hooks/
 │   ├── useGameState.ts           # État global du jeu
 │   ├── useMapControls.ts         # Pan, zoom, sélection
+│   ├── useDragRoute.ts           # Gestion drag planète→planète
 │   └── useWindowLayout.ts        # Sauvegarde disposition
 └── services/
-    └── api.ts                    # Nouveaux endpoints
+    ├── api.ts                    # Endpoints API
+    └── RouteCalculator.ts        # Calcul routes côté client (preview)
+```
+
+## Architecture Backend (additions)
+
+```
+backend/app/
+├── services/
+│   └── route.py                  # RouteService - calcul de routes A*
+└── routes/
+    └── fleet.py                  # + endpoints calculate-route, move-with-waypoints
 ```
 
 ## Nouveaux Endpoints Backend Requis
@@ -108,6 +123,82 @@ Retourne la carte complète avec étoiles, planètes et flottes visibles.
     }
   ],
   "my_player_id": 1
+}
+```
+
+### POST /api/games/:id/calculate-route
+Calcule la meilleure route entre deux planètes pour une flotte donnée.
+
+**Request:**
+```json
+{
+  "fleet_id": 1,
+  "from_planet_id": 1,
+  "to_planet_id": 5
+}
+```
+
+**Response:**
+```json
+{
+  "reachable": true,
+  "direct_route": false,
+  "waypoints": [
+    {"id": 3, "name": "Marengo", "x": 45.0, "y": 60.0}
+  ],
+  "segments": [
+    {
+      "from_id": 1,
+      "to_id": 3,
+      "distance": 12.5,
+      "travel_turns": 2
+    },
+    {
+      "from_id": 3,
+      "to_id": 5,
+      "distance": 8.3,
+      "travel_turns": 1
+    }
+  ],
+  "total_distance": 20.8,
+  "total_turns": 3,
+  "fleet_range": 15.0
+}
+```
+
+**Si route impossible:**
+```json
+{
+  "reachable": false,
+  "direct_route": false,
+  "waypoints": [],
+  "segments": [],
+  "reason": "No allied planets within range to create a route",
+  "fleet_range": 15.0,
+  "direct_distance": 45.2
+}
+```
+
+### POST /api/fleets/:id/move-with-waypoints
+Déplace une flotte avec des escales programmées.
+
+**Request:**
+```json
+{
+  "waypoints": [3, 5]  // IDs des planètes dans l'ordre
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Fleet departing for Marengo (waypoint 1/2)",
+  "fleet": {...},
+  "planned_route": [
+    {"planet_id": 3, "arrival_turn": 3},
+    {"planet_id": 5, "arrival_turn": 5}
+  ]
 }
 ```
 
@@ -154,9 +245,59 @@ Retourne le rapport du dernier tour.
 1. `FleetSidebar.tsx` - liste des flottes du joueur
 2. `FleetCard.tsx` - résumé d'une flotte
 3. `FleetMarker.tsx` - icône sur la carte
-4. `FleetTrajectory.tsx` - lignes pointillées avec segments/tour
-5. Drag & drop pour déplacement (ou clic destination)
-6. Actions : split, merge, disband
+4. `FleetTrajectory.tsx` - lignes de trajectoire (voir système ci-dessous)
+5. `RouteCalculator.ts` - calcul des routes avec escales
+6. Drag & drop **planète → planète** pour déplacement
+7. Actions : split, merge, disband
+
+#### Système de déplacement par glisser-déposer (style Spaceward Ho!)
+
+**Interaction utilisateur :**
+1. Glisser depuis une planète possédée (avec flottes)
+2. Pendant le glissement, afficher la ligne de trajectoire
+3. Relâcher sur la planète destination
+
+**Feedback visuel selon la portée :**
+
+| Situation | Affichage |
+|-----------|-----------|
+| Portée suffisante | Ligne **continue** avec flèche → |
+| Portée insuffisante mais route possible | Ligne continue avec **escales suggérées** (points intermédiaires) |
+| Aucune route possible | Ligne **discontinue** (pointillés rouges) |
+
+**Calcul de route avec escales :**
+```typescript
+interface RouteResult {
+  reachable: boolean;
+  directRoute: boolean;      // true si portée directe
+  waypoints: Planet[];       // planètes intermédiaires (escales)
+  totalDistance: number;
+  segments: RouteSegment[];  // pour affichage
+}
+
+interface RouteSegment {
+  from: Planet;
+  to: Planet;
+  distance: number;
+  travelTurns: number;
+}
+```
+
+**Algorithme de recherche de route :**
+```
+1. Calculer distance directe source → destination
+2. Si distance <= portée_flotte → route directe OK
+3. Sinon, chercher chemin via planètes intermédiaires :
+   - Planètes alliées/possédées uniquement (pour ravitaillement)
+   - Algorithme A* ou Dijkstra
+   - Contrainte : chaque segment <= portée_flotte
+4. Si aucun chemin trouvé → route impossible
+```
+
+**Composants à créer :**
+- `useDragRoute.ts` - hook pour gérer le drag & drop
+- `RoutePreview.tsx` - affichage de la route pendant le drag
+- `WaypointMarker.tsx` - marqueur d'escale suggérée
 
 ### Phase 5 : Rapports et Historique (US 10.7, 10.8)
 1. Endpoint GET `/games/:id/turn-report`
@@ -258,10 +399,19 @@ interface FleetSidebarProps {
 - [x] "?" sur planètes inexplorées
 - [x] Couleur du propriétaire visible
 
-### US 10.4 - Trajectoires flottes
+### US 10.4 - Trajectoires flottes et déplacement
+**Système de déplacement (style Spaceward Ho!) :**
+- [ ] Glisser-déposer de planète source vers planète destination
+- [ ] Ligne **continue** avec flèche si portée suffisante
+- [ ] Ligne continue avec **escales suggérées** si portée insuffisante mais route possible
+- [ ] Ligne **discontinue** (pointillés rouges) si aucune route possible
+- [ ] Calcul automatique du meilleur chemin via planètes alliées
+
+**Affichage des flottes en transit :**
 - [ ] Lignes visibles pour flottes en transit
 - [ ] Segments par tour marqués
-- [ ] Destination claire
+- [ ] Escales intermédiaires affichées
+- [ ] Destination finale claire
 
 ### US 10.5 - Panneau info planète
 - [x] Affiche temp, gravité, métal, population

@@ -44,6 +44,9 @@ function GameView() {
   const [showBreakthroughModal, setShowBreakthroughModal] = useState(false);
   const [showTechComparison, setShowTechComparison] = useState(false);
 
+  // Turn submission state
+  const [isSubmittingTurn, setIsSubmittingTurn] = useState(false);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -130,6 +133,28 @@ function GameView() {
     }
   };
 
+  const handleSubmitTurn = async () => {
+    if (!gameId || isSubmittingTurn) return;
+
+    setIsSubmittingTurn(true);
+    try {
+      const result = await api.submitTurn(parseInt(gameId));
+
+      if (result.turn_processed) {
+        // Turn was processed - reload all data
+        await Promise.all([loadMap(), loadEconomy(), loadBreakthroughs()]);
+      }
+    } catch (err) {
+      console.error('Erreur soumission tour:', err);
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Erreur de soumission du tour';
+      alert(errorMessage);
+    } finally {
+      setIsSubmittingTurn(false);
+    }
+  };
+
   const getPlayerColor = (playerId: number | null): string => {
     if (!playerId || !mapData) return '#666';
     const player = mapData.players.find((p) => p.id === playerId);
@@ -208,7 +233,13 @@ function GameView() {
           <button className="btn-refresh" onClick={() => { loadMap(); loadEconomy(); }}>
             Actualiser
           </button>
-          <button className="btn-end-turn">Fin de tour</button>
+          <button
+            className="btn-end-turn"
+            onClick={handleSubmitTurn}
+            disabled={isSubmittingTurn}
+          >
+            {isSubmittingTurn ? 'Traitement...' : 'Fin de tour'}
+          </button>
           <div className="profile-dropdown" ref={dropdownRef}>
             <button
               className="profile-trigger"
@@ -323,6 +354,19 @@ function GameView() {
                 </div>
               )}
             </div>
+          </section>
+
+          {/* Fleet Management Section */}
+          <section className="panel-section fleet-management-section">
+            <FleetPanel
+              gameId={parseInt(gameId || '0')}
+              fleets={mapData.fleets}
+              planets={mapData.planets}
+              myPlayerId={mapData.my_player_id}
+              selectedFleetId={selectedFleetId}
+              onSelectFleet={setSelectedFleetId}
+              onFleetAction={() => { loadMap(); loadEconomy(); }}
+            />
           </section>
         </aside>
 

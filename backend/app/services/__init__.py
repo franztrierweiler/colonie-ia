@@ -21,6 +21,7 @@ from app.services.turn import TurnService
 from app.services.fleet import FleetService
 from app.services.technology import TechnologyService
 from app.services.combat import CombatService
+from app.services.ai import AIService, GameAnalysis, AIDifficultyLevel, DifficultyModifiers
 
 __all__ = [
     "GalaxyGenerator",
@@ -39,4 +40,8 @@ __all__ = [
     "FleetService",
     "TechnologyService",
     "CombatService",
+    "AIService",
+    "GameAnalysis",
+    "AIDifficultyLevel",
+    "DifficultyModifiers",
 ]

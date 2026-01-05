@@ -298,6 +298,50 @@ body:has(.game-view) {
   color: #ff6b6b;
 }
 
+/* Fleet Management Section - compact version for left panel */
+.fleet-management-section {
+  flex: 1;
+  min-height: 150px;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.fleet-management-section .fleet-panel {
+  height: 100%;
+  font-size: 0.85rem;
+}
+
+.fleet-management-section .fleet-panel .panel-header {
+  margin-bottom: 0.5rem;
+}
+
+.fleet-management-section .fleet-panel .panel-header h2 {
+  font-size: 0.8rem;
+}
+
+.fleet-management-section .fleet-list {
+  max-height: 100px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
+.fleet-management-section .fleet-details {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fleet-management-section .fleet-details h3 {
+  font-size: 0.85rem;
+}
+
+.fleet-management-section .designs-section {
+  padding-top: 0.5rem;
+}
+
+.fleet-management-section .designs-list {
+  max-height: 80px;
+}
+
 /* ============ MAP AREA ============ */
 .map-area {
   flex: 1;

@@ -11,6 +11,7 @@ from app.services.economy import EconomyService
 from app.services.technology import TechnologyService
 from app.services.fleet import FleetService
 from app.services.combat import CombatService
+from app.services.ai import AIService
 
 
 class TurnService:
@@ -51,7 +52,24 @@ class TurnService:
             "eliminations": [],
             "fleet_movements": {},
             "combats": [],
+            "ai_decisions": {},
         }
+
+        # 0. Process AI player decisions (before fleet movements)
+        for player in game.players.filter_by(is_eliminated=False, is_ai=True):
+            try:
+                ai_result = AIService.process_ai_turn(player)
+                results["ai_decisions"][player.id] = ai_result
+
+                # Execute AI fleet movements
+                if ai_result.get("decisions", {}).get("fleet_movements"):
+                    AIService.execute_fleet_movements(
+                        player,
+                        ai_result["decisions"]["fleet_movements"]
+                    )
+            except Exception as e:
+                print(f"[AI] Error processing AI player {player.id}: {e}")
+                results["ai_decisions"][player.id] = {"error": str(e)}
 
         # 1. Process fleet movements
         fleet_results = FleetService.process_fleet_movements(game.id, game.current_turn)
@@ -339,8 +357,8 @@ class TurnService:
         combat_reports = []
 
         # Get all planets in the game
-        for star in game.galaxy.stars:
-            for planet in star.planets:
+        if game.galaxy:
+            for planet in game.galaxy.planets:
                 if CombatService.check_for_combat(planet):
                     report = CombatService.resolve_battle(planet, game.current_turn)
                     if report:

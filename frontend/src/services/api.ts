@@ -445,6 +445,20 @@ class ApiClient {
   }
 
   // ==========================================================================
+  // Turn endpoints
+  // ==========================================================================
+
+  async submitTurn(gameId: number): Promise<TurnSubmitResult> {
+    const response = await this.client.post(`/games/${gameId}/turn/submit`);
+    return response.data;
+  }
+
+  async getTurnStatus(gameId: number): Promise<TurnStatus> {
+    const response = await this.client.get(`/games/${gameId}/turn/status`);
+    return response.data;
+  }
+
+  // ==========================================================================
   // Debug endpoints
   // ==========================================================================
 
@@ -623,6 +637,35 @@ export interface CombatStats {
 export interface BattleHistory extends CombatReportSummary {
   role: 'attacker' | 'defender';
   result: 'victory' | 'defeat' | 'draw';
+}
+
+// =============================================================================
+// Turn Types
+// =============================================================================
+
+export interface TurnSubmitResult {
+  success: boolean;
+  message: string;
+  turn_processed: boolean;
+  new_turn?: number;
+  turn_results?: {
+    turn: number;
+    players_processed: number;
+    fleets_moved: number;
+    combats: number;
+  };
+}
+
+export interface TurnStatus {
+  game_id: number;
+  current_turn: number;
+  players: {
+    player_id: number;
+    player_name: string;
+    is_ai: boolean;
+    submitted: boolean;
+  }[];
+  all_submitted: boolean;
 }
 
 export const api = new ApiClient();

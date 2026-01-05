@@ -46,7 +46,7 @@ class CombatBehavior(str, Enum):
 SHIP_BASE_STATS = {
     ShipType.FIGHTER: {
         "range_bonus": 0,
-        "speed_mult": 1.0,
+        "speed_mult": 5.0,  # ~6 turns to travel 30 units at speed 1
         "weapons_mult": 1.0,
         "shields_mult": 1.0,
         "base_metal": 50,
@@ -55,7 +55,7 @@ SHIP_BASE_STATS = {
     },
     ShipType.SCOUT: {
         "range_bonus": 3,
-        "speed_mult": 1.2,
+        "speed_mult": 6.0,  # Fast scouts
         "weapons_mult": 0.3,
         "shields_mult": 0.3,
         "base_metal": 30,
@@ -64,7 +64,7 @@ SHIP_BASE_STATS = {
     },
     ShipType.COLONY: {
         "range_bonus": -1,
-        "speed_mult": 0.5,
+        "speed_mult": 2.5,  # ~12 turns to travel 30 units at speed 1
         "weapons_mult": 0.1,
         "shields_mult": 0.5,
         "base_metal": 200,
@@ -82,7 +82,7 @@ SHIP_BASE_STATS = {
     },
     ShipType.TANKER: {
         "range_bonus": 0,
-        "speed_mult": 0.8,
+        "speed_mult": 4.0,
         "weapons_mult": 0.1,
         "shields_mult": 0.5,
         "base_metal": 100,
@@ -91,7 +91,7 @@ SHIP_BASE_STATS = {
     },
     ShipType.BATTLESHIP: {
         "range_bonus": 0,
-        "speed_mult": 0.7,
+        "speed_mult": 3.5,
         "weapons_mult": 2.0,
         "shields_mult": 2.0,
         "base_metal": 300,
@@ -100,7 +100,7 @@ SHIP_BASE_STATS = {
     },
     ShipType.DECOY: {
         "range_bonus": 0,
-        "speed_mult": 1.5,
+        "speed_mult": 7.5,  # Very fast
         "weapons_mult": 0,
         "shields_mult": 0.1,
         "base_metal": 5,
@@ -110,7 +110,7 @@ SHIP_BASE_STATS = {
     },
     ShipType.BIOLOGICAL: {
         "range_bonus": 0,
-        "speed_mult": 1.0,
+        "speed_mult": 5.0,
         "weapons_mult": 1.5,
         "shields_mult": 0.5,
         "base_metal": 0,  # No metal, organic
@@ -171,8 +171,10 @@ class ShipDesign(db.Model):
     def effective_range(self) -> float:
         """Calculate effective range based on tech level and ship type."""
         base = self.base_stats
-        # Base range is 5 units per range level, plus type bonus
-        return (self.range_level * 5) + base["range_bonus"]
+        # Base range is 35 units per range level, plus type bonus
+        # This allows range-1 colony ships (35-1=34) to reach nearby planets
+        # in a 140x140 galaxy where average neighbor distance is ~30 units
+        return (self.range_level * 35) + base["range_bonus"]
 
     @property
     def effective_speed(self) -> float:

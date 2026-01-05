@@ -20,7 +20,7 @@ from app.models import (
 
 DISBAND_METAL_RECOVERY = 0.75  # 75% metal recovered when disbanding
 TANKER_RANGE_BONUS = 1.5  # Tankers extend range by 50%
-BASE_FUEL_CAPACITY = 10.0  # Base fuel units
+BASE_FUEL_CAPACITY = 100.0  # Base fuel units (enough for long-range trips)
 PROTOTYPE_COST_MULTIPLIER = 2  # Prototype costs 2x production
 
 
@@ -527,6 +527,10 @@ class FleetService:
         """
         Process all fleet movements for a game (called at end of turn).
 
+        Handles:
+        - Fleet arrivals
+        - Auto-colonization for AI players with colony ships
+
         Args:
             game_id: Game ID
             current_turn: Current turn number
@@ -543,6 +547,7 @@ class FleetService:
         results = {
             "arrivals": [],
             "in_transit": [],
+            "colonizations": [],
         }
 
         # Get all fleets in transit for this game
@@ -550,18 +555,40 @@ class FleetService:
             for fleet in player.fleets.filter_by(status=FleetStatus.IN_TRANSIT.value):
                 if fleet.arrival_turn <= current_turn:
                     # Fleet has arrived
+                    destination_planet_id = fleet.destination_planet_id
+
                     fleet.status = FleetStatus.STATIONED.value
-                    fleet.current_planet_id = fleet.destination_planet_id
+                    fleet.current_planet_id = destination_planet_id
                     fleet.destination_planet_id = None
                     fleet.departure_turn = None
                     fleet.arrival_turn = None
 
-                    results["arrivals"].append({
+                    arrival_info = {
                         "fleet_id": fleet.id,
                         "fleet_name": fleet.name,
                         "player_id": fleet.player_id,
                         "planet_id": fleet.current_planet_id,
-                    })
+                    }
+                    results["arrivals"].append(arrival_info)
+
+                    # Check for auto-colonization (AI players)
+                    if player.is_ai and fleet.can_colonize:
+                        planet = Planet.query.get(destination_planet_id)
+                        if planet and planet.state not in [
+                            PlanetState.COLONIZED.value,
+                            PlanetState.DEVELOPED.value
+                        ]:
+                            # Execute colonization
+                            from app.services.ai import AIExpansionService
+                            success, msg = AIExpansionService.execute_colonization(fleet, planet)
+                            if success:
+                                results["colonizations"].append({
+                                    "fleet_id": fleet.id,
+                                    "player_id": player.id,
+                                    "player_name": player.player_name,
+                                    "planet_id": planet.id,
+                                    "planet_name": planet.name,
+                                })
                 else:
                     results["in_transit"].append({
                         "fleet_id": fleet.id,
@@ -607,6 +634,8 @@ class FleetService:
         if fleet.current_planet_id:
             planet = Planet.query.get(fleet.current_planet_id)
             if planet and FleetService.can_refuel_at(fleet, planet):
+                # Update max_fuel to current constant (in case it changed)
+                fleet.max_fuel = BASE_FUEL_CAPACITY
                 fleet.fuel_remaining = fleet.max_fuel
                 return True, f"Refueled at {planet.name}"
 
@@ -627,7 +656,11 @@ class FleetService:
 
         for player in game.players:
             for fleet in player.fleets.filter_by(status=FleetStatus.STATIONED.value):
-                if fleet.fuel_remaining < fleet.max_fuel:
+                # Refuel if not at max, or if max_fuel needs updating
+                needs_fuel = fleet.fuel_remaining < fleet.max_fuel
+                needs_capacity_update = fleet.max_fuel < BASE_FUEL_CAPACITY
+
+                if needs_fuel or needs_capacity_update:
                     success, message = FleetService.refuel_fleet(fleet)
                     if success:
                         results["refueled"].append({
