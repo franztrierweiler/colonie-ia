@@ -70,7 +70,7 @@
 
 .budget-label.planet-label {
   font-weight: 600;
-  filter: brightness(1.4);
+  filter: brightness(1.8) saturate(1.2);
 }
 
 .budget-bar-container {

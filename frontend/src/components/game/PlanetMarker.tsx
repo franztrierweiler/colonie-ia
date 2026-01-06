@@ -199,29 +199,29 @@ function PlanetMarker({
               }}
             >
               <path
-                d={`M${planet.x + satelliteOrbitRadius + 4},${planet.y - 2}
-                    A3,3 0 0,1 ${planet.x + satelliteOrbitRadius + 4},${planet.y + 2}`}
+                d={`M${planet.x + satelliteOrbitRadius + 5},${planet.y - 4}
+                    A5,5 0 0,1 ${planet.x + satelliteOrbitRadius + 5},${planet.y + 4}`}
                 fill="none"
                 stroke="#cccccc"
-                strokeWidth="0.4"
+                strokeWidth="0.5"
                 className="radar-wave-1"
                 style={{ animationDuration: `${radarPeriod}s` }}
               />
               <path
-                d={`M${planet.x + satelliteOrbitRadius + 5.5},${planet.y - 3}
-                    A4.5,4.5 0 0,1 ${planet.x + satelliteOrbitRadius + 5.5},${planet.y + 3}`}
+                d={`M${planet.x + satelliteOrbitRadius + 9},${planet.y - 6}
+                    A8,8 0 0,1 ${planet.x + satelliteOrbitRadius + 9},${planet.y + 6}`}
                 fill="none"
                 stroke="#aaaaaa"
-                strokeWidth="0.3"
+                strokeWidth="0.4"
                 className="radar-wave-2"
                 style={{ animationDuration: `${radarPeriod}s` }}
               />
               <path
-                d={`M${planet.x + satelliteOrbitRadius + 7},${planet.y - 4}
-                    A6,6 0 0,1 ${planet.x + satelliteOrbitRadius + 7},${planet.y + 4}`}
+                d={`M${planet.x + satelliteOrbitRadius + 13},${planet.y - 8}
+                    A11,11 0 0,1 ${planet.x + satelliteOrbitRadius + 13},${planet.y + 8}`}
                 fill="none"
                 stroke="#888888"
-                strokeWidth="0.25"
+                strokeWidth="0.3"
                 className="radar-wave-3"
                 style={{ animationDuration: `${radarPeriod}s` }}
               />
