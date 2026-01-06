@@ -694,3 +694,51 @@ def debug_conquer_all(game_id: int):
         "message": f"{count} planètes conquises",
         "count": count
     })
+
+
+@api_bp.route("/games/<int:game_id>/debug/add-resources", methods=["POST"])
+@token_required
+def debug_add_resources(game_id: int):
+    """
+    [DEBUG] Ajouter des ressources à toutes les planètes du joueur
+    ---
+    tags:
+      - Debug
+    security:
+      - Bearer: []
+    """
+    from app import db
+    from app.models import GamePlayer, Planet
+
+    game = Game.query.get(game_id)
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+
+    player = GamePlayer.query.filter_by(
+        game_id=game_id,
+        user_id=g.current_user.id
+    ).first()
+
+    if not player:
+        return jsonify({"error": "You are not a player in this game"}), 403
+
+    # Ajouter des ressources à toutes les planètes du joueur
+    count = 0
+    for planet in game.galaxy.planets:
+        if planet.owner_id == player.id:
+            planet.metal_reserves = max(planet.metal_reserves, 10000)
+            planet.metal_remaining = max(planet.metal_remaining, 10000)
+            count += 1
+
+    # Ajouter des ressources au joueur
+    player.money = max(player.money or 0, 100000)
+    player.metal = max(player.metal or 0, 100000)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": f"Ressources ajoutées à {count} planètes",
+        "count": count,
+        "player_money": player.money,
+        "player_metal": player.metal
+    })

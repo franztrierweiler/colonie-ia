@@ -58,6 +58,13 @@ class MergeFleetSchema(BaseModel):
     fleet_id_to_merge: int
 
 
+class SendShipsFromPlanetSchema(BaseModel):
+    """Schema for sending ships from a planet."""
+    destination_planet_id: int
+    ships_to_send: dict  # {ship_type: count}
+    new_fleet_name: Optional[str] = None
+
+
 # =============================================================================
 # Helper Functions
 # =============================================================================
@@ -626,3 +633,143 @@ def disband_ship(ship_id: int):
         })
     else:
         return jsonify({"error": message}), 400
+
+
+# =============================================================================
+# Planet Ship Sending
+# =============================================================================
+
+@api_bp.route("/planets/<int:planet_id>/send-ships", methods=["POST"])
+@token_required
+def send_ships_from_planet(planet_id: int):
+    """
+    Envoyer des vaisseaux depuis une planète vers une destination.
+    Crée une nouvelle flotte avec les vaisseaux sélectionnés.
+    ---
+    tags:
+      - Flottes
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: planet_id
+        type: integer
+        required: true
+        description: ID de la planète d'origine
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - destination_planet_id
+            - ships_to_send
+          properties:
+            destination_planet_id:
+              type: integer
+            ships_to_send:
+              type: object
+              description: "Dict {ship_type: count}"
+            new_fleet_name:
+              type: string
+    responses:
+      200:
+        description: Vaisseaux en route
+      400:
+        description: Envoi impossible
+    """
+    try:
+        data = SendShipsFromPlanetSchema(**request.json)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+    # Get origin planet
+    origin_planet = Planet.query.get(planet_id)
+    if not origin_planet:
+        return jsonify({"error": "Origin planet not found"}), 404
+
+    # Get player
+    player = GamePlayer.query.filter_by(
+        game_id=origin_planet.game_id,
+        user_id=g.current_user.id
+    ).first()
+
+    if not player:
+        return jsonify({"error": "You are not in this game"}), 403
+
+    # Check game is running
+    game = Game.query.get(origin_planet.game_id)
+    if game.status != GameStatus.RUNNING.value:
+        return jsonify({"error": "Game is not running"}), 400
+
+    # Get destination planet
+    destination_planet = Planet.query.get(data.destination_planet_id)
+    if not destination_planet:
+        return jsonify({"error": "Destination planet not found"}), 404
+
+    if destination_planet.game_id != origin_planet.game_id:
+        return jsonify({"error": "Planets must be in the same game"}), 400
+
+    # Send ships
+    success, message, new_fleet = FleetService.send_ships_from_planet(
+        player=player,
+        origin_planet=origin_planet,
+        destination_planet=destination_planet,
+        ships_to_send=data.ships_to_send,
+        current_turn=game.current_turn,
+        new_fleet_name=data.new_fleet_name,
+    )
+
+    if success:
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": message,
+            "new_fleet": new_fleet.to_dict() if new_fleet else None,
+            "arrival_turn": new_fleet.arrival_turn if new_fleet else None,
+        })
+    else:
+        return jsonify({"error": message}), 400
+
+
+@api_bp.route("/planets/<int:planet_id>/stationed-ships", methods=["GET"])
+@token_required
+def get_stationed_ships(planet_id: int):
+    """
+    Obtenir les vaisseaux stationnés sur une planète (agrégés par type).
+    ---
+    tags:
+      - Flottes
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: planet_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Vaisseaux disponibles
+    """
+    planet = Planet.query.get(planet_id)
+    if not planet:
+        return jsonify({"error": "Planet not found"}), 404
+
+    player = GamePlayer.query.filter_by(
+        game_id=planet.game_id,
+        user_id=g.current_user.id
+    ).first()
+
+    if not player:
+        return jsonify({"error": "You are not in this game"}), 403
+
+    if planet.owner_id != player.id:
+        return jsonify({"error": "You don't own this planet"}), 403
+
+    ships_by_type = FleetService.get_stationed_ships_at_planet(player, planet)
+
+    return jsonify({
+        "planet_id": planet_id,
+        "ships_by_type": ships_by_type,
+        "total_ships": sum(ships_by_type.values()),
+    })

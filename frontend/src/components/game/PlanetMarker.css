@@ -1,0 +1,246 @@
+/* PlanetMarker.css - Animations pour les indicateurs planétaires */
+
+/* ============================================================
+   PLANÈTE MÈRE - Cercle bleu pulsant (cycle 5s)
+   ============================================================ */
+@keyframes homePlanetPulse {
+  0% {
+    stroke: #2266ff;
+    stroke-opacity: 0.6;
+  }
+  25% {
+    stroke: #44aaff;
+    stroke-opacity: 0.8;
+  }
+  50% {
+    stroke: #66ddff;
+    stroke-opacity: 1;
+  }
+  75% {
+    stroke: #44aaff;
+    stroke-opacity: 0.8;
+  }
+  100% {
+    stroke: #2266ff;
+    stroke-opacity: 0.6;
+  }
+}
+
+.home-planet-ring {
+  animation: homePlanetPulse 5s ease-in-out infinite;
+}
+
+/* ============================================================
+   SATELLITE - Constellation rotative (20s/rotation = 0.05Hz)
+   ============================================================ */
+@keyframes satelliteOrbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.satellite-orbit {
+  animation: satelliteOrbit 20s linear infinite;
+}
+
+/* Dérive légère des satellites individuels */
+@keyframes satelliteDrift {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(0.4px, -0.3px);
+  }
+  50% {
+    transform: translate(-0.2px, 0.5px);
+  }
+  75% {
+    transform: translate(-0.4px, -0.2px);
+  }
+}
+
+.satellite-drift {
+  animation: satelliteDrift 5s ease-in-out infinite;
+}
+
+/* Onde radar (apparition intermittente style wifi) */
+@keyframes radarWave1 {
+  0%, 70%, 100% {
+    opacity: 0;
+  }
+  75%, 85% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0;
+  }
+}
+
+@keyframes radarWave2 {
+  0%, 73%, 100% {
+    opacity: 0;
+  }
+  78%, 88% {
+    opacity: 0.8;
+  }
+  93% {
+    opacity: 0;
+  }
+}
+
+@keyframes radarWave3 {
+  0%, 76%, 100% {
+    opacity: 0;
+  }
+  81%, 91% {
+    opacity: 0.6;
+  }
+  96% {
+    opacity: 0;
+  }
+}
+
+.radar-wave-1 {
+  animation: radarWave1 6s ease-in-out infinite;
+}
+
+.radar-wave-2 {
+  animation: radarWave2 6s ease-in-out infinite;
+}
+
+.radar-wave-3 {
+  animation: radarWave3 6s ease-in-out infinite;
+}
+
+/* ============================================================
+   CONSTRUCTION - Pastille jaune→rouge (cycle 3s) + arcs électriques
+   ============================================================ */
+@keyframes constructionGlow {
+  0% {
+    fill: #ffdd00;
+    filter: drop-shadow(0 0 2px #ffdd00);
+  }
+  50% {
+    fill: #ff4400;
+    filter: drop-shadow(0 0 4px #ff4400);
+  }
+  100% {
+    fill: #ffdd00;
+    filter: drop-shadow(0 0 2px #ffdd00);
+  }
+}
+
+.construction-indicator {
+  animation: constructionGlow 3s ease-in-out infinite;
+}
+
+/* Arcs électriques autour de la construction */
+@keyframes electricArc1 {
+  0%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+  10%, 15% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0;
+    stroke-dashoffset: 10;
+  }
+}
+
+@keyframes electricArc2 {
+  0%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+  40%, 45% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+    stroke-dashoffset: 8;
+  }
+}
+
+@keyframes electricArc3 {
+  0%, 100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+  70%, 75% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+    stroke-dashoffset: 12;
+  }
+}
+
+.electric-arc-1 {
+  animation: electricArc1 1.5s ease-in-out infinite;
+}
+
+.electric-arc-2 {
+  animation: electricArc2 1.8s ease-in-out infinite;
+}
+
+.electric-arc-3 {
+  animation: electricArc3 2.1s ease-in-out infinite;
+}
+
+/* ============================================================
+   PASTILLE VAISSEAUX - Style pour ShipCountBadge
+   ============================================================ */
+.ship-badge {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.ship-badge:hover {
+  transform: scale(1.1);
+}
+
+/* ============================================================
+   CERCLES DE POSSESSION
+   ============================================================ */
+.ownership-ring {
+  pointer-events: none;
+}
+
+/* ============================================================
+   SÉLECTION
+   ============================================================ */
+@keyframes selectionPulse {
+  0%, 100% {
+    stroke-opacity: 0.6;
+    stroke-width: 1;
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 1.5;
+  }
+}
+
+.planet-marker.selected .ownership-ring {
+  animation: selectionPulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   NOVA IMMINENTE
+   ============================================================ */
+@keyframes dangerBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.danger-blink {
+  animation: dangerBlink 0.5s ease-in-out infinite;
+}

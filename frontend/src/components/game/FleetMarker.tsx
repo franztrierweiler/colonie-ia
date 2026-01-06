@@ -23,11 +23,14 @@ function FleetMarker({
   onClick,
   onDragStart,
 }: FleetMarkerProps) {
-  // Position du marqueur (décalé par rapport à l'étoile)
-  const offsetX = 6;
-  const offsetY = -2;
+  // Position du marqueur (décalé par rapport à la planète)
+  const offsetX = 12;
+  const offsetY = -4;
   const markerX = x + offsetX;
   const markerY = y + offsetY;
+
+  // Taille du marqueur (plus grand = plus facile à attraper)
+  const size = 8;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isMine && onDragStart) {
@@ -47,56 +50,66 @@ function FleetMarker({
       onMouseDown={handleMouseDown}
       style={{ cursor: isMine ? 'grab' : 'pointer' }}
     >
-      {/* Icône vaisseau (triangle/flèche) */}
+      {/* Zone de clic invisible plus grande */}
+      <rect
+        x={markerX - size/2}
+        y={markerY - size/2}
+        width={size * 2}
+        height={size}
+        fill="transparent"
+      />
+
+      {/* Icône vaisseau (triangle/flèche) - plus grand */}
       <polygon
         points={`
-          ${markerX},${markerY - 2}
-          ${markerX + 3},${markerY}
-          ${markerX},${markerY + 2}
-          ${markerX + 1},${markerY}
+          ${markerX},${markerY - size/2}
+          ${markerX + size},${markerY}
+          ${markerX},${markerY + size/2}
+          ${markerX + size/3},${markerY}
         `}
         fill={color}
-        stroke={isMine ? '#fff' : 'none'}
-        strokeWidth="0.3"
+        stroke={isMine ? '#fff' : '#333'}
+        strokeWidth="0.5"
         className="fleet-icon"
       />
 
       {/* Nombre de vaisseaux */}
-      {zoom >= 0.8 && (
-        <text
-          x={markerX + 5}
-          y={markerY + 1}
-          fill={color}
-          fontSize="3"
-          fontWeight="bold"
-        >
-          {fleet.ship_count}
-        </text>
-      )}
+      <text
+        x={markerX + size + 2}
+        y={markerY + 2}
+        fill={color}
+        fontSize="5"
+        fontWeight="bold"
+        stroke="#000"
+        strokeWidth="0.3"
+      >
+        {fleet.ship_count}
+      </text>
 
-      {/* Nom de la flotte (zoom élevé) */}
-      {zoom >= 1.5 && isMine && (
+      {/* Nom de la flotte */}
+      {zoom >= 1.0 && isMine && (
         <text
           x={markerX}
-          y={markerY + 6}
-          fill="#888"
-          fontSize="2"
+          y={markerY + size + 4}
+          fill="#aaa"
+          fontSize="3"
         >
           {fleet.name}
         </text>
       )}
 
-      {/* Indicateur flotte sélectionnée ou survolée */}
-      <circle
-        cx={markerX + 1}
-        cy={markerY}
-        r={4}
-        fill="none"
-        stroke={color}
-        strokeWidth="0.3"
-        opacity="0"
-        className="fleet-highlight"
-      />
+      {/* Indicateur drag actif */}
+      {isDragging && (
+        <circle
+          cx={markerX + size/2}
+          cy={markerY}
+          r={size}
+          fill="none"
+          stroke="#4ade80"
+          strokeWidth="1"
+          strokeDasharray="2 1"
+        />
+      )}
     </g>
   );
 }

@@ -47,6 +47,9 @@ function GameView() {
   // Turn submission state
   const [isSubmittingTurn, setIsSubmittingTurn] = useState(false);
 
+  // Fleet movement mode - when a fleet is selected for sending
+  const [fleetToSend, setFleetToSend] = useState<number | null>(null);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -111,9 +114,27 @@ function GameView() {
     loadBreakthroughs();
   }, [loadMap, loadEconomy, loadBreakthroughs]);
 
-  const handlePlanetClick = (planetId: number) => {
+  const handlePlanetClick = async (planetId: number) => {
+    // If we're in "send fleet" mode, move the fleet to this planet
+    if (fleetToSend) {
+      const fleet = mapData?.fleets.find(f => f.id === fleetToSend);
+      if (fleet && fleet.current_planet_id !== planetId) {
+        await handleMoveFleet(fleetToSend, planetId);
+      }
+      setFleetToSend(null);
+      return;
+    }
+
     setSelectedPlanetId(planetId === selectedPlanetId ? null : planetId);
     setSelectedFleetId(null);
+  };
+
+  const handleSendFleet = (fleetId: number) => {
+    setFleetToSend(fleetId);
+  };
+
+  const cancelSendFleet = () => {
+    setFleetToSend(null);
   };
 
   const handleFleetClick = (fleetId: number) => {
@@ -129,6 +150,23 @@ function GameView() {
       const errorMessage =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
         'Erreur de déplacement';
+      alert(errorMessage);
+    }
+  };
+
+  const handleSendShips = async (
+    originPlanetId: number,
+    destinationPlanetId: number,
+    shipsToSend: Record<string, number>
+  ) => {
+    try {
+      await api.sendShipsFromPlanet(originPlanetId, destinationPlanetId, shipsToSend);
+      await loadMap();
+    } catch (err) {
+      console.error('Erreur envoi vaisseaux:', err);
+      const errorMessage =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        'Erreur d\'envoi des vaisseaux';
       alert(errorMessage);
     }
   };
@@ -312,21 +350,45 @@ function GameView() {
           {selectedPlanet && fleetsAtSelectedPlanet.length > 0 && (
             <section className="panel-section fleet-info-section">
               <h3>Flottes en orbite</h3>
+              {fleetToSend && (
+                <div className="send-mode-banner">
+                  <span>🎯 Cliquez sur la destination</span>
+                  <button className="btn-cancel-send" onClick={cancelSendFleet}>✕</button>
+                </div>
+              )}
               <div className="fleet-list-compact">
-                {fleetsAtSelectedPlanet.map((fleet) => (
-                  <div
-                    key={fleet.id}
-                    className={`fleet-item ${fleet.player_id === mapData.my_player_id ? 'mine' : ''} ${fleet.id === selectedFleetId ? 'selected' : ''}`}
-                    onClick={() => handleFleetClick(fleet.id)}
-                  >
-                    <span
-                      className="fleet-dot"
-                      style={{ backgroundColor: getPlayerColor(fleet.player_id) }}
-                    />
-                    <span className="fleet-name">{fleet.name}</span>
-                    <span className="fleet-ships">{fleet.ship_count} vx</span>
-                  </div>
-                ))}
+                {fleetsAtSelectedPlanet.map((fleet) => {
+                  const isMine = fleet.player_id === mapData.my_player_id;
+                  const isSelected = fleet.id === selectedFleetId;
+                  const isSending = fleet.id === fleetToSend;
+
+                  return (
+                    <div
+                      key={fleet.id}
+                      className={`fleet-item ${isMine ? 'mine' : ''} ${isSelected ? 'selected' : ''} ${isSending ? 'sending' : ''}`}
+                      onClick={() => handleFleetClick(fleet.id)}
+                    >
+                      <span
+                        className="fleet-dot"
+                        style={{ backgroundColor: getPlayerColor(fleet.player_id) }}
+                      />
+                      <span className="fleet-name">{fleet.name}</span>
+                      <span className="fleet-ships">{fleet.ship_count} vx</span>
+                      {isMine && fleet.status === 'stationed' && !fleetToSend && (
+                        <button
+                          className="btn-send-fleet"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSendFleet(fleet.id);
+                          }}
+                          title="Envoyer cette flotte"
+                        >
+                          ➤
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}
@@ -381,9 +443,11 @@ function GameView() {
             myPlayerId={mapData.my_player_id}
             currentTurn={mapData.turn}
             selectedPlanetId={selectedPlanetId}
+            selectedFleetId={selectedFleetId}
             onPlanetClick={handlePlanetClick}
             onFleetClick={handleFleetClick}
             onMoveFleet={handleMoveFleet}
+            onSendShips={handleSendShips}
           />
         </main>
       </div>

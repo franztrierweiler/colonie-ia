@@ -354,6 +354,39 @@ class ApiClient {
     return response.data;
   }
 
+  async sendShipsFromPlanet(
+    planetId: number,
+    destinationPlanetId: number,
+    shipsToSend: Record<string, number>,
+    fleetName?: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    new_fleet: {
+      id: number;
+      name: string;
+      ship_count: number;
+      destination_planet_id: number;
+      arrival_turn: number;
+    };
+  }> {
+    const response = await this.client.post(`/planets/${planetId}/send-ships`, {
+      destination_planet_id: destinationPlanetId,
+      ships_to_send: shipsToSend,
+      new_fleet_name: fleetName,
+    });
+    return response.data;
+  }
+
+  async getStationedShips(planetId: number): Promise<{
+    planet_id: number;
+    ships_by_type: Record<string, number>;
+    total: number;
+  }> {
+    const response = await this.client.get(`/planets/${planetId}/stationed-ships`);
+    return response.data;
+  }
+
   // ==========================================================================
   // Technology endpoints
   // ==========================================================================

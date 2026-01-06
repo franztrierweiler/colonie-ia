@@ -9,3 +9,6 @@ export { default as TechPanel } from './TechPanel';
 export { default as TechComparisonModal } from './TechComparisonModal';
 export { default as BreakthroughModal } from './BreakthroughModal';
 export { default as CombatReportPanel } from './CombatReportPanel';
+export { default as ShipCountBadge } from './ShipCountBadge';
+export { default as ShipSelectionModal } from './ShipSelectionModal';
+export { default as RocketNozzleIcon } from './RocketNozzleIcon';

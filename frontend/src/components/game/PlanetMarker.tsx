@@ -1,4 +1,6 @@
 import type { Planet } from '../../hooks/useGameState';
+import ShipCountBadge from './ShipCountBadge';
+import './PlanetMarker.css';
 
 interface PlanetMarkerProps {
   planet: Planet;
@@ -7,6 +9,13 @@ interface PlanetMarkerProps {
   zoom: number;
   getPlayerColor: (playerId: number | null) => string;
   onClick: () => void;
+  canDrag?: boolean;
+  onDragStart?: () => void;
+  stationedShipCount?: number;
+  onShipBadgeClick?: () => void;
+  // Indicateurs orbitaux
+  hasSatellite?: boolean;
+  hasShipsInConstruction?: boolean;
 }
 
 function PlanetMarker({
@@ -16,6 +25,12 @@ function PlanetMarker({
   zoom,
   getPlayerColor,
   onClick,
+  canDrag = false,
+  onDragStart,
+  stationedShipCount = 0,
+  onShipBadgeClick,
+  hasSatellite = false,
+  hasShipsInConstruction = false,
 }: PlanetMarkerProps) {
   const isOwned = planet.owner_id !== null;
   const isMine = planet.owner_id === myPlayerId;
@@ -24,7 +39,7 @@ function PlanetMarker({
   const isHomePlanet = planet.is_home_planet;
   const ownerColor = getPlayerColor(planet.owner_id);
 
-  // Type de planète et conditions (pour affichage des halos)
+  // Type de planète et conditions
   const isGaseous = planet.texture_type === 'gas';
   const isHostile = !isUnexplored && (
     planet.texture_type === 'volcanic' ||
@@ -32,26 +47,24 @@ function PlanetMarker({
     (planet.texture_type === 'barren' && planet.habitability < 0.2)
   );
 
-  // Taille selon sélection (plus grand pour voir les textures)
+  // Taille selon sélection
   const planetRadius = isSelected ? 6 : 5;
   const glowRadius = isSelected ? 8 : 7;
 
-  // Construit le chemin de texture à partir des valeurs stockées en base
-  const getPlanetTexture = (): string => {
-    // Planète inexplorée = pas de texture (gris uniforme)
-    if (isUnexplored) return '';
+  // Rayons pour les orbites
+  const satelliteOrbitRadius = planetRadius + 4;
+  const constructionOrbitRadius = planetRadius + (hasSatellite ? 7 : 5);
 
-    // Utiliser les valeurs stockées en base de données
+  const getPlanetTexture = (): string => {
+    if (isUnexplored) return '';
     const textureType = planet.texture_type || 'barren';
     const textureIdx = planet.texture_index || 1;
     const paddedIdx = String(textureIdx).padStart(3, '0');
-
     return `/planets/${textureType}/planet-${paddedIdx}.png`;
   };
 
   const planetTexture = getPlanetTexture();
 
-  // Fallback couleur selon le type de texture stocké
   const getFallbackFill = () => {
     if (isUnexplored) return '#3a3a4a';
     switch (planet.texture_type) {
@@ -70,40 +83,35 @@ function PlanetMarker({
     onClick();
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (canDrag && onDragStart) {
+      e.preventDefault();
+      onDragStart();
+    }
+  };
+
   return (
     <g
-      className={`planet-marker ${isSelected ? 'selected' : ''}`}
+      className={`planet-marker ${isSelected ? 'selected' : ''} ${canDrag ? 'can-drag' : ''}`}
       onClick={handleClick}
-      onMouseDown={(e) => e.stopPropagation()}
-      style={{ cursor: 'pointer' }}
+      onMouseDown={handleMouseDown}
+      style={{ cursor: canDrag ? 'grab' : 'pointer' }}
     >
-      {/* Halo bleu animé pour MA planète mère uniquement */}
+      {/* Cercle bleu épais pulsant pour MA planète mère */}
       {isHomePlanet && isMine && (
-        <>
-          <circle
-            cx={planet.x}
-            cy={planet.y}
-            r={planetRadius + 5}
-            fill="none"
-            stroke="#66aaff"
-            strokeWidth="2"
-            opacity="0.7"
-            className="home-planet-halo-inner"
-          />
-          <circle
-            cx={planet.x}
-            cy={planet.y}
-            r={planetRadius + 8}
-            fill="none"
-            stroke="#4488ff"
-            strokeWidth="1.5"
-            opacity="0.5"
-            className="home-planet-halo-outer"
-          />
-        </>
+        <circle
+          cx={planet.x}
+          cy={planet.y}
+          r={planetRadius + 4}
+          fill="none"
+          stroke="#4488ff"
+          strokeWidth="3"
+          className="home-planet-ring"
+        />
       )}
 
-      {/* Halo animé orange-rouge pour planètes gazeuses hostiles */}
+      {/* Halo pour planètes gazeuses hostiles */}
       {isHostile && isGaseous && (
         <circle
           cx={planet.x}
@@ -117,7 +125,7 @@ function PlanetMarker({
         />
       )}
 
-      {/* Halo de sélection ou de base (pas pour ma planète mère qui a son halo bleu) */}
+      {/* Halo de base */}
       {!(isHomePlanet && isMine) && (
         <circle
           cx={planet.x}
@@ -129,14 +137,161 @@ function PlanetMarker({
         />
       )}
 
-      {/* ClipPath pour découpage circulaire de la texture */}
+      {/* === INDICATEURS ORBITAUX === */}
+
+      {/* Constellation de 9 micro-satellites répartis aléatoirement avec onde radar */}
+      {hasSatellite && (() => {
+        // Générateur pseudo-aléatoire basé sur l'ID de la planète
+        const seed = planet.id * 137.5;
+        const pseudoRandom = (i: number) => {
+          const x = Math.sin(seed + i * 97.3) * 10000;
+          return x - Math.floor(x);
+        };
+        // Période radar entre 5s (0.2Hz) et 20s (0.05Hz)
+        const radarPeriod = 5 + (pseudoRandom(100) * 15);
+        // Période de base pour l'orbite (20s)
+        const baseOrbitPeriod = 20;
+
+        return (
+          <g>
+            {/* 9 satellites avec vitesse variable selon distance */}
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+              const angle = pseudoRandom(i) * Math.PI * 2;
+              const dist = 1 + pseudoRandom(i + 10) * 4; // rayon 1-5
+              // Vitesse: +10% si proche, -10% si loin (dist 1-5 -> variation ±10%)
+              const distFactor = (dist - 3) / 20; // -0.1 à +0.1
+              const orbitPeriod = baseOrbitPeriod * (1 + distFactor);
+              const driftDuration = 3 + pseudoRandom(i + 30) * 4;
+              const driftDelay = pseudoRandom(i + 40) * 5;
+              const orbitDelay = (planet.id % 20) + pseudoRandom(i + 50) * 2;
+
+              return (
+                <g
+                  key={i}
+                  className="satellite-orbit"
+                  style={{
+                    transformOrigin: `${planet.x}px ${planet.y}px`,
+                    animationDuration: `${orbitPeriod}s`,
+                    animationDelay: `${-orbitDelay}s`
+                  }}
+                >
+                  <circle
+                    cx={planet.x + satelliteOrbitRadius + Math.cos(angle) * dist}
+                    cy={planet.y + Math.sin(angle) * dist}
+                    r={0.25 + pseudoRandom(i + 20) * 0.1}
+                    fill="#a0a0a0"
+                    className="satellite-drift"
+                    style={{
+                      animationDuration: `${driftDuration}s`,
+                      animationDelay: `${-driftDelay}s`
+                    }}
+                  />
+                </g>
+              );
+            })}
+            {/* Onde radar (tourne avec le groupe médian) */}
+            <g
+              className="satellite-orbit"
+              style={{
+                transformOrigin: `${planet.x}px ${planet.y}px`,
+                animationDuration: `${baseOrbitPeriod}s`,
+                animationDelay: `${-(planet.id % 20)}s`
+              }}
+            >
+              <path
+                d={`M${planet.x + satelliteOrbitRadius + 4},${planet.y - 2}
+                    A3,3 0 0,1 ${planet.x + satelliteOrbitRadius + 4},${planet.y + 2}`}
+                fill="none"
+                stroke="#cccccc"
+                strokeWidth="0.4"
+                className="radar-wave-1"
+                style={{ animationDuration: `${radarPeriod}s` }}
+              />
+              <path
+                d={`M${planet.x + satelliteOrbitRadius + 5.5},${planet.y - 3}
+                    A4.5,4.5 0 0,1 ${planet.x + satelliteOrbitRadius + 5.5},${planet.y + 3}`}
+                fill="none"
+                stroke="#aaaaaa"
+                strokeWidth="0.3"
+                className="radar-wave-2"
+                style={{ animationDuration: `${radarPeriod}s` }}
+              />
+              <path
+                d={`M${planet.x + satelliteOrbitRadius + 7},${planet.y - 4}
+                    A6,6 0 0,1 ${planet.x + satelliteOrbitRadius + 7},${planet.y + 4}`}
+                fill="none"
+                stroke="#888888"
+                strokeWidth="0.25"
+                className="radar-wave-3"
+                style={{ animationDuration: `${radarPeriod}s` }}
+              />
+            </g>
+          </g>
+        );
+      })()}
+
+      {/* Pastille construction jaune→rouge + arcs électriques (sous le badge vaisseaux) */}
+      {hasShipsInConstruction && isMine && (
+        (() => {
+          // Position sous le badge vaisseaux
+          const badgeX = planet.x + planetRadius + 4;
+          const badgeY = planet.y - planetRadius + (stationedShipCount > 0 ? 8 : 0);
+          const badgeRadius = 3;
+          return (
+            <g>
+              {/* Cercle de fond */}
+              <circle
+                cx={badgeX}
+                cy={badgeY}
+                r={badgeRadius + 1}
+                fill="#000"
+                opacity="0.6"
+              />
+              {/* Pastille de construction animée (sans contour) */}
+              <circle
+                cx={badgeX}
+                cy={badgeY}
+                r={badgeRadius}
+                className="construction-indicator"
+              />
+              {/* Arcs électriques */}
+              <path
+                d={`M${badgeX - 4},${badgeY - 2} L${badgeX - 2},${badgeY} L${badgeX - 5},${badgeY + 1}`}
+                stroke="#88ffff"
+                strokeWidth="0.5"
+                fill="none"
+                strokeDasharray="2,1"
+                className="electric-arc-1"
+              />
+              <path
+                d={`M${badgeX + 2},${badgeY - 4} L${badgeX},${badgeY - 2} L${badgeX + 3},${badgeY - 1}`}
+                stroke="#ffff88"
+                strokeWidth="0.5"
+                fill="none"
+                strokeDasharray="1.5,1"
+                className="electric-arc-2"
+              />
+              <path
+                d={`M${badgeX + 3},${badgeY + 2} L${badgeX + 1},${badgeY + 1} L${badgeX + 4},${badgeY + 3}`}
+                stroke="#ffffff"
+                strokeWidth="0.4"
+                fill="none"
+                strokeDasharray="1,1.5"
+                className="electric-arc-3"
+              />
+            </g>
+          );
+        })()
+      )}
+
+      {/* ClipPath pour la texture */}
       <defs>
         <clipPath id={`planet-clip-${planet.id}`}>
           <circle cx={planet.x} cy={planet.y} r={planetRadius} />
         </clipPath>
       </defs>
 
-      {/* Coeur de la planète avec texture */}
+      {/* Coeur de la planète */}
       {planet.is_nova ? (
         <circle
           cx={planet.x}
@@ -146,7 +301,6 @@ function PlanetMarker({
           className="planet-core"
         />
       ) : isUnexplored ? (
-        /* Planète non explorée = cercle gris uniforme */
         <circle
           cx={planet.x}
           cy={planet.y}
@@ -158,14 +312,12 @@ function PlanetMarker({
         />
       ) : (
         <g clipPath={`url(#planet-clip-${planet.id})`}>
-          {/* Cercle de fond (fallback) */}
           <circle
             cx={planet.x}
             cy={planet.y}
             r={planetRadius}
             fill={getFallbackFill()}
           />
-          {/* Image de texture */}
           <image
             href={planetTexture}
             x={planet.x - planetRadius}
@@ -175,7 +327,6 @@ function PlanetMarker({
             preserveAspectRatio="xMidYMid slice"
             className="planet-core"
           />
-          {/* Effet d'auto-rotation (ombre qui traverse la surface) */}
           <ellipse
             cx={planet.x}
             cy={planet.y}
@@ -183,15 +334,11 @@ function PlanetMarker({
             ry={planetRadius * 1.2}
             fill="rgba(0,0,0,0.15)"
             className="planet-terminator"
-            style={{
-              ['--planet-x' as string]: `${planet.x}px`,
-              ['--planet-radius' as string]: `${planetRadius}px`,
-            }}
           />
         </g>
       )}
 
-      {/* Point d'interrogation pour planètes inexplorées - toujours visible */}
+      {/* Point d'interrogation pour planètes inexplorées */}
       {isUnexplored && (
         <text
           x={planet.x}
@@ -206,16 +353,17 @@ function PlanetMarker({
         </text>
       )}
 
-      {/* Indicateur de possession - cercle */}
+      {/* Cercle fin de possession - bleu pour joueur, couleur ennemi pour adversaires */}
       {isMine && !isHomePlanet && (
         <circle
           cx={planet.x}
           cy={planet.y}
           r={planetRadius + 3}
           fill="none"
-          stroke={ownerColor}
-          strokeWidth="1.5"
-          opacity="0.8"
+          stroke="#4488ff"
+          strokeWidth="0.1"
+          opacity="0.7"
+          className="ownership-ring"
         />
       )}
       {isEnemy && (
@@ -224,249 +372,14 @@ function PlanetMarker({
           cy={planet.y}
           r={planetRadius + 3}
           fill="none"
-          stroke="#ff4444"
-          strokeWidth="0.5"
-          strokeDasharray="2,2"
-          opacity="0.6"
+          stroke={ownerColor}
+          strokeWidth="0.1"
+          opacity="0.7"
+          className="ownership-ring"
         />
       )}
 
-      {/* Bicorne 3D Isométrique pour planètes possédées */}
-      {isOwned && !isUnexplored && (
-        <g transform={`translate(${planet.x}, ${planet.y - planetRadius * 0.9})`}>
-          {/* Définitions des dégradés pour effet 3D LEGO */}
-          <defs>
-            {/* Dégradé face supérieure (lumière du haut) */}
-            <linearGradient id={`top-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#3a3a3a" />
-              <stop offset="100%" stopColor="#252525" />
-            </linearGradient>
-            {/* Dégradé face avant (plus sombre) */}
-            <linearGradient id={`front-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#1a1a1a" />
-              <stop offset="100%" stopColor="#0a0a0a" />
-            </linearGradient>
-            {/* Dégradé doré */}
-            <linearGradient id={`gold-grad-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#ffd700" />
-              <stop offset="50%" stopColor="#daa520" />
-              <stop offset="100%" stopColor="#996515" />
-            </linearGradient>
-            {/* Dégradé bleu 3D */}
-            <linearGradient id={`blue-grad-${planet.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#4488cc" />
-              <stop offset="50%" stopColor="#0055a4" />
-              <stop offset="100%" stopColor="#003366" />
-            </linearGradient>
-            {/* Dégradé rouge 3D */}
-            <linearGradient id={`red-grad-${planet.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ff6655" />
-              <stop offset="50%" stopColor="#ef4135" />
-              <stop offset="100%" stopColor="#aa2020" />
-            </linearGradient>
-            {/* Dégradé ennemi */}
-            <linearGradient id={`enemy-top-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={ownerColor} />
-              <stop offset="100%" stopColor={ownerColor} stopOpacity="0.7" />
-            </linearGradient>
-            <linearGradient id={`enemy-front-${planet.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={ownerColor} stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#0a0a0a" />
-            </linearGradient>
-          </defs>
-
-          {/* Ombre portée du bicorne sur la planète */}
-          <ellipse
-            cx="0"
-            cy={planetRadius * 0.35}
-            rx="6"
-            ry="2"
-            fill="rgba(0,0,0,0.5)"
-          />
-
-          {isMine ? (
-            /* === BICORNE NAPOLÉONIEN 3D ISOMÉTRIQUE === */
-            <g transform="translate(-7, -8) scale(1.5)">
-
-              {/* === POINTE GAUCHE (BLEUE) - Vue 3D === */}
-              {/* Face supérieure de la pointe gauche */}
-              <path
-                d="M0.5,5.5 L2.8,1.2 L3.5,1.8 L1.5,5.2 Z"
-                fill={`url(#blue-grad-${planet.id})`}
-              />
-              {/* Face avant de la pointe gauche (plus sombre) */}
-              <path
-                d="M0.5,5.5 L1.5,5.2 L1.5,6.2 L0.5,6.5 Z"
-                fill="#002244"
-              />
-              {/* Épaisseur/tranche de la pointe gauche */}
-              <path
-                d="M0.5,5.5 L0.5,6.5 L0.2,6.3 L0.2,5.3 Z"
-                fill="#001133"
-              />
-              {/* Liseré doré pointe gauche */}
-              <path
-                d="M0.5,5.5 L2.8,1.2"
-                fill="none"
-                stroke="#daa520"
-                strokeWidth="0.3"
-              />
-              {/* Reflet sur pointe bleue */}
-              <path
-                d="M1.8,3 L2.5,1.8 L2.8,2.1 L2.1,3.3 Z"
-                fill="#6699dd"
-                opacity="0.5"
-              />
-
-              {/* === CORPS CENTRAL DU BICORNE === */}
-              {/* Face supérieure du corps (vue de dessus légèrement) */}
-              <path
-                d="M1.5,5.2 L3.5,1.8 L4.5,1.5 L5.5,1.8 L7.5,5.2 L4.5,4.5 Z"
-                fill={`url(#top-grad-${planet.id})`}
-              />
-              {/* Face avant du corps (épaisseur 3D) */}
-              <path
-                d="M1.5,5.2 L1.5,6.2 L4.5,5.5 L7.5,6.2 L7.5,5.2 L4.5,4.5 Z"
-                fill={`url(#front-grad-${planet.id})`}
-              />
-              {/* Bordure dorée inférieure 3D */}
-              <path
-                d="M1.5,6.2 L4.5,5.5 L7.5,6.2 L4.5,5.8 Z"
-                fill={`url(#gold-grad-${planet.id})`}
-              />
-              {/* Ligne de séparation (rebord du chapeau) */}
-              <path
-                d="M1.5,5.2 L4.5,4.5 L7.5,5.2"
-                fill="none"
-                stroke="#4a4a4a"
-                strokeWidth="0.2"
-              />
-
-              {/* === POINTE DROITE (ROUGE) - Vue 3D === */}
-              {/* Face supérieure de la pointe droite */}
-              <path
-                d="M8.5,5.5 L6.2,1.2 L5.5,1.8 L7.5,5.2 Z"
-                fill={`url(#red-grad-${planet.id})`}
-              />
-              {/* Face avant de la pointe droite (plus sombre) */}
-              <path
-                d="M8.5,5.5 L7.5,5.2 L7.5,6.2 L8.5,6.5 Z"
-                fill="#661515"
-              />
-              {/* Épaisseur/tranche de la pointe droite */}
-              <path
-                d="M8.5,5.5 L8.5,6.5 L8.8,6.3 L8.8,5.3 Z"
-                fill="#441010"
-              />
-              {/* Liseré doré pointe droite */}
-              <path
-                d="M8.5,5.5 L6.2,1.2"
-                fill="none"
-                stroke="#daa520"
-                strokeWidth="0.3"
-              />
-              {/* Reflet sur pointe rouge */}
-              <path
-                d="M7.2,3 L6.5,1.8 L6.2,2.1 L6.9,3.3 Z"
-                fill="#ff8866"
-                opacity="0.5"
-              />
-
-              {/* === COCARDE TRICOLORE 3D === */}
-              {/* Ombre portée de la cocarde */}
-              <ellipse cx="4.7" cy="3.5" rx="1.2" ry="0.8" fill="rgba(0,0,0,0.4)" />
-
-              {/* Base en relief (cylindre) */}
-              <ellipse cx="4.5" cy="3.2" rx="1.1" ry="0.7" fill="#0a0a0a" />
-              <ellipse cx="4.5" cy="3" rx="1.1" ry="0.7" fill="#1a1a1a" />
-
-              {/* Anneau bleu extérieur */}
-              <ellipse cx="4.5" cy="2.85" rx="1.0" ry="0.65" fill="#002244" />
-              <ellipse cx="4.5" cy="2.8" rx="0.95" ry="0.6" fill="#0055a4" />
-
-              {/* Anneau blanc */}
-              <ellipse cx="4.5" cy="2.75" rx="0.65" ry="0.4" fill="#cccccc" />
-              <ellipse cx="4.5" cy="2.7" rx="0.6" ry="0.38" fill="#ffffff" />
-
-              {/* Centre rouge */}
-              <ellipse cx="4.5" cy="2.68" rx="0.35" ry="0.22" fill="#aa2020" />
-              <ellipse cx="4.5" cy="2.65" rx="0.3" ry="0.2" fill="#ef4135" />
-
-              {/* Bouton doré central en 3D */}
-              <ellipse cx="4.5" cy="2.62" rx="0.15" ry="0.1" fill="#996515" />
-              <ellipse cx="4.5" cy="2.6" rx="0.12" ry="0.08" fill="#ffd700" />
-              <ellipse cx="4.45" cy="2.58" rx="0.04" ry="0.03" fill="#fff8dc" />
-
-              {/* Reflet global sur le bicorne */}
-              <path
-                d="M2,4.5 Q3,2.5 4,2 L4.5,2.2 Q3.5,3 2.5,4.8 Z"
-                fill="rgba(255,255,255,0.15)"
-              />
-            </g>
-          ) : (
-            /* === BICORNE ENNEMI 3D ISOMÉTRIQUE === */
-            <g transform="translate(-7, -8) scale(1.5)">
-
-              {/* Pointe gauche */}
-              <path
-                d="M0.5,5.5 L2.8,1.2 L3.5,1.8 L1.5,5.2 Z"
-                fill={`url(#enemy-top-${planet.id})`}
-              />
-              <path
-                d="M0.5,5.5 L1.5,5.2 L1.5,6.2 L0.5,6.5 Z"
-                fill="rgba(0,0,0,0.5)"
-              />
-              <path
-                d="M0.5,5.5 L0.5,6.5 L0.2,6.3 L0.2,5.3 Z"
-                fill="rgba(0,0,0,0.7)"
-              />
-
-              {/* Corps central */}
-              <path
-                d="M1.5,5.2 L3.5,1.8 L4.5,1.5 L5.5,1.8 L7.5,5.2 L4.5,4.5 Z"
-                fill={`url(#enemy-top-${planet.id})`}
-              />
-              <path
-                d="M1.5,5.2 L1.5,6.2 L4.5,5.5 L7.5,6.2 L7.5,5.2 L4.5,4.5 Z"
-                fill={`url(#enemy-front-${planet.id})`}
-              />
-              <path
-                d="M1.5,6.2 L4.5,5.5 L7.5,6.2 L4.5,5.8 Z"
-                fill="#222"
-              />
-
-              {/* Pointe droite */}
-              <path
-                d="M8.5,5.5 L6.2,1.2 L5.5,1.8 L7.5,5.2 Z"
-                fill={`url(#enemy-top-${planet.id})`}
-              />
-              <path
-                d="M8.5,5.5 L7.5,5.2 L7.5,6.2 L8.5,6.5 Z"
-                fill="rgba(0,0,0,0.5)"
-              />
-              <path
-                d="M8.5,5.5 L8.5,6.5 L8.8,6.3 L8.8,5.3 Z"
-                fill="rgba(0,0,0,0.7)"
-              />
-
-              {/* Insigne ennemi 3D */}
-              <ellipse cx="4.7" cy="3.5" rx="1.0" ry="0.7" fill="rgba(0,0,0,0.4)" />
-              <ellipse cx="4.5" cy="3.1" rx="0.9" ry="0.6" fill="#0a0a0a" />
-              <ellipse cx="4.5" cy="2.9" rx="0.85" ry="0.55" fill="#1a1a1a" />
-              <ellipse cx="4.5" cy="2.75" rx="0.6" ry="0.4" fill="#2a2a2a" />
-              <ellipse cx="4.5" cy="2.65" rx="0.35" ry="0.25" fill="#3a3a3a" />
-              <ellipse cx="4.45" cy="2.6" rx="0.1" ry="0.07" fill="#555" />
-
-              {/* Contours */}
-              <path d="M0.5,5.5 L2.8,1.2" fill="none" stroke="#333" strokeWidth="0.2" />
-              <path d="M8.5,5.5 L6.2,1.2" fill="none" stroke="#333" strokeWidth="0.2" />
-            </g>
-          )}
-        </g>
-      )}
-
-      {/* Nom de la planète - sous la planète, taille fixe, visible à partir de 1:1 */}
-      {/* TODO: revoir la méthode d'affichage des noms de planètes */}
+      {/* Nom de la planète */}
       {zoom >= 1.0 && (
         <text
           x={planet.x}
@@ -482,10 +395,9 @@ function PlanetMarker({
         </text>
       )}
 
-      {/* Détails (visibles à zoom élevé) */}
+      {/* Détails (zoom élevé) */}
       {zoom >= 2.0 && !isUnexplored && (
         <g className="planet-details">
-          {/* Température */}
           <text
             x={planet.x}
             y={planet.y + planetRadius + 8}
@@ -496,8 +408,6 @@ function PlanetMarker({
           >
             {Math.round(planet.current_temperature)}°C
           </text>
-
-          {/* Population pour planètes possédées */}
           {isMine && (
             <text
               x={planet.x}
@@ -513,7 +423,7 @@ function PlanetMarker({
         </g>
       )}
 
-      {/* Point rouge clignotant pour nova imminente */}
+      {/* Point rouge pour nova imminente */}
       {planet.nova_turn && !planet.is_nova && (
         <circle
           cx={planet.x + planetRadius + 2}
@@ -521,6 +431,17 @@ function PlanetMarker({
           r={2}
           fill="#ff0000"
           className="danger-blink"
+        />
+      )}
+
+      {/* Pastille de vaisseaux stationnés */}
+      {isMine && stationedShipCount > 0 && onShipBadgeClick && (
+        <ShipCountBadge
+          x={planet.x + planetRadius + 4}
+          y={planet.y - planetRadius}
+          count={stationedShipCount}
+          color={ownerColor}
+          onClick={onShipBadgeClick}
         />
       )}
     </g>

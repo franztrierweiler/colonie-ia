@@ -239,3 +239,26 @@
 .fleet-drag-line {
   pointer-events: none;
 }
+
+/* Planète prête à être glissée (flotte sélectionnée) */
+.planet-marker.can-drag {
+  cursor: grab;
+}
+
+.planet-marker.can-drag:active {
+  cursor: grabbing;
+}
+
+.planet-marker.can-drag .planet-core {
+  filter: drop-shadow(0 0 4px #4ade80) drop-shadow(0 0 8px #4ade80);
+  animation: readyToDrag 1.5s ease-in-out infinite;
+}
+
+@keyframes readyToDrag {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px #4ade80) drop-shadow(0 0 6px #4ade80);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px #4ade80) drop-shadow(0 0 12px #4ade80);
+  }
+}

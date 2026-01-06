@@ -748,6 +748,143 @@ class FleetService:
         return True, f"Disbanded {ships_disbanded} ships, recovered {total_metal} metal", total_metal
 
     # -------------------------------------------------------------------------
+    # Send Ships from Planet
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def get_stationed_ships_at_planet(player: GamePlayer, planet: Planet) -> Dict[str, int]:
+        """
+        Get aggregated count of all stationed ships at a planet.
+
+        Args:
+            player: Player who owns the ships
+            planet: Planet to check
+
+        Returns:
+            Dictionary of {ship_type: count}
+        """
+        ships_by_type: Dict[str, int] = {}
+
+        for fleet in player.fleets.filter_by(
+            status=FleetStatus.STATIONED.value,
+            current_planet_id=planet.id
+        ):
+            for ship in fleet.ships.filter_by(is_destroyed=False):
+                ship_type = ship.design.ship_type
+                ships_by_type[ship_type] = ships_by_type.get(ship_type, 0) + 1
+
+        return ships_by_type
+
+    @staticmethod
+    def send_ships_from_planet(
+        player: GamePlayer,
+        origin_planet: Planet,
+        destination_planet: Planet,
+        ships_to_send: Dict[str, int],
+        current_turn: int,
+        new_fleet_name: Optional[str] = None,
+    ) -> Tuple[bool, str, Optional[Fleet]]:
+        """
+        Send selected ships from a planet to a destination.
+        Creates a new fleet with the selected ships and initiates movement.
+
+        Args:
+            player: Player sending the ships
+            origin_planet: Planet where ships are stationed
+            destination_planet: Target planet
+            ships_to_send: Dictionary of {ship_type: count}
+            current_turn: Current game turn
+            new_fleet_name: Name for the new fleet (auto-generated if not provided)
+
+        Returns:
+            Tuple of (success, message, new fleet or None)
+        """
+        # Validate origin planet ownership
+        if origin_planet.owner_id != player.id:
+            return False, "You don't own the origin planet", None
+
+        # Get available ships at planet
+        available = FleetService.get_stationed_ships_at_planet(player, origin_planet)
+
+        # Validate requested ships are available
+        for ship_type, count in ships_to_send.items():
+            if count <= 0:
+                continue
+            if ship_type not in available:
+                return False, f"No {ship_type} ships available at this planet", None
+            if count > available[ship_type]:
+                return False, f"Not enough {ship_type} ships (requested {count}, available {available[ship_type]})", None
+
+        # Calculate total ships to send
+        total_ships = sum(count for count in ships_to_send.values() if count > 0)
+        if total_ships == 0:
+            return False, "No ships selected", None
+
+        # Generate fleet name if not provided
+        if not new_fleet_name:
+            fleet_count = player.fleets.count()
+            new_fleet_name = f"Flotte {fleet_count + 1}"
+
+        # Create new fleet at origin planet
+        new_fleet = Fleet(
+            player_id=player.id,
+            name=new_fleet_name,
+            current_planet_id=origin_planet.id,
+            status=FleetStatus.STATIONED.value,
+            fuel_remaining=BASE_FUEL_CAPACITY,
+            max_fuel=BASE_FUEL_CAPACITY,
+        )
+        db.session.add(new_fleet)
+        db.session.flush()  # Get ID
+
+        # Move ships from existing fleets to new fleet
+        ships_moved = 0
+        for ship_type, count_needed in ships_to_send.items():
+            if count_needed <= 0:
+                continue
+
+            remaining = count_needed
+
+            # Find ships of this type in stationed fleets at this planet
+            for fleet in player.fleets.filter_by(
+                status=FleetStatus.STATIONED.value,
+                current_planet_id=origin_planet.id
+            ):
+                if remaining <= 0:
+                    break
+                if fleet.id == new_fleet.id:
+                    continue  # Skip the new fleet
+
+                for ship in fleet.ships.filter_by(is_destroyed=False):
+                    if remaining <= 0:
+                        break
+                    if ship.design.ship_type == ship_type:
+                        ship.fleet_id = new_fleet.id
+                        ships_moved += 1
+                        remaining -= 1
+
+        if ships_moved == 0:
+            db.session.delete(new_fleet)
+            return False, "Failed to move any ships", None
+
+        # Flush to ensure ship changes are applied before moving
+        db.session.flush()
+
+        # Check if new fleet can reach destination
+        can_move, reason = FleetService.can_reach(new_fleet, destination_planet)
+        if not can_move:
+            # Rollback: move ships back to original fleets would be complex
+            # Instead, just leave the fleet stationed and return error
+            return False, f"Cannot reach destination: {reason}", None
+
+        # Initiate movement
+        success, message = FleetService.move_fleet(new_fleet, destination_planet, current_turn)
+        if not success:
+            return False, message, None
+
+        return True, f"{ships_moved} ships departing to {destination_planet.name}", new_fleet
+
+    # -------------------------------------------------------------------------
     # Fleet Summary
     # -------------------------------------------------------------------------
 

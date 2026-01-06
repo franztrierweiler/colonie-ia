@@ -253,6 +253,65 @@ body:has(.game-view) {
   font-size: 0.65rem;
 }
 
+/* Send fleet button */
+.btn-send-fleet {
+  background: var(--orange-primary);
+  border: none;
+  color: #000;
+  padding: 0.15rem 0.3rem;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  opacity: 0.8;
+  transition: all 0.15s;
+}
+
+.btn-send-fleet:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Fleet in sending mode */
+.fleet-item.sending {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: #4ade80;
+  animation: pulse-send 1s infinite;
+}
+
+@keyframes pulse-send {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+}
+
+/* Send mode banner */
+.send-mode-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0.2), transparent);
+  border: 1px solid #4ade80;
+  border-radius: 3px;
+  padding: 0.3rem 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  color: #4ade80;
+}
+
+.btn-cancel-send {
+  background: transparent;
+  border: 1px solid #4ade80;
+  color: #4ade80;
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+
+.btn-cancel-send:hover {
+  background: #4ade80;
+  color: #000;
+}
+
 /* Resources Section */
 .resources-section {
   background: var(--bg-darker);
