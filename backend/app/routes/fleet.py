@@ -773,3 +773,80 @@ def get_stationed_ships(planet_id: int):
         "ships_by_type": ships_by_type,
         "total_ships": sum(ships_by_type.values()),
     })
+
+
+@api_bp.route("/planets/<int:planet_id>/ships-detailed", methods=["GET"])
+@token_required
+def get_stationed_ships_detailed(planet_id: int):
+    """
+    Obtenir les vaisseaux individuels stationnés sur une planète avec détails.
+    ---
+    tags:
+      - Flottes
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: planet_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Liste des vaisseaux avec détails
+    """
+    planet = Planet.query.get(planet_id)
+    if not planet:
+        return jsonify({"error": "Planet not found"}), 404
+
+    # Get game from galaxy
+    from app.models.galaxy import Galaxy
+    galaxy = Galaxy.query.get(planet.galaxy_id)
+    if not galaxy:
+        return jsonify({"error": "Galaxy not found"}), 404
+
+    player = GamePlayer.query.filter_by(
+        game_id=galaxy.game_id,
+        user_id=g.current_user.id
+    ).first()
+
+    if not player:
+        return jsonify({"error": "You are not in this game"}), 403
+
+    if planet.owner_id != player.id:
+        return jsonify({"error": "You don't own this planet"}), 403
+
+    # Récupérer toutes les flottes stationnées du joueur
+    from app.models.fleet import Fleet, Ship, FleetStatus
+    fleets = Fleet.query.filter_by(
+        player_id=player.id,
+        current_planet_id=planet_id,
+        status=FleetStatus.STATIONED.value
+    ).all()
+
+    ships_list = []
+    for fleet in fleets:
+        for ship in fleet.ships.filter_by(is_destroyed=False):
+            design = ship.design
+            # Calcul du scrap (75% du coût métal)
+            scrap_value = int(design.production_cost_metal * 0.75) if design else 0
+
+            ships_list.append({
+                "id": ship.id,
+                "fleet_id": fleet.id,
+                "fleet_name": fleet.name,
+                "design_name": design.name if design else "?",
+                "ship_type": design.ship_type if design else "?",
+                "weapons": design.effective_weapons if design else 0,
+                "shields": design.effective_shields if design else 0,
+                "speed": design.effective_speed if design else 0,
+                "range": design.effective_range if design else 0,
+                "fuel": fleet.fuel_remaining,
+                "max_fuel": fleet.max_fuel,
+                "health_percent": ship.health_percent,
+                "scrap_value": scrap_value,
+            })
+
+    return jsonify({
+        "planet_id": planet_id,
+        "ships": ships_list,
+    })

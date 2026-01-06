@@ -179,7 +179,8 @@ body:has(.game-view) {
 /* Planet Info Section */
 .planet-info-section {
   flex: 1;
-  min-height: 100px;
+  min-height: 200px;
+  overflow-y: auto;
 }
 
 .no-planet-selected {
@@ -357,48 +358,11 @@ body:has(.game-view) {
   color: #ff6b6b;
 }
 
-/* Fleet Management Section - compact version for left panel */
-.fleet-management-section {
-  flex: 1;
-  min-height: 150px;
-  max-height: 300px;
-  overflow: hidden;
-}
-
-.fleet-management-section .fleet-panel {
-  height: 100%;
-  font-size: 0.85rem;
-}
-
-.fleet-management-section .fleet-panel .panel-header {
-  margin-bottom: 0.5rem;
-}
-
-.fleet-management-section .fleet-panel .panel-header h2 {
-  font-size: 0.8rem;
-}
-
-.fleet-management-section .fleet-list {
-  max-height: 100px;
+/* Budget Bars Section */
+.budget-bars-section {
+  flex-shrink: 0;
+  max-height: 140px;
   overflow-y: auto;
-  margin-bottom: 0.5rem;
-}
-
-.fleet-management-section .fleet-details {
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.fleet-management-section .fleet-details h3 {
-  font-size: 0.85rem;
-}
-
-.fleet-management-section .designs-section {
-  padding-top: 0.5rem;
-}
-
-.fleet-management-section .designs-list {
-  max-height: 80px;
 }
 
 /* ============ MAP AREA ============ */
@@ -583,9 +547,22 @@ body:has(.game-view) {
   .left-panel {
     width: 100%;
     min-width: 100%;
-    max-height: 200px;
+    max-height: 40vh;
     border-right: none;
     border-bottom: 2px solid var(--border-color);
+    /* Afficher la scrollbar sur petit écran */
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+  }
+
+  .left-panel::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+
+  .left-panel::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
   }
 
   .bottom-bar {
@@ -737,4 +714,163 @@ body:has(.game-view) {
 
 .game-header .dropdown-item-danger:hover {
   background: rgba(220, 38, 38, 0.08);
+}
+
+/* ============ HEADER MENU ============ */
+.header-menu {
+  position: relative;
+}
+
+.btn-header-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.3rem 0.6rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 0.75rem;
+  border-radius: 3px;
+}
+
+.btn-header-menu:hover {
+  border-color: var(--orange-primary);
+}
+
+.btn-header-menu .menu-arrow {
+  transition: transform 0.2s;
+}
+
+.btn-header-menu .menu-arrow.open {
+  transform: rotate(180deg);
+}
+
+.header-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  min-width: 160px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.header-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.header-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.header-menu-item:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.header-menu-item:disabled:hover {
+  background: none;
+}
+
+.header-menu-item:first-child {
+  border-radius: 4px 4px 0 0;
+}
+
+.header-menu-item:last-child {
+  border-radius: 0 0 4px 4px;
+}
+
+/* ============ EXPERT MODALS ============ */
+.expert-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.expert-modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  min-width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.expert-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-darker);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+.expert-modal-header button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.expert-modal-header button:hover {
+  color: var(--text-light);
+}
+
+.expert-modal-content {
+  padding: 0.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.expert-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+}
+
+.expert-table th,
+.expert-table td {
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.expert-table th {
+  background: var(--bg-darker);
+  color: var(--text-muted);
+  font-weight: normal;
+  text-transform: uppercase;
+  font-size: 0.65rem;
+}
+
+.expert-table tbody tr {
+  cursor: pointer;
+}
+
+.expert-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
 }

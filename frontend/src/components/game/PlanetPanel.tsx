@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { Planet, ProductionQueueItem, ShipDesign } from '../../hooks/useGameState';
+import type { Planet, ProductionQueueItem, ShipDesign, Fleet } from '../../hooks/useGameState';
+import { SHIP_TYPES } from '../../hooks/useGameState';
 import api from '../../services/api';
+import type { ShipDetailed } from '../../services/api';
 import './PlanetPanel.css';
 
 interface PlanetPanelProps {
@@ -8,6 +10,8 @@ interface PlanetPanelProps {
   isOwned: boolean;
   ownerColor: string;
   ownerName?: string;
+  fleets?: Fleet[];  // Flottes stationnées sur cette planète
+  myPlayerId?: number;
   onClose: () => void;
   onBudgetChange: () => void;
   onAbandon: () => void;
@@ -18,6 +22,8 @@ function PlanetPanel({
   isOwned,
   ownerColor,
   ownerName,
+  fleets = [],
+  myPlayerId,
   onClose,
   onBudgetChange,
   onAbandon,
@@ -37,6 +43,10 @@ function PlanetPanel({
   const [productionOutput, setProductionOutput] = useState(0);
   const [showAddProduction, setShowAddProduction] = useState(false);
 
+  // Individual ships state
+  const [ships, setShips] = useState<ShipDetailed[]>([]);
+  const [selectedShipId, setSelectedShipId] = useState<number | null>(null);
+
   const hasChanges =
     terraformBudget !== planet.terraform_budget ||
     miningBudget !== planet.mining_budget ||
@@ -46,8 +56,19 @@ function PlanetPanel({
     if (isOwned) {
       loadProductionQueue();
       loadDesigns();
+      loadShips();
     }
   }, [isOwned, planet.id]);
+
+  const loadShips = async () => {
+    try {
+      const data = await api.getStationedShipsDetailed(planet.id);
+      setShips(data.ships || []);
+    } catch (err) {
+      // Silently fail
+      setShips([]);
+    }
+  };
 
   const loadProductionQueue = async () => {
     try {
@@ -299,58 +320,93 @@ function PlanetPanel({
         </div>
       )}
 
-      {/* Production Queue compact */}
+      {/* Liste des vaisseaux style Spaceward Ho! */}
       {isOwned && (
-        <div className="production-compact">
-          <div className="production-header">
-            <span>Production ({productionOutput.toFixed(0)} pts/tour)</span>
-            {!showAddProduction && (
-              <button
-                className="btn-add-small"
-                onClick={() => setShowAddProduction(true)}
-                disabled={designs.length === 0}
-              >
-                +
-              </button>
-            )}
+        <div className="ships-section-compact">
+          <div className="ships-header">
+            Stationnés à {planet.name}
           </div>
 
-          {productionQueue.length > 0 ? (
-            <div className="queue-list-compact">
-              {productionQueue.map((item) => (
-                <div key={item.id} className="queue-item-compact">
-                  <span className="queue-name">{item.design_name}</span>
-                  <span className="queue-progress">{item.production_progress.toFixed(0)}%</span>
+          <div className="ships-list-compact">
+            {/* Vaisseaux individuels */}
+            {ships.map((ship) => {
+              const isSelected = selectedShipId === ship.id;
+              const shipInfo = SHIP_TYPES[ship.ship_type as keyof typeof SHIP_TYPES];
+              const typeName = shipInfo?.name || ship.ship_type;
+
+              return (
+                <div key={ship.id}>
+                  <div
+                    className={`ship-entry ${isSelected ? 'selected' : ''}`}
+                    onClick={() => setSelectedShipId(isSelected ? null : ship.id)}
+                  >
+                    <span className="ship-name">
+                      {ship.design_name} ({ship.weapons}/{ship.shields}) {typeName}
+                    </span>
+                  </div>
+                  {/* Détails au clic */}
+                  {isSelected && (
+                    <div className="ship-details">
+                      <span>Fuel: {ship.fuel.toFixed(0)}/{ship.max_fuel.toFixed(0)}</span>
+                      <span>Speed: {ship.speed}</span>
+                      <span>Scrap: {ship.scrap_value}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Vaisseaux en construction (italique) */}
+            {productionQueue.filter(item => !item.is_completed).map((item) => {
+              const designName = item.design_name || 'Vaisseau';
+              return (
+                <div key={`queue-${item.id}`} className="ship-entry construction">
+                  <span className="ship-name">{designName}</span>
+                  <span className="ship-progress">{item.production_progress.toFixed(0)}%</span>
                   <button
-                    className="queue-remove"
+                    className="ship-remove"
                     onClick={() => handleRemoveFromQueue(item.id)}
                   >
                     ×
                   </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="no-production-compact">Aucune production</p>
-          )}
+              );
+            })}
 
-          {showAddProduction && (
-            <div className="add-production-compact">
-              <select
-                value={selectedDesign || ''}
-                onChange={(e) => setSelectedDesign(Number(e.target.value) || null)}
+            {ships.length === 0 && productionQueue.filter(i => !i.is_completed).length === 0 && (
+              <div className="no-ships">Aucun.</div>
+            )}
+          </div>
+
+          {/* Bouton ajouter production */}
+          <div className="add-ship-row">
+            {!showAddProduction ? (
+              <button
+                className="btn-add-ship"
+                onClick={() => setShowAddProduction(true)}
+                disabled={designs.length === 0}
+                title="Construire un vaisseau"
               >
-                <option value="">Choisir...</option>
-                {designs.map((design) => (
-                  <option key={design.id} value={design.id}>
-                    {design.name}
-                  </option>
-                ))}
-              </select>
-              <button onClick={handleAddToQueue} disabled={!selectedDesign || isSaving}>OK</button>
-              <button onClick={() => { setShowAddProduction(false); setSelectedDesign(null); }}>×</button>
-            </div>
-          )}
+                + ({productionOutput.toFixed(0)} pts/tour)
+              </button>
+            ) : (
+              <div className="add-production-inline">
+                <select
+                  value={selectedDesign || ''}
+                  onChange={(e) => setSelectedDesign(Number(e.target.value) || null)}
+                >
+                  <option value="">Choisir...</option>
+                  {designs.map((design) => (
+                    <option key={design.id} value={design.id}>
+                      {design.name}
+                    </option>
+                  ))}
+                </select>
+                <button onClick={handleAddToQueue} disabled={!selectedDesign || isSaving}>OK</button>
+                <button onClick={() => { setShowAddProduction(false); setSelectedDesign(null); }}>×</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

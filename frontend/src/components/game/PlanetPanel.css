@@ -258,130 +258,182 @@
   margin-top: 0.5rem;
 }
 
-/* Production compact */
-.production-compact {
+/* === SHIPS SECTION - SPACEWARD HO! STYLE === */
+.ships-section-compact {
   background: var(--bg-darker);
-  border-radius: 3px;
-  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border-color);
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-size: 11px;
 }
 
-.production-header {
+.ships-header {
+  background: var(--bg-dark);
+  padding: 2px 4px;
+  font-weight: bold;
+  color: var(--text-light);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fleet-stats-line {
+  padding: 2px 4px;
+  color: var(--text-muted);
+  font-size: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ships-list-compact {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 2px 0;
+}
+
+/* Sur petits écrans, pas de limite de hauteur et scrollbar visible */
+@media (max-height: 700px) {
+  .ships-list-compact {
+    max-height: 150px;
+  }
+
+  .ships-list-compact::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+}
+
+.ships-list-compact::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ships-list-compact::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+}
+
+.ships-list-compact::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.ship-entry {
+  padding: 1px 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.2rem;
-  font-size: 0.65rem;
-  color: var(--text-light);
-}
-
-.btn-add-small {
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  background: var(--bg-dark);
-  border: 1px solid var(--border-color);
   color: var(--text-light);
   cursor: pointer;
-  font-size: 0.75rem;
-  line-height: 1;
-  border-radius: 2px;
 }
 
-.btn-add-small:hover:not(:disabled) {
-  border-color: var(--orange-primary);
-  color: var(--orange-primary);
+.ship-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.btn-add-small:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.ship-entry.selected {
+  background: rgba(68, 136, 255, 0.15);
 }
 
-.queue-list-compact {
+/* Détails du vaisseau sélectionné */
+.ship-details {
+  padding: 2px 8px 4px 8px;
+  font-size: 10px;
+  color: var(--text-muted);
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.queue-item-compact {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.1rem 0.25rem;
-  background: var(--bg-dark);
-  border-radius: 2px;
-  font-size: 0.6rem;
+/* Vaisseaux en construction - ITALIQUE */
+.ship-entry.construction {
+  font-style: italic;
+  color: var(--text-muted);
 }
 
-.queue-item-compact .queue-name {
+.ship-entry .ship-name {
   flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--text-light);
 }
 
-.queue-item-compact .queue-progress {
-  color: #50c878;
-  font-weight: bold;
-  min-width: 30px;
-  text-align: right;
+.ship-entry .ship-progress {
+  color: #ffa500;
+  font-style: normal;
+  margin-left: 8px;
+  font-size: 10px;
 }
 
-.queue-item-compact .queue-remove {
+.ship-entry .ship-remove {
   background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0 0.2rem;
+  font-size: 12px;
+  padding: 0 2px;
   line-height: 1;
+  margin-left: 4px;
 }
 
-.queue-item-compact .queue-remove:hover {
+.ship-entry .ship-remove:hover {
   color: #d44;
 }
 
-.no-production-compact {
-  margin: 0;
-  font-size: 0.6rem;
+.no-ships {
+  padding: 2px 4px;
   color: var(--text-muted);
   font-style: italic;
-  text-align: center;
-  padding: 0.15rem;
 }
 
-.add-production-compact {
+.add-ship-row {
+  padding: 2px 4px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-add-ship {
+  width: 100%;
+  padding: 2px 4px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 10px;
+  font-family: var(--font-mono, 'Courier New', monospace);
+  text-align: left;
+}
+
+.btn-add-ship:hover:not(:disabled) {
+  border-color: var(--orange-primary);
+  color: var(--orange-primary);
+}
+
+.btn-add-ship:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.add-production-inline {
   display: flex;
-  gap: 0.2rem;
-  margin-top: 0.2rem;
+  gap: 2px;
 }
 
-.add-production-compact select {
+.add-production-inline select {
   flex: 1;
-  padding: 0.1rem;
+  padding: 1px 2px;
   background: var(--bg-dark);
   border: 1px solid var(--border-color);
   color: var(--text-light);
-  border-radius: 2px;
-  font-size: 0.6rem;
+  font-size: 10px;
+  font-family: var(--font-mono);
 }
 
-.add-production-compact button {
-  padding: 0.1rem 0.3rem;
+.add-production-inline button {
+  padding: 1px 4px;
   background: var(--bg-dark);
   border: 1px solid var(--border-color);
   color: var(--text-light);
   cursor: pointer;
-  font-size: 0.6rem;
-  border-radius: 2px;
+  font-size: 10px;
 }
 
-.add-production-compact button:hover:not(:disabled) {
+.add-production-inline button:hover:not(:disabled) {
   border-color: var(--orange-primary);
 }
 
-.add-production-compact button:disabled {
+.add-production-inline button:disabled {
   opacity: 0.5;
 }
 

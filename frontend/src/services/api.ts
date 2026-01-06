@@ -387,6 +387,14 @@ class ApiClient {
     return response.data;
   }
 
+  async getStationedShipsDetailed(planetId: number): Promise<{
+    planet_id: number;
+    ships: ShipDetailed[];
+  }> {
+    const response = await this.client.get(`/planets/${planetId}/ships-detailed`);
+    return response.data;
+  }
+
   // ==========================================================================
   // Technology endpoints
   // ==========================================================================
@@ -499,6 +507,26 @@ class ApiClient {
     const response = await this.client.post(`/games/${gameId}/debug/conquer-all`);
     return response.data;
   }
+}
+
+// ==========================================================================
+// Ship Types
+// ==========================================================================
+
+export interface ShipDetailed {
+  id: number;
+  fleet_id: number;
+  fleet_name: string;
+  design_name: string;
+  ship_type: string;
+  weapons: number;
+  shields: number;
+  speed: number;
+  range: number;
+  fuel: number;
+  max_fuel: number;
+  health_percent: number;
+  scrap_value: number;
 }
 
 // ==========================================================================

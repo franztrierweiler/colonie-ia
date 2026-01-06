@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import type { RadicalBreakthrough, BreakthroughEffect } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { GalaxyMap, PlanetPanel, FleetPanel, TechPanel, TechComparisonModal, BreakthroughModal } from '../components/game';
+import { GalaxyMap, PlanetPanel, TechPanel, TechComparisonModal, BreakthroughModal, BudgetBars } from '../components/game';
 import { PixelUser, PixelLogout, PixelChevron } from '../components/PixelIcons';
 import type { Fleet, Player, Galaxy, Planet } from '../hooks/useGameState';
 import './GameView.css';
@@ -39,6 +39,14 @@ function GameView() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Menus header
+  const [shipsMenuOpen, setShipsMenuOpen] = useState(false);
+  const [galaxyMenuOpen, setGalaxyMenuOpen] = useState(false);
+  const shipsMenuRef = useRef<HTMLDivElement>(null);
+  const galaxyMenuRef = useRef<HTMLDivElement>(null);
+  const [showFleetsModal, setShowFleetsModal] = useState(false);
+  const [showPlanetsModal, setShowPlanetsModal] = useState(false);
+
   // Technology & Breakthrough state
   const [pendingBreakthrough, setPendingBreakthrough] = useState<RadicalBreakthrough | null>(null);
   const [showBreakthroughModal, setShowBreakthroughModal] = useState(false);
@@ -50,11 +58,17 @@ function GameView() {
   // Fleet movement mode - when a fleet is selected for sending
   const [fleetToSend, setFleetToSend] = useState<number | null>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (shipsMenuRef.current && !shipsMenuRef.current.contains(event.target as Node)) {
+        setShipsMenuOpen(false);
+      }
+      if (galaxyMenuRef.current && !galaxyMenuRef.current.contains(event.target as Node)) {
+        setGalaxyMenuOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -253,6 +267,65 @@ function GameView() {
           <button className="btn-back" onClick={() => navigate('/games')}>
             Quitter
           </button>
+          {/* Menu Vaisseaux */}
+          <div className="header-menu" ref={shipsMenuRef}>
+            <button
+              className="btn-header-menu"
+              onClick={() => { setShipsMenuOpen(!shipsMenuOpen); setGalaxyMenuOpen(false); }}
+            >
+              Vaisseaux
+              <PixelChevron
+                className={`menu-arrow ${shipsMenuOpen ? 'open' : ''}`}
+                size={10}
+                direction={shipsMenuOpen ? 'up' : 'down'}
+              />
+            </button>
+            {shipsMenuOpen && (
+              <div className="header-menu-dropdown">
+                <button
+                  className="header-menu-item"
+                  onClick={() => { setShowFleetsModal(true); setShipsMenuOpen(false); }}
+                >
+                  Afficher tout
+                </button>
+                <button
+                  className="header-menu-item"
+                  onClick={() => {
+                    setShipsMenuOpen(false);
+                    // Scroll to ships section in planet panel
+                    document.querySelector('.ships-section-compact')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  disabled={!selectedPlanetId || !selectedPlanet || selectedPlanet.owner_id !== mapData.my_player_id}
+                >
+                  Créer sur la planète
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Menu Galaxie */}
+          <div className="header-menu" ref={galaxyMenuRef}>
+            <button
+              className="btn-header-menu"
+              onClick={() => { setGalaxyMenuOpen(!galaxyMenuOpen); setShipsMenuOpen(false); }}
+            >
+              Galaxie
+              <PixelChevron
+                className={`menu-arrow ${galaxyMenuOpen ? 'open' : ''}`}
+                size={10}
+                direction={galaxyMenuOpen ? 'up' : 'down'}
+              />
+            </button>
+            {galaxyMenuOpen && (
+              <div className="header-menu-dropdown">
+                <button
+                  className="header-menu-item"
+                  onClick={() => { setShowPlanetsModal(true); setGalaxyMenuOpen(false); }}
+                >
+                  Mes planètes
+                </button>
+              </div>
+            )}
+          </div>
           <span className="turn-label">Tour {mapData.turn}</span>
         </div>
         <div className="header-right">
@@ -331,6 +404,8 @@ function GameView() {
                 isOwned={selectedPlanet.owner_id === mapData.my_player_id}
                 ownerColor={getPlayerColor(selectedPlanet.owner_id)}
                 ownerName={getPlayerName(selectedPlanet.owner_id)}
+                fleets={fleetsAtSelectedPlanet}
+                myPlayerId={mapData.my_player_id}
                 onClose={() => setSelectedPlanetId(null)}
                 onBudgetChange={() => { loadMap(); loadEconomy(); }}
                 onAbandon={() => {
@@ -346,56 +421,8 @@ function GameView() {
             )}
           </section>
 
-          {/* Fleet Info Section */}
-          {selectedPlanet && fleetsAtSelectedPlanet.length > 0 && (
-            <section className="panel-section fleet-info-section">
-              <h3>Flottes en orbite</h3>
-              {fleetToSend && (
-                <div className="send-mode-banner">
-                  <span>🎯 Cliquez sur la destination</span>
-                  <button className="btn-cancel-send" onClick={cancelSendFleet}>✕</button>
-                </div>
-              )}
-              <div className="fleet-list-compact">
-                {fleetsAtSelectedPlanet.map((fleet) => {
-                  const isMine = fleet.player_id === mapData.my_player_id;
-                  const isSelected = fleet.id === selectedFleetId;
-                  const isSending = fleet.id === fleetToSend;
-
-                  return (
-                    <div
-                      key={fleet.id}
-                      className={`fleet-item ${isMine ? 'mine' : ''} ${isSelected ? 'selected' : ''} ${isSending ? 'sending' : ''}`}
-                      onClick={() => handleFleetClick(fleet.id)}
-                    >
-                      <span
-                        className="fleet-dot"
-                        style={{ backgroundColor: getPlayerColor(fleet.player_id) }}
-                      />
-                      <span className="fleet-name">{fleet.name}</span>
-                      <span className="fleet-ships">{fleet.ship_count} vx</span>
-                      {isMine && fleet.status === 'stationed' && !fleetToSend && (
-                        <button
-                          className="btn-send-fleet"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSendFleet(fleet.id);
-                          }}
-                          title="Envoyer cette flotte"
-                        >
-                          ➤
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
           {/* Global Resources Section */}
           <section className="panel-section resources-section">
-            <h3>Ressources</h3>
             <div className="resource-grid">
               <div className="resource-item">
                 <span className="resource-label">Réserve Métal</span>
@@ -418,18 +445,18 @@ function GameView() {
             </div>
           </section>
 
-          {/* Fleet Management Section */}
-          <section className="panel-section fleet-management-section">
-            <FleetPanel
+          {/* Budget Allocation Bars */}
+          <section className="panel-section budget-bars-section">
+            <BudgetBars
               gameId={parseInt(gameId || '0')}
-              fleets={mapData.fleets}
-              planets={mapData.planets}
-              myPlayerId={mapData.my_player_id}
-              selectedFleetId={selectedFleetId}
-              onSelectFleet={setSelectedFleetId}
-              onFleetAction={() => { loadMap(); loadEconomy(); }}
+              planets={mapData.planets.filter(p => p.owner_id === mapData.my_player_id)}
+              playerColor={myPlayer?.color || '#ffa500'}
+              economy={economy}
+              onPlanetClick={(planetId) => setSelectedPlanetId(planetId)}
+              selectedPlanetId={selectedPlanetId}
             />
           </section>
+
         </aside>
 
         {/* -------- GALAXY MAP (CENTER) -------- */}
@@ -503,6 +530,89 @@ function GameView() {
         isOpen={showTechComparison}
         onClose={() => setShowTechComparison(false)}
       />
+
+      {/* Fleets Modal */}
+      {showFleetsModal && (
+        <div className="expert-modal-overlay" onClick={() => setShowFleetsModal(false)}>
+          <div className="expert-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="expert-modal-header">
+              <span>Flottes ({myFleets.length})</span>
+              <button onClick={() => setShowFleetsModal(false)}>×</button>
+            </div>
+            <div className="expert-modal-content">
+              <table className="expert-table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Position</th>
+                    <th>Vx</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myFleets.map((fleet) => {
+                    const planet = mapData?.planets.find(p => p.id === fleet.current_planet_id);
+                    const destPlanet = mapData?.planets.find(p => p.id === fleet.destination_planet_id);
+                    return (
+                      <tr key={fleet.id} onClick={() => {
+                        if (fleet.current_planet_id) {
+                          setSelectedPlanetId(fleet.current_planet_id);
+                        }
+                        setShowFleetsModal(false);
+                      }}>
+                        <td>{fleet.name}</td>
+                        <td>{planet?.name || '—'}</td>
+                        <td>{fleet.ship_count}</td>
+                        <td>{fleet.status === 'stationed' ? 'Stationné' : `→ ${destPlanet?.name || '?'}`}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Planets Modal */}
+      {showPlanetsModal && (
+        <div className="expert-modal-overlay" onClick={() => setShowPlanetsModal(false)}>
+          <div className="expert-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="expert-modal-header">
+              <span>Mes planètes ({mapData?.planets.filter(p => p.owner_id === mapData.my_player_id).length})</span>
+              <button onClick={() => setShowPlanetsModal(false)}>×</button>
+            </div>
+            <div className="expert-modal-content">
+              <table className="expert-table">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Pop</th>
+                    <th>Métal</th>
+                    <th>T/M/V</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mapData?.planets
+                    .filter(p => p.owner_id === mapData.my_player_id)
+                    .sort((a, b) => b.population - a.population)
+                    .map((planet) => (
+                      <tr key={planet.id} onClick={() => {
+                        setSelectedPlanetId(planet.id);
+                        setShowPlanetsModal(false);
+                      }}>
+                        <td>{planet.name}</td>
+                        <td>{(planet.population / 1000).toFixed(0)}k</td>
+                        <td>{planet.metal_remaining.toLocaleString()}</td>
+                        <td>{planet.terraform_budget}/{planet.mining_budget}/{planet.ships_budget}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

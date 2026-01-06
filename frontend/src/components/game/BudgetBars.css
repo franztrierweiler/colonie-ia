@@ -1,0 +1,118 @@
+/* ============================================
+   BUDGET BARS - SPACEWARD HO! STYLE
+   ============================================ */
+
+.budget-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono, 'Courier New', monospace);
+  font-size: 11px;
+}
+
+.budget-bars-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px 2px 60px;
+  font-size: 9px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 2px;
+}
+
+.budget-scale {
+  font-size: 8px;
+}
+
+.budget-scale-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.budget-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 2px;
+}
+
+.budget-row.planet-row {
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.budget-row.planet-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.budget-row.planet-row.selected {
+  background: rgba(255, 165, 0, 0.15);
+}
+
+.budget-label {
+  width: 56px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.budget-label.savings-label {
+  color: #50c878;
+}
+
+.budget-label.tech-label {
+  color: #9370db;
+}
+
+.budget-label.planet-label {
+  font-weight: 600;
+  filter: brightness(1.4);
+}
+
+.budget-bar-container {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.budget-bar-fill {
+  height: 100%;
+  transition: width 0.2s ease;
+  border-radius: 1px;
+}
+
+.budget-bar-fill.savings-fill {
+  background: linear-gradient(to right, #2e8b57, #50c878);
+}
+
+.budget-bar-fill.tech-fill {
+  background: linear-gradient(to right, #5a4acd, #9370db);
+}
+
+.budget-bar-fill.planet-fill {
+  opacity: 0.85;
+}
+
+.budget-percent {
+  width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.budget-empty {
+  padding: 8px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 10px;
+}
