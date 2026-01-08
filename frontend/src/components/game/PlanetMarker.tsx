@@ -230,55 +230,65 @@ function PlanetMarker({
         );
       })()}
 
-      {/* Pastille construction jaune→rouge + arcs électriques (sous le badge vaisseaux) */}
+      {/* Usine avec activité et vaisseau sortant */}
       {hasShipsInConstruction && isMine && (
         (() => {
-          // Position sous le badge vaisseaux
-          const badgeX = planet.x + planetRadius + 4;
-          const badgeY = planet.y - planetRadius + (stationedShipCount > 0 ? 8 : 0);
-          const badgeRadius = 3;
+          const factoryX = planet.x + planetRadius + 5;
+          const factoryY = planet.y - planetRadius + (stationedShipCount > 0 ? 6 : 2);
           return (
-            <g>
-              {/* Cercle de fond */}
-              <circle
-                cx={badgeX}
-                cy={badgeY}
-                r={badgeRadius + 1}
-                fill="#000"
-                opacity="0.6"
+            <g className="factory-indicator">
+              {/* Bâtiment principal */}
+              <rect
+                x={factoryX - 2.25}
+                y={factoryY}
+                width={4.5}
+                height={2.25}
+                fill="#556"
+                stroke="#667"
+                strokeWidth="0.15"
               />
-              {/* Pastille de construction animée (sans contour) */}
-              <circle
-                cx={badgeX}
-                cy={badgeY}
-                r={badgeRadius}
-                className="construction-indicator"
+              {/* Toit en shed - pans inclinés gris */}
+              <polygon
+                points={`${factoryX - 2.25},${factoryY} ${factoryX - 2.25},${factoryY - 0.9} ${factoryX - 0.75},${factoryY}`}
+                fill="#777"
               />
-              {/* Arcs électriques */}
-              <path
-                d={`M${badgeX - 4},${badgeY - 2} L${badgeX - 2},${badgeY} L${badgeX - 5},${badgeY + 1}`}
-                stroke="#88ffff"
-                strokeWidth="0.5"
-                fill="none"
-                strokeDasharray="2,1"
-                className="electric-arc-1"
+              <polygon
+                points={`${factoryX - 0.75},${factoryY} ${factoryX - 0.75},${factoryY - 0.9} ${factoryX + 0.75},${factoryY}`}
+                fill="#888"
               />
-              <path
-                d={`M${badgeX + 2},${badgeY - 4} L${badgeX},${badgeY - 2} L${badgeX + 3},${badgeY - 1}`}
-                stroke="#ffff88"
-                strokeWidth="0.5"
-                fill="none"
-                strokeDasharray="1.5,1"
-                className="electric-arc-2"
+              <polygon
+                points={`${factoryX + 0.75},${factoryY} ${factoryX + 0.75},${factoryY - 0.9} ${factoryX + 2.25},${factoryY}`}
+                fill="#777"
               />
-              <path
-                d={`M${badgeX + 3},${badgeY + 2} L${badgeX + 1},${badgeY + 1} L${badgeX + 4},${badgeY + 3}`}
-                stroke="#ffffff"
-                strokeWidth="0.4"
-                fill="none"
-                strokeDasharray="1,1.5"
-                className="electric-arc-3"
-              />
+              {/* Fenêtres du toit (vitrage) */}
+              <rect x={factoryX - 2.15} y={factoryY - 0.75} width={0.4} height={0.6} fill="#88ccff" />
+              <rect x={factoryX - 0.65} y={factoryY - 0.75} width={0.4} height={0.6} fill="#88ccff" />
+              <rect x={factoryX + 0.85} y={factoryY - 0.75} width={0.4} height={0.6} fill="#88ccff" />
+              {/* Fenêtres du bâtiment qui clignotent */}
+              <rect x={factoryX - 1.65} y={factoryY + 0.45} width={0.6} height={0.6} fill="#ffdd66" className="factory-window" />
+              <rect x={factoryX - 0.3} y={factoryY + 0.45} width={0.6} height={0.6} fill="#ffcc44" className="factory-window-2" />
+              <rect x={factoryX + 1.05} y={factoryY + 0.45} width={0.6} height={0.6} fill="#ffdd66" className="factory-window-3" />
+              {/* Cheminée */}
+              <rect x={factoryX + 1.5} y={factoryY - 1.5} width={0.6} height={0.9} fill="#555" />
+              {/* Porte de sortie */}
+              <rect x={factoryX + 2.25} y={factoryY + 0.45} width={0.45} height={1.5} fill="#333" />
+              {/* Étincelles d'activité dans l'usine */}
+              <circle cx={factoryX - 1.2} cy={factoryY + 0.9} r={0.15} fill="#ffff00" className="weld-spark-1" />
+              <circle cx={factoryX + 0.3} cy={factoryY + 0.75} r={0.12} fill="#ffaa00" className="weld-spark-2" />
+              <circle cx={factoryX - 0.45} cy={factoryY + 1.2} r={0.1} fill="#ffffff" className="weld-spark-3" />
+              <circle cx={factoryX + 0.9} cy={factoryY + 1.05} r={0.13} fill="#ffdd00" className="weld-spark-4" />
+              {/* Éclairs à la sortie de l'usine */}
+              <line x1={factoryX + 2.7} y1={factoryY + 0.6} x2={factoryX + 3.15} y2={factoryY + 0.9} stroke="#88ddff" strokeWidth="0.2" className="exit-spark-1" />
+              <line x1={factoryX + 2.7} y1={factoryY + 1.8} x2={factoryX + 3.3} y2={factoryY + 1.5} stroke="#aaeeff" strokeWidth="0.18" className="exit-spark-2" />
+              <line x1={factoryX + 2.8} y1={factoryY + 1.2} x2={factoryX + 3.0} y2={factoryY + 0.75} stroke="#ffffff" strokeWidth="0.15" className="exit-spark-3" />
+              {/* Petit vaisseau qui sort depuis la porte */}
+              <g className="ship-exit">
+                <polygon
+                  points={`${factoryX + 2.7},${factoryY + 1.0} ${factoryX + 3.6},${factoryY + 1.25} ${factoryX + 2.7},${factoryY + 1.5}`}
+                  fill="#6688aa"
+                />
+                <circle cx={factoryX + 3.3} cy={factoryY + 1.25} r={0.18} fill="#aaddff" />
+              </g>
             </g>
           );
         })()
@@ -380,47 +390,49 @@ function PlanetMarker({
       )}
 
       {/* Nom de la planète */}
-      {zoom >= 1.0 && (
-        <text
-          x={planet.x}
-          y={planet.y + planetRadius + 3}
-          textAnchor="middle"
-          fill={isUnexplored ? '#666' : '#999'}
-          fontSize="0.05"
-          fontFamily="Courier, 'Courier New', monospace"
-          className="planet-name"
-          style={{ pointerEvents: 'none' }}
-        >
-          {planet.name}
-        </text>
-      )}
-
-      {/* Détails (zoom élevé) */}
-      {zoom >= 2.0 && !isUnexplored && (
-        <g className="planet-details">
+      {zoom >= 0.8 && (
+        <g className="planet-name-group" style={{ pointerEvents: 'none' }}>
+          {/* Contour noir pour lisibilité */}
           <text
             x={planet.x}
-            y={planet.y + planetRadius + 8}
+            y={planet.y + planetRadius + 5}
             textAnchor="middle"
-            fill="#666"
-            fontSize={Math.max(1.2, 2.5 / zoom)}
-            style={{ pointerEvents: 'none' }}
+            fill="none"
+            stroke="#000"
+            strokeWidth={1.2}
+            fontSize={3.5}
+            fontFamily="Arial, sans-serif"
+            fontWeight="normal"
           >
-            {Math.round(planet.current_temperature)}°C
+            {planet.name}
           </text>
-          {isMine && (
-            <text
-              x={planet.x}
-              y={planet.y + planetRadius + 11}
-              textAnchor="middle"
-              fill="#888"
-              fontSize={Math.max(1, 2 / zoom)}
-              style={{ pointerEvents: 'none' }}
-            >
-              {(planet.population / 1000).toFixed(0)}k
-            </text>
-          )}
+          {/* Texte principal */}
+          <text
+            x={planet.x}
+            y={planet.y + planetRadius + 5}
+            textAnchor="middle"
+            fill={isUnexplored ? '#999' : '#fff'}
+            fontSize={3.5}
+            fontFamily="Arial, sans-serif"
+            fontWeight="normal"
+          >
+            {planet.name}
+          </text>
         </g>
+      )}
+
+      {/* Détails (zoom élevé) - population uniquement */}
+      {zoom >= 2.0 && !isUnexplored && isMine && (
+        <text
+          x={planet.x}
+          y={planet.y + planetRadius + 8}
+          textAnchor="middle"
+          fill="#888"
+          fontSize={Math.max(1, 2 / zoom)}
+          style={{ pointerEvents: 'none' }}
+        >
+          {(planet.population / 1000).toFixed(0)}k
+        </text>
       )}
 
       {/* Point rouge pour nova imminente */}
