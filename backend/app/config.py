@@ -2,13 +2,28 @@
 Configuration par environnement (dev/staging/prod)
 """
 import os
+import secrets
 from datetime import timedelta
+
+
+def _get_secret_key():
+    """Get SECRET_KEY from environment or generate a random one for development.
+
+    WARNING: If no SECRET_KEY is set, a random key is generated. This means
+    sessions/tokens will be invalidated on every restart. Always set SECRET_KEY
+    in production via environment variable.
+    """
+    key = os.environ.get("SECRET_KEY")
+    if key:
+        return key
+    # Generate a secure random key for development (32 bytes = 256 bits)
+    return secrets.token_hex(32)
 
 
 class Config:
     """Configuration de base."""
 
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+    SECRET_KEY = _get_secret_key()
 
     # SQLAlchemy
     SQLALCHEMY_TRACK_MODIFICATIONS = False
